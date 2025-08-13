@@ -12,10 +12,40 @@ import Signup from './pages/Signup.jsx'
 import SocialIcon from './components/SocialIcon.jsx'
 import ImageSlider from './components/ImageSlider.jsx'
 import Admin from './pages/Admin.jsx'
+import { getToken, removeToken } from './utils/auth'
 
 function NavBar() {
   const location = useLocation()
-  const isAdminRoute = location.pathname.startsWith('/admin')
+  const [authState, setAuthState] = useState({
+    isAdmin: !!getToken() && localStorage.getItem('is_admin') === 'true',
+    isLoggedIn: !!getToken()
+  })
+
+  useEffect(() => {
+    const checkAuth = () => setAuthState({
+      isAdmin: !!getToken() && localStorage.getItem('is_admin') === 'true',
+      isLoggedIn: !!getToken()
+    })
+    checkAuth()
+    window.addEventListener('storage', checkAuth)
+    return () => window.removeEventListener('storage', checkAuth)
+  }, [])
+
+  useEffect(() => {
+    // Also update on route change (for instant UI update after login/logout)
+    setAuthState({
+      isAdmin: !!getToken() && localStorage.getItem('is_admin') === 'true',
+      isLoggedIn: !!getToken()
+    })
+  }, [location])
+
+  const handleLogout = () => {
+    removeToken()
+    localStorage.removeItem('is_admin')
+    setAuthState({ isAdmin: false, isLoggedIn: false })
+    window.location.href = '/'
+  }
+
   return (
     <motion.header
       initial={{ y: -40, opacity: 0 }}
@@ -25,14 +55,29 @@ function NavBar() {
     >
       <div className="bg-gradient-to-r from-[color:var(--color-india-saffron)] via-white to-[color:var(--color-india-green)]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
+          <div className="flex h-20 items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-full overflow-hidden ring-2 ring-[color:var(--color-ashoka-blue)]">
-                <div className="h-full w-full bg-gradient-to-b from-[color:var(--color-india-saffron)] via-white to-[color:var(--color-india-green)]" />
+              <div className="flex items-center gap-3">
+                {/* NSS Logo */}
+                <div className="h-12 w-12 rounded-full bg-blue-800 flex items-center justify-center ring-2 ring-white shadow-lg">
+                  <div className="text-white text-sm font-bold text-center leading-tight">
+                    <div>राष्ट्रीय</div>
+                    <div>सेवा योजना</div>
+                  </div>
+                </div>
+                {/* SVNIT Logo */}
+                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center ring-2 ring-blue-300 shadow-lg">
+                  <div className="text-blue-800 text-sm font-bold text-center leading-tight">
+                    <div>SVNIT</div>
+                  </div>
+                </div>
               </div>
-              <span className="font-extrabold text-xl md:text-2xl tracking-wide text-[color:var(--color-ashoka-blue)]">Think India</span>
+              <div className="flex flex-col ml-3 sm:ml-4">
+                <span className="font-black text-2xl md:text-3xl tracking-wide text-[color:var(--color-ashoka-blue)]">Think India</span>
+                <span className="font-semibold text-xl md:text-2xl tracking-wide text-[color:var(--color-ashoka-blue)]">SVNIT</span>
+              </div>
             </Link>
-            <nav className="hidden md:flex items-center gap-6 text-base md:text-lg font-semibold">
+            <nav className="hidden md:flex items-center gap-4 text-sm md:text-base font-semibold">
               <Link className="hover:text-[color:var(--color-ashoka-blue)]" to="/#about">About</Link>
               <Link className="hover:text-[color:var(--color-ashoka-blue)]" to="/internships">Internships</Link>
               <Link className="hover:text-[color:var(--color-ashoka-blue)]" to="/teams">Teams</Link>
@@ -41,16 +86,7 @@ function NavBar() {
               <Link className="hover:text-[color:var(--color-ashoka-blue)]" to="/#contact">Contact Us</Link>
             </nav>
             <div className="flex items-center gap-3">
-              {isAdminRoute ? (
-                <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
-                  <Link
-                    to="/admin"
-                    className="inline-flex items-center rounded-md border border-[color:var(--color-ashoka-blue)] bg-white px-4 py-2 text-[color:var(--color-ashoka-blue)] shadow hover:bg-white"
-                  >
-                    Admin
-                  </Link>
-                </motion.div>
-              ) : (
+              {authState.isAdmin ? (
                 <>
                   <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
                     <Link
@@ -60,6 +96,26 @@ function NavBar() {
                       Admin
                     </Link>
                   </motion.div>
+                  <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
+                    <button
+                      onClick={handleLogout}
+                      className="hidden sm:inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-white shadow hover:bg-red-700"
+                    >
+                      Logout
+                    </button>
+                  </motion.div>
+                </>
+              ) : authState.isLoggedIn ? (
+                <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
+                  <button
+                    onClick={handleLogout}
+                    className="hidden sm:inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-white shadow hover:bg-red-700"
+                  >
+                    Logout
+                  </button>
+                </motion.div>
+              ) : (
+                <>
                   <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
                     <Link
                       to="/login"
@@ -163,6 +219,7 @@ function Footer() {
             <ul className="mt-2 space-y-2 text-white/80">
               <li><Link className="hover:text-white" to="/blogs">Blog</Link></li>
               <li><Link className="hover:text-white" to="/internships">Internships</Link></li>
+              <li><Link className="hover:text-white" to="/admin">Admin Dashboard</Link></li>
             </ul>
           </div>
           <div className="text-center md:text-left">
@@ -465,7 +522,7 @@ function HomePage() {
         </div>
       </Section>
       <Section id="events" title="Events">
-        <ImageSlider className="mb-2" intervalMs={2000} images={eventImages} />
+        <ImageSlider className="mb-2" intervalMs={8000} images={eventImages} overlay={false} />
       </Section>
       <ContactSection />
     </>

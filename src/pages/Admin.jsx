@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
+import { authFetch, isAuthenticated, removeToken, getToken } from '../utils/auth'
 
 const TABS = [
   { key: 'blogs', label: 'Blogs' },
@@ -10,19 +12,40 @@ const TABS = [
 ]
 
 export default function Admin() {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('blogs')
   
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate('/login')
+      return
+    }
+    // Check admin rights
+    if (localStorage.getItem('is_admin') !== 'true') {
+      window.alert('Access Denied!')
+      navigate('/')
+      return
+    }
+  }, [navigate])
+
+  const handleLogout = () => {
+    removeToken()
+    localStorage.removeItem('is_admin')
+    navigate('/login')
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-      <motion.h1
-        initial={{ y: 12, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 120, damping: 18 }}
-        className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[color:var(--color-ashoka-blue)]"
-      >
-        Admin Dashboard
-      </motion.h1>
+      <div className="flex justify-between items-center">
+        <motion.h1
+          initial={{ y: 12, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+          className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[color:var(--color-ashoka-blue)]"
+        >
+          Admin Dashboard
+        </motion.h1>
+      </div>
 
       <div className="mt-8 flex flex-wrap gap-3">
         {TABS.map((t) => (
@@ -53,35 +76,38 @@ export default function Admin() {
 
 function useJsonFetch() {
   const common = useMemo(
-    () => ({ headers: { 'Content-Type': 'application/json' }, credentials: 'include' }),
+    () => ({ headers: { 'Content-Type': 'application/json' } }),
     [],
   )
+  
   const get = async (url) => {
-    const res = await fetch(url, { credentials: 'include' })
+    const res = await authFetch(url)
     if (!res.ok) throw new Error(await safeMessage(res))
     return res.json()
   }
+  
   const post = async (url, body) => {
     const isFormData = body instanceof FormData
     const options = {
       method: 'POST',
-      body: isFormData ? body : JSON.stringify(body),
-      credentials: 'include'
+      body: isFormData ? body : JSON.stringify(body)
     }
     
     if (!isFormData) {
       options.headers = { 'Content-Type': 'application/json' }
     }
     
-    const res = await fetch(url, options)
+    const res = await authFetch(url, options)
     if (!res.ok) throw new Error(await safeMessage(res))
     return res.json()
   }
+  
   const patch = async (url, body) => {
-    const res = await fetch(url, { method: 'PATCH', body: JSON.stringify(body), ...common })
+    const res = await authFetch(url, { method: 'PATCH', body: JSON.stringify(body), ...common })
     if (!res.ok) throw new Error(await safeMessage(res))
     return res.json()
   }
+  
   return { get, post, patch }
 }
 
@@ -120,7 +146,7 @@ function BlogsPanel() {
     setLoading(true)
     try {
       // Attempt to load blogs list if backend provides it; otherwise, silently no-op
-      let res = await fetch('http://localhost:8082/api/admin/blogs', { credentials: 'include' })
+      let res = await authFetch('http://localhost:8082/api/admin/blogs')
       if (!res.ok) throw new Error(res.statusText)
       const ct = res.headers.get('content-type') || ''
       const data = ct.includes('application/json') ? await res.json() : []
@@ -150,15 +176,11 @@ function BlogsPanel() {
       if (form.coverImage) {
         formData.append('Cover_image', form.coverImage)
       }
-      // Direct call to the Spring endpoint from Postman
-      let res = await fetch('http://localhost:8082/api/admin/createBlog', {
+      // Use authenticated fetch for admin endpoint
+      let res = await authFetch('http://localhost:8082/api/admin/createBlog', {
         method: 'POST',
-        body: formData,
-        mode: 'cors',
+        body: formData
       })
-      if (!res.ok) {
-        res = await fetch('http://localhost:8082/api/admin/createBlog', { method: 'POST', body: formData })
-      }
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       const text = await res.text().catch(() => '') // backend may return plain text or empty body
       setSuccess(text ? `Created blog (id: ${text})` : 'Created blog successfully')
@@ -234,7 +256,7 @@ function TeamsPanel() {
     setLoading(true)
     setError('')
     try {
-      const data = await get('/api/admin/teams')
+      const data = await get('http://localhost:8082/api/admin/teams')
       setMembers(Array.isArray(data) ? data : data.members || [])
     } catch (e) {
       setError(e.message)
@@ -261,7 +283,7 @@ function TeamsPanel() {
         formData.append('photo', form.photo)
       }
       
-      await post('/api/admin/teams', formData)
+      await post('http://localhost:8082/api/admin/teams', formData)
       setForm({ name: '', type: 'Core', photo: null })
       await load()
     } catch (e) {
@@ -349,7 +371,7 @@ function EventsPanel() {
     setLoading(true)
     try {
       // Optional list fetch; ignore if your backend doesn't expose a GET
-      let res = await fetch('http://localhost:8082/api/admin/events', { credentials: 'include' })
+      let res = await authFetch('http://localhost:8082/api/admin/events')
       if (!res.ok) throw new Error(res.statusText)
       const ct = res.headers.get('content-type') || ''
       const data = ct.includes('application/json') ? await res.json() : []
@@ -381,14 +403,10 @@ function EventsPanel() {
       form.append('Name', name)
       form.append('Event_image', file)
 
-      let res = await fetch('http://localhost:8082/api/admin/addEvent', {
+      let res = await authFetch('http://localhost:8082/api/admin/addEvent', {
         method: 'POST',
-        body: form,
-        mode: 'cors',
+        body: form
       })
-      if (!res.ok) {
-        res = await fetch('http://localhost:8082/api/admin/addEvent', { method: 'POST', body: form })
-      }
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       const text = await res.text().catch(() => '')
       setSuccess(text ? `Created event (id: ${text})` : 'Created event successfully')
@@ -458,8 +476,8 @@ function RecommendationsPanel() {
     setError('')
     try {
       const [uRes, rRes] = await Promise.all([
-        fetch('http://localhost:8082/api/admin/showUnresolvedRecommendations'),
-        fetch('http://localhost:8082/api/admin/showResolvedRecommendations'),
+        authFetch('http://localhost:8082/api/admin/showUnresolvedRecommendations'),
+        authFetch('http://localhost:8082/api/admin/showResolvedRecommendations'),
       ])
 
       if (!uRes.ok || !rRes.ok) throw new Error('Failed to load recommendations')
@@ -489,7 +507,7 @@ function RecommendationsPanel() {
   const removeRecommendation = async (id) => {
     try {
       const idNum = Number(String(id).trim())
-      const res = await fetch(`http://localhost:8082/api/admin/removeRecommendation/${encodeURIComponent(idNum)}`, {
+      const res = await authFetch(`http://localhost:8082/api/admin/removeRecommendation/${encodeURIComponent(idNum)}`, {
         method: 'DELETE',
       })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
@@ -502,7 +520,7 @@ function RecommendationsPanel() {
   const resolveRecommendation = async (id) => {
     try {
       const idNum = Number(String(id).trim())
-      const res = await fetch(`http://localhost:8082/api/admin/resolveRecommendation/${encodeURIComponent(idNum)}`, {
+      const res = await authFetch(`http://localhost:8082/api/admin/resolveRecommendation/${encodeURIComponent(idNum)}`, {
         method: 'PUT',
       })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
@@ -614,7 +632,7 @@ function InternshipsPanel() {
     setLoading(true)
     setError('')
     try {
-      const data = await get('/api/admin/internships')
+      const data = await get('http://localhost:8082/api/admin/internships')
       setItems(Array.isArray(data) ? data : data.items || [])
     } catch (e) {
       setError(e.message)
@@ -632,7 +650,7 @@ function InternshipsPanel() {
     setSubmitting(true)
     setError('')
     try {
-      await post('/api/admin/internships', form)
+      await post('http://localhost:8082/api/admin/internships', form)
       setForm({ title: '', description: '', applyUrl: '', category: 'current' })
       await load()
     } catch (e) {

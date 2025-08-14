@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import SectionDivider from '../components/SectionDivider.jsx'
+import { HoverCard } from '../components/ui/card-hover-effect.jsx'
 
 export default function Blogs() {
   const [posts, setPosts] = useState([])
@@ -250,63 +251,62 @@ export default function Blogs() {
             </div>
           ) : (
             posts.map((post) => (
-              <motion.article 
-                key={post.id} 
-                initial={{ opacity: 0, y: 12 }} 
-                whileInView={{ opacity: 1, y: 0 }} 
-                viewport={{ once: true }} 
-                className="group rounded-xl overflow-hidden border bg-white shadow-lg hover:shadow-xl transition-shadow"
-              >
-                {post.imageSrc ? (
-                  <div className="h-40 w-full overflow-hidden">
-                    <img 
-                      src={post.imageSrc}
-                      alt={post.heading || 'Blog post image'} 
-                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                      onError={(e) => {
-                        console.error('Image failed to load for post:', post.id)
-                        console.error('Image src length:', post.imageSrc?.length)
-                        console.error('Image type:', post.imageType)
-                        e.target.parentElement.innerHTML = `
-                          <div class="h-40 w-full bg-gray-200 flex items-center justify-center">
-                            <span class="text-gray-500 text-sm">Image failed to load</span>
-                          </div>
-                        `
-                      }}
-                      onLoad={() => {
-                        console.log('Image loaded successfully for post:', post.id)
-                      }}
-                    />
+              <HoverCard key={post.id} className="rounded-xl">
+                <motion.article 
+                  initial={{ opacity: 0, y: 12 }} 
+                  whileInView={{ opacity: 1, y: 0 }} 
+                  viewport={{ once: true }} 
+                  className="group rounded-xl overflow-hidden border bg-white shadow-lg hover:shadow-2xl transition-all duration-200 h-[440px] flex flex-col"
+                >
+                  {post.imageSrc ? (
+                    <div className="h-56 w-full overflow-hidden">
+                      <img 
+                        src={post.imageSrc}
+                        alt={post.heading || 'Blog post image'} 
+                        className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300" 
+                        onError={(e) => {
+                          console.error('Image failed to load for post:', post.id)
+                          console.error('Image src length:', post.imageSrc?.length)
+                          console.error('Image type:', post.imageType)
+                          e.target.parentElement.innerHTML = `
+                            <div class=\"h-40 w-full bg-gray-200 flex items-center justify-center\">\n                              <span class=\"text-gray-500 text-sm\">Image failed to load</span>\n                            </div>
+                          `
+                        }}
+                        onLoad={() => {
+                          console.log('Image loaded successfully for post:', post.id)
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-40 w-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-500 text-sm">No image available</span>
+                    </div>
+                  )}
+                  
+                  <div className="p-5 flex-1 flex flex-col">
+                    <h3 className="text-lg font-bold text-[color:var(--color-ashoka-blue)] mb-2 line-clamp-2 group-hover:text-[color:var(--color-india-saffron)] transition-colors">
+                      {post.heading || 'Untitled Post'}
+                    </h3>
+                    <p className="text-xs text-gray-500 mb-2">
+                      {post.postTime ? new Date(post.postTime).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      }) : 'Date not available'}
+                    </p>
+                    <p className="text-gray-700 line-clamp-2 mb-3 text-sm">
+                      {post.content || 'No content available'}
+                    </p>
+                    <Link
+                      to={`/blogs/${encodeURIComponent(post.id ?? post.heading ?? '')}`}
+                      state={{ post }}
+                      className="mt-auto inline-flex items-center text-[color:var(--color-india-saffron)] font-semibold hover:text-orange-600 transition-colors text-sm"
+                    >
+                      Read More <span className="ml-1">→</span>
+                    </Link>
                   </div>
-                ) : (
-                  <div className="h-40 w-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-gray-500 text-sm">No image available</span>
-                  </div>
-                )}
-                
-                <div className="p-4">
-                  <h3 className="text-lg font-bold text-[color:var(--color-ashoka-blue)] mb-2 line-clamp-2">
-                    {post.heading || 'Untitled Post'}
-                  </h3>
-                  <p className="text-xs text-gray-500 mb-2">
-                    {post.postTime ? new Date(post.postTime).toLocaleDateString('en-US', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    }) : 'Date not available'}
-                  </p>
-                  <p className="text-gray-700 line-clamp-2 mb-3 text-sm">
-                    {post.content || 'No content available'}
-                  </p>
-                  <Link
-                    to={`/blogs/${encodeURIComponent(post.id ?? post.heading ?? '')}`}
-                    state={{ post }}
-                    className="inline-flex items-center text-[color:var(--color-india-saffron)] font-semibold hover:text-orange-600 transition-colors text-sm"
-                  >
-                    Read More <span className="ml-1">→</span>
-                  </Link>
-                </div>
-              </motion.article>
+                </motion.article>
+              </HoverCard>
             ))
           )}
         </div>

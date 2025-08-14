@@ -1,7 +1,45 @@
 import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { setToken } from '../utils/auth'
+
+// Shared UI helpers to mirror Signup design
+const BottomGradient = () => (
+  <>
+    <span className="absolute inset-x-0 -bottom-px block h-[2px] w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-0 transition duration-500 group-hover/btn:opacity-100" />
+    <span className="absolute inset-x-10 -bottom-px mx-auto block h-[3px] w-2/3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 blur-md transition duration-500 group-hover/btn:opacity-100" />
+  </>
+)
+
+const FieldHover = ({ children, className = '' }) => {
+  const ref = useRef(null)
+  const handleMove = (e) => {
+    const el = ref.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const xPct = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100))
+    el.style.setProperty('--fx', `${xPct}%`)
+  }
+  const handleLeave = () => {
+    const el = ref.current
+    if (el) el.style.setProperty('--fx', '50%')
+  }
+  return (
+    <div ref={ref} onMouseMove={handleMove} onMouseLeave={handleLeave} className={`relative group/field ${className}`}>
+      {children}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute left-0 right-0 top-0 block h-[3px] w-full opacity-0 transition duration-150 group-hover/field:opacity-100 group-focus-within/field:opacity-100"
+        style={{ background: 'radial-gradient(160px 30px at var(--fx, 50%) 0, rgba(96,165,250,0.8), transparent 72%)' }}
+      />
+      <span
+        aria-hidden
+        className="pointer-events-none absolute left-0 right-0 bottom-0 block h-[3px] w-full opacity-0 transition duration-150 group-hover/field:opacity-100 group-focus-within/field:opacity-100"
+        style={{ background: 'radial-gradient(160px 30px at var(--fx, 50%) 100%, rgba(96,165,250,0.8), transparent 72%)' }}
+      />
+    </div>
+  )
+}
 
 export default function Login() {
   const navigate = useNavigate()
@@ -26,6 +64,8 @@ export default function Login() {
       }))
     }
   }
+
+  
 
   const validateForm = () => {
     const newErrors = {}
@@ -103,26 +143,28 @@ export default function Login() {
   return (
     <section className="py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-md">
+        <div className="mx-auto w-full max-w-md shadow-input rounded-none bg-white p-4 md:rounded-2xl md:p-8">
           <motion.h1
             initial={{ y: 16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 120, damping: 18 }}
-            className="text-3xl font-extrabold text-[color:var(--color-ashoka-blue)]"
+            className="text-xl font-bold text-neutral-800"
           >
-            Login
+            Welcome back
           </motion.h1>
+          <p className="mt-2 max-w-sm text-sm text-neutral-600">Login to your account</p>
 
-          <div className="mt-6 rounded-2xl border p-6 shadow-sm">
+          <div className="mt-6">
             {errors.submit && (
               <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-4">
                 <p className="text-sm text-red-800">{errors.submit}</p>
               </div>
             )}
 
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+            <form className="my-6" onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label htmlFor="email" className="text-sm font-medium text-gray-700">Email</label>
+                <FieldHover className="mt-2">
                 <input 
                   id="email" 
                   name="email" 
@@ -130,17 +172,19 @@ export default function Login() {
                   required 
                   value={formData.email}
                   onChange={handleInputChange}
-                  className={`mt-2 w-full rounded-lg border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)] ${
+                    className={`w-full rounded-md border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)] hover:border-[color:var(--color-ashoka-blue)] ${
                     errors.email ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
+                </FieldHover>
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">{errors.email}</p>
                 )}
               </div>
               
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+              <div className="mb-6">
+                <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
+                <FieldHover className="mt-2">
                 <input 
                   id="password" 
                   name="password" 
@@ -148,10 +192,11 @@ export default function Login() {
                   required 
                   value={formData.password}
                   onChange={handleInputChange}
-                  className={`mt-2 w-full rounded-lg border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)] ${
+                    className={`w-full rounded-md border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)] hover:border-[color:var(--color-ashoka-blue)] ${
                     errors.password ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
+                </FieldHover>
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600">{errors.password}</p>
                 )}
@@ -160,24 +205,26 @@ export default function Login() {
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className={`w-full rounded-lg px-4 py-3 text-white font-semibold shadow transition-all ${
-                  isLoading 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-[color:var(--color-ashoka-blue)] hover:opacity-90'
+                className={`group/btn relative block h-11 w-full rounded-md bg-gradient-to-br from-black to-neutral-700 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] ${
+                  isLoading ? 'opacity-70 cursor-not-allowed' : ''
                 }`}
               >
-                {isLoading ? 'Logging in...' : 'Login'}
+                {isLoading ? 'Logging in…' : 'Login →'}
+                <BottomGradient />
               </button>
             </form>
 
-            <div className="my-5 flex items-center gap-2 text-xs text-gray-500">
-              <div className="h-px flex-1 bg-gray-200" />
-              <span>or</span>
-              <div className="h-px flex-1 bg-gray-200" />
-            </div>
+            <div className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-300 to-transparent" />
 
-            <button type="button" className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 shadow hover:bg-gray-50">
-              Continue with Google
+            <button type="button" className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black">
+              <svg className="h-4 w-4" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                <path fill="#4285F4" d="M533.5 278.4c0-18.4-1.5-36.8-4.7-54.6H272.1v103.4h146.7c-6.3 34.2-26.8 63.2-57.1 82.5v68.3h92.4c54.1-49.8 79.4-123.2 79.4-199.6z"/>
+                <path fill="#34A853" d="M272.1 544.3c77.4 0 142.6-25.6 190.2-69.3l-92.4-68.3c-25.7 17.3-58.7 27.5-97.8 27.5-75 0-138.6-50.6-161.4-118.6H14.7v74.6c48.2 95.7 146.8 154.1 257.4 154.1z"/>
+                <path fill="#FBBC05" d="M110.7 315.6c-12.3-36.9-12.3-76.4 0-113.3V127.7H14.7c-47.2 94.3-47.2 206.3 0 300.6l95.9-72.7z"/>
+                <path fill="#EA4335" d="M272.1 106.8c41.9-.6 82.4 14.9 113.2 43.7l84.2-84.2C428.4 24.1 353.6-1 272.1 0 161.5 0 62.9 58.4 14.7 154.1l96 74.6C133.4 160.7 197 110.1 272.1 110.1z"/>
+              </svg>
+              <span className="text-sm text-neutral-700">Continue with Google</span>
+              <BottomGradient />
             </button>
 
             <p className="mt-6 text-sm text-gray-600">

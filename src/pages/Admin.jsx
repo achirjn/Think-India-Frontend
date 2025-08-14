@@ -122,10 +122,10 @@ async function safeMessage(res) {
 
 function PanelShell({ title, description, children, footer }) {
   return (
-    <div className="rounded-2xl border bg-white shadow-sm">
-      <div className="p-6 border-b">
-        <div className="text-xl font-bold text-[color:var(--color-ashoka-blue)]">{title}</div>
-        {description && <p className="mt-1 text-sm text-gray-600">{description}</p>}
+    <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+      <div className="p-6 bg-[color:var(--color-ashoka-blue)] text-white border-b border-white/20">
+        <div className="text-xl font-bold">{title}</div>
+        {description && <p className="mt-1 text-sm text-white/90">{description}</p>}
       </div>
       <div className="p-6">{children}</div>
       {footer && <div className="p-4 border-t bg-gray-50">{footer}</div>}
@@ -141,19 +141,25 @@ function BlogsPanel() {
   const [form, setForm] = useState({ title: '', excerpt: '', coverImage: null })
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState('')
+  const [deleting, setDeleting] = useState('')
 
   const load = async () => {
     setLoading(true)
     try {
-      // Attempt to load blogs list if backend provides it; otherwise, silently no-op
-      let res = await authFetch('http://localhost:8082/api/admin/blogs')
+      // Fetch all public blogs for management list
+      let res = await fetch('http://localhost:8082/blogPageGetAllBlogs', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+      })
+      if (!res.ok) {
+        // retry with CORS fallback if needed
+        res = await fetch('http://localhost:8082/blogPageGetAllBlogs', { method: 'GET', mode: 'cors' })
+      }
       if (!res.ok) throw new Error(res.statusText)
-      const ct = res.headers.get('content-type') || ''
-      const data = ct.includes('application/json') ? await res.json() : []
-      setItems(Array.isArray(data) ? data : data.items || data.posts || [])
+      const data = await res.json().catch(() => [])
+      setItems(Array.isArray(data) ? data : [])
     } catch (e) {
-      console.warn('Blog list load skipped:', e.message)
-      setItems([])
+      setError(typeof e?.message === 'string' ? e.message : 'Failed to load blogs')
     } finally {
       setLoading(false)
     }
@@ -194,6 +200,39 @@ function BlogsPanel() {
     }
   }
 
+  const deleteBlog = async (rawHeading) => {
+    const clean = String(rawHeading || '').trim()
+    if (!clean) {
+      setError('Cannot delete: Missing blog heading')
+      return
+    }
+    try {
+      setDeleting(clean)
+      setError('')
+      const enc = encodeURIComponent(clean)
+      const tries = [
+        { url: `http://localhost:8082/deleteBlog/${enc}`, method: 'DELETE' },
+        { url: `http://localhost:8082/api/admin/deleteBlog/${enc}`, method: 'DELETE' },
+        { url: `http://localhost:8082/deleteBlog/${enc}`, method: 'GET' },
+        { url: `http://localhost:8082/api/admin/deleteBlog/${enc}`, method: 'GET' },
+      ]
+      let ok = false
+      let lastStatus = ''
+      for (const t of tries) {
+        const res = await authFetch(t.url, { method: t.method })
+        if (res.ok) { ok = true; break }
+        lastStatus = `${res.status} ${res.statusText}`
+        if (res.status === 404) continue
+      }
+      if (!ok) throw new Error(`Delete failed (${lastStatus || 'unknown'}) for heading "${clean}"`)
+      await load()
+    } catch (e) {
+      setError(typeof e?.message === 'string' ? e.message : 'Delete failed')
+    } finally {
+      setDeleting('')
+    }
+  }
+
   return (
     <PanelShell title="Manage Blogs" description="Create and review blog entries.">
       <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
@@ -229,14 +268,46 @@ function BlogsPanel() {
       </form>
       <div className="mt-8">
         {loading && <div className="text-gray-600">Loading…</div>}
+        {error && <div className="text-red-600">{error}</div>}
         {!loading && !error && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((b) => (
-              <div key={b.id || b.title} className="rounded-xl border bg-white p-4 shadow-sm">
-                <div className="font-semibold text-[color:var(--color-ashoka-blue)]">{b.title}</div>
-                {b.excerpt && <p className="mt-1 text-sm text-gray-600 line-clamp-3">{b.excerpt}</p>}
-              </div>
-            ))}
+          <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">ID</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Heading</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Posted</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Preview</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {items.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-4 text-center text-gray-500">No blogs found.</td>
+                  </tr>
+                )}
+                {items.map((b, i) => {
+                  const heading = typeof b.heading === 'string' ? b.heading.trim() : ''
+                  return (
+                  <tr key={b.id ?? heading ?? i}>
+                    <td className="px-4 py-2 text-gray-700">{b.id ?? i + 1}</td>
+                    <td className="px-4 py-2 text-gray-700">{heading || 'Untitled'}</td>
+                    <td className="px-4 py-2 text-gray-700">{b.postTime ? new Date(b.postTime).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : ''}</td>
+                    <td className="px-4 py-2 text-gray-700 max-w-[30rem] truncate" title={b.content}>{b.content}</td>
+                    <td className="px-4 py-2 text-gray-700">
+                      <button
+                        onClick={() => deleteBlog(heading)}
+                        className="rounded-md bg-red-600 px-3 py-1.5 text-white disabled:opacity-60"
+                        disabled={!heading || deleting === heading}
+                      >
+                        {deleting === heading ? 'Deleting…' : 'Delete'}
+                      </button>
+                    </td>
+                  </tr>
+                )})}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -366,18 +437,24 @@ function EventsPanel() {
   const [file, setFile] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState('')
+  const [deleting, setDeleting] = useState('')
 
   const load = async () => {
     setLoading(true)
     try {
-      // Optional list fetch; ignore if your backend doesn't expose a GET
-      let res = await authFetch('http://localhost:8082/api/admin/events')
+      // Fetch events list for table display
+      let res = await fetch('http://localhost:8082/events', { method: 'GET', headers: { 'Accept': 'application/json' } })
+      if (!res.ok) {
+        res = await fetch('http://localhost:8082/events', { method: 'GET', mode: 'cors' })
+      }
       if (!res.ok) throw new Error(res.statusText)
-      const ct = res.headers.get('content-type') || ''
-      const data = ct.includes('application/json') ? await res.json() : []
-      const normalized = (Array.isArray(data) ? data : data.images || [])
-        .map((it) => ({ id: it.id, name: it.name || it.alt, url: it.url || it.src }))
-        .filter((x) => x.url)
+      const data = await res.json().catch(() => [])
+      const list = Array.isArray(data) ? data : []
+      const normalized = list.map((ev, i) => ({
+        id: ev.id ?? ev.eventId ?? i + 1,
+        name: ev.eventName || ev.name || ev.title || '',
+        imageId: ev.imageId ?? ev.imageID ?? ev.image_id ?? ev.imageid ?? '',
+      }))
       setItems(normalized)
     } catch (e) {
       console.warn('Events list load skipped:', e.message)
@@ -420,6 +497,23 @@ function EventsPanel() {
     }
   }
 
+  const deleteEvent = async (rawName) => {
+    const clean = String(rawName || '').trim()
+    if (!clean) { setError('Cannot delete: Missing event name'); return }
+    try {
+      setDeleting(clean)
+      setError('')
+      const url = `http://localhost:8082/api/admin/deleteEvent/${encodeURIComponent(clean)}`
+      const res = await authFetch(url, { method: 'DELETE' })
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      await load()
+    } catch (e) {
+      setError(typeof e?.message === 'string' ? e.message : 'Delete failed')
+    } finally {
+      setDeleting('')
+    }
+  }
+
   return (
     <PanelShell title="Manage Event Images" description="Upload and review event images.">
       <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
@@ -443,13 +537,40 @@ function EventsPanel() {
         {loading && <div className="text-gray-600">Loading…</div>}
         {error && <div className="text-red-600">{error}</div>}
         {!loading && !error && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((img) => (
-              <div key={img.id || img.url} className="rounded-xl border bg-white overflow-hidden shadow-sm">
-                <img src={img.url} alt={img.name || ''} className="h-44 w-full object-cover" />
-                <div className="p-3 text-sm text-gray-700">{img.name}</div>
-              </div>
-            ))}
+          <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">ID</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Name</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Image ID</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {items.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-4 text-center text-gray-500">No events found.</td>
+                  </tr>
+                )}
+                {items.map((ev) => (
+                  <tr key={ev.id}>
+                    <td className="px-4 py-2 text-gray-700">{ev.id}</td>
+                    <td className="px-4 py-2 text-gray-700">{ev.name || 'Untitled Event'}</td>
+                    <td className="px-4 py-2 text-gray-700">{ev.imageId}</td>
+                    <td className="px-4 py-2 text-gray-700">
+                      <button
+                        onClick={() => deleteEvent(ev.name)}
+                        className="rounded-md bg-red-600 px-3 py-1.5 text-white disabled:opacity-60"
+                        disabled={!ev.name || deleting === ev.name}
+                      >
+                        {deleting === ev.name ? 'Deleting…' : 'Delete'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -462,6 +583,7 @@ function RecommendationsPanel() {
   const [resolved, setResolved] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [view, setView] = useState('unresolved')
 
   const formatDateTime = (value) => {
     try {
@@ -535,10 +657,31 @@ function RecommendationsPanel() {
       {loading && <div className="text-gray-600">Loading…</div>}
       {error && <div className="mb-4 text-red-600">{error}</div>}
       {!loading && (
-        <div className="grid gap-8 lg:grid-cols-2">
-          {/* Unresolved Table */}
-          <div>
-            <div className="text-lg font-semibold text-[color:var(--color-ashoka-blue)] mb-3">Unresolved</div>
+        <>
+          <div className="mb-4 flex gap-2">
+            <button
+              onClick={() => setView('unresolved')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold border transition ${
+                view === 'unresolved'
+                  ? 'bg-[color:var(--color-ashoka-blue)] text-white border-[color:var(--color-ashoka-blue)]'
+                  : 'bg-white text-[color:var(--color-ashoka-blue)] border-[color:var(--color-ashoka-blue)] hover:bg-[rgba(0,0,128,0.04)]'
+              }`}
+            >
+              Unresolved ({unresolved.length})
+            </button>
+            <button
+              onClick={() => setView('resolved')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold border transition ${
+                view === 'resolved'
+                  ? 'bg-[color:var(--color-ashoka-blue)] text-white border-[color:var(--color-ashoka-blue)]'
+                  : 'bg-white text-[color:var(--color-ashoka-blue)] border-[color:var(--color-ashoka-blue)] hover:bg-[rgba(0,0,128,0.04)]'
+              }`}
+            >
+              Resolved ({resolved.length})
+            </button>
+          </div>
+
+          {view === 'unresolved' ? (
             <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
               <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
@@ -575,11 +718,7 @@ function RecommendationsPanel() {
                 </tbody>
               </table>
             </div>
-          </div>
-
-          {/* Resolved Table */}
-          <div>
-            <div className="text-lg font-semibold text-[color:var(--color-ashoka-blue)] mb-3">Resolved</div>
+          ) : (
             <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
               <table className="min-w-full divide-y divide-gray-200 text-sm">
                 <thead className="bg-gray-50">
@@ -613,8 +752,8 @@ function RecommendationsPanel() {
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
+          )}
+        </>
       )}
     </PanelShell>
   )

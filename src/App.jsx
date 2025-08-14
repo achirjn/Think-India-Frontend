@@ -10,6 +10,7 @@ import BlogDetail from './pages/BlogDetail.jsx'
 import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
 import SocialIcon from './components/SocialIcon.jsx'
+import SocialMediaCard from './components/SocialMediaCard.jsx'
 import ImageSlider from './components/ImageSlider.jsx'
 import Admin from './pages/Admin.jsx'
 import { getToken, removeToken } from './utils/auth'
@@ -20,6 +21,7 @@ function NavBar() {
     isAdmin: !!getToken() && localStorage.getItem('is_admin') === 'true',
     isLoggedIn: !!getToken()
   })
+  const [navHidden, setNavHidden] = useState(false)
 
   useEffect(() => {
     const checkAuth = () => setAuthState({
@@ -29,6 +31,31 @@ function NavBar() {
     checkAuth()
     window.addEventListener('storage', checkAuth)
     return () => window.removeEventListener('storage', checkAuth)
+  }, [])
+
+  // Hide nav when scrolling down, show when scrolling up
+  useEffect(() => {
+    let lastY = window.scrollY || 0
+    let rafId = 0
+    const update = () => {
+      const y = window.scrollY || 0
+      const delta = y - lastY
+      const scrollingDown = delta > 0
+      const thresholdPassed = y > 64
+      if (Math.abs(delta) > 4) {
+        setNavHidden(scrollingDown && thresholdPassed)
+        lastY = y
+      }
+      rafId = 0
+    }
+    const onScroll = () => {
+      if (!rafId) rafId = requestAnimationFrame(update)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (rafId) cancelAnimationFrame(rafId)
+    }
   }, [])
 
   useEffect(() => {
@@ -49,8 +76,8 @@ function NavBar() {
   return (
     <motion.header
       initial={{ y: -40, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 120, damping: 16 }}
+      animate={{ y: navHidden ? -96 : 0, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 160, damping: 20 }}
       className="sticky top-0 z-50 border-b"
     >
       <div className="bg-gradient-to-r from-[color:var(--color-india-saffron)] via-white to-[color:var(--color-india-green)]">
@@ -58,7 +85,7 @@ function NavBar() {
           <div className="flex h-20 items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
               <div className="flex items-center gap-3">
-                {/* NSS Logo */}
+                {/* think india Logo */}
                 <div className="h-12 w-12 rounded-full bg-blue-800 flex items-center justify-center ring-2 ring-white shadow-lg">
                   <div className="text-white text-sm font-bold text-center leading-tight">
                     <div>राष्ट्रीय</div>
@@ -72,9 +99,9 @@ function NavBar() {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col ml-3 sm:ml-4">
-                <span className="font-black text-2xl md:text-3xl tracking-wide text-[color:var(--color-ashoka-blue)]">Think India</span>
-                <span className="font-semibold text-xl md:text-2xl tracking-wide text-[color:var(--color-ashoka-blue)]">SVNIT</span>
+              <div className="flex flex-col items-center ml-3 sm:ml-4">
+                <span className="font-black text-3xl md:text-4xl tracking-wide text-[color:var(--color-ashoka-blue)]">Think India</span>
+                <span className="font-semibold text-xl md:text-2xl tracking-wide text-[color:var(--color-ashoka-blue)] -mt-1">SVNIT</span>
               </div>
             </Link>
             <nav className="hidden md:flex items-center gap-4 text-sm md:text-base font-semibold">
@@ -225,18 +252,14 @@ function Footer() {
           <div className="text-center md:text-left">
             <div className="text-lg font-semibold">Follow Us</div>
             <div className="my-2 h-0.5 w-16 mx-auto md:mx-0 bg-white/30" />
-            <div className="mt-3 flex justify-center md:justify-start gap-4">
-              <SocialIcon label="LinkedIn">in</SocialIcon>
-              <SocialIcon label="Instagram">◎</SocialIcon>
-              <SocialIcon label="Facebook">f</SocialIcon>
-              <SocialIcon label="Twitter">t</SocialIcon>
-              <SocialIcon label="YouTube">▶</SocialIcon>
-              <SocialIcon label="Email">✉</SocialIcon>
+            <div className="mt-3 flex justify-center md:justify-start">
+              <SocialMediaCard />
             </div>
           </div>
         </div>
-        <div className="mt-10 flex items-center justify-between border-t border-white/10 pt-6 text-xs text-white/70">
-          <div>© {new Date().getFullYear()} Think India. All rights reserved.</div>
+        <div className="mt-10 flex items-center justify-between border-t border-white/10 pt-6 text-white/70">
+          <div className="text-sm">© {new Date().getFullYear()} Think India, SVNIT</div>
+          <div className="text-md">Developed and maintained by  <span className="text-white font-bold">Achir Jain</span></div>
         </div>
       </div>
       <div className="h-1 w-full grid grid-cols-3">
@@ -312,12 +335,7 @@ function ContactSection() {
                 <div>
                   <div className="font-semibold mb-2">Follow us</div>
                   <div className="flex flex-wrap gap-3">
-                    <SocialIcon label="LinkedIn" href="https://linkedin.com">in</SocialIcon>
-                    <SocialIcon label="Instagram" href="https://instagram.com">◎</SocialIcon>
-                    <SocialIcon label="Facebook" href="https://facebook.com">f</SocialIcon>
-                    <SocialIcon label="Twitter" href="https://twitter.com">t</SocialIcon>
-                    <SocialIcon label="YouTube" href="https://youtube.com">▶</SocialIcon>
-                    <SocialIcon label="Email" href="mailto:contact@thinkindia.org">✉</SocialIcon>
+                    <SocialMediaCard />
                   </div>
                 </div>
               </div>
@@ -361,6 +379,7 @@ function ContactSection() {
 function HomePage() {
   const [eventImages, setEventImages] = useState([])
 
+  // ... your existing useEffect for fetching data remains unchanged ...
   useEffect(() => {
     let cancelled = false
     const load = async () => {
@@ -504,19 +523,21 @@ function HomePage() {
         </p>
       </Section>
       <Section id="initiatives" title="Key Initiatives">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {[
             { title: 'Internships', desc: 'Meaningful opportunities in governance, policy, and industry.', barClass: 'bg-[color:var(--color-india-saffron)]' },
-            { title: 'Research', desc: 'Collaborative projects addressing national priorities.', barClass: 'bg-white' },
+            // Note: The white bar for 'Research' will blend in. Changed to gray for visibility.
+            { title: 'Research', desc: 'Collaborative projects addressing national priorities.', barClass: 'bg-gray-400' },
             { title: 'Leadership', desc: 'Workshops and programs that build character and capability.', barClass: 'bg-[color:var(--color-india-green)]' },
           ].map((card) => (
-            <div
-              key={card.title}
-              className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[color:var(--color-ashoka-blue)]/30 hover:shadow-lg"
-            >
-              <div className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${card.barClass}`} />
-              <div className="mt-2 text-lg font-semibold text-[color:var(--color-ashoka-blue)]">{card.title}</div>
-              <p className="mt-2 text-gray-600">{card.desc}</p>
+            <div key={card.title} className="glass-card-container">
+              <div
+                className="group relative overflow-hidden rounded-2xl border-2 border-[color:var(--color-ashoka-blue)] p-8 transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[4px_4px_0_0_var(--color-ashoka-blue)] glass-card"
+              >
+                <div className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${card.barClass}`} />
+                <div className="mt-2 text-lg font-semibold text-[color:var(--color-ashoka-blue)]">{card.title}</div>
+                <p className="mt-2 text-gray-600">{card.desc}</p>
+              </div>
             </div>
           ))}
         </div>

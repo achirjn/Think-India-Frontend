@@ -1,1 +1,56 @@
 /* App specific utility layer if needed */
+
+/* Glass effect styles adapted from the provided snippet */
+.glass-card-container {
+	position: relative;
+	color: inherit;
+}
+
+.glass-card-container::before,
+.glass-card-container::after {
+	content: "";
+	position: absolute;
+	background-color: #fab5704c; /* warm accent like sample */
+	pointer-events: none;
+	z-index: 0;
+}
+
+.glass-card-container::before {
+	border-radius: 50%;
+	width: 6rem; /* 96px */
+	height: 6rem;
+	top: 30%;
+	right: 7%;
+}
+
+.glass-card-container::after {
+	content: "";
+	position: absolute;
+	height: 3rem;
+	top: 8%;
+	right: 5%;
+	border: 1px solid rgba(255,255,255,0.6);
+}
+
+.glass-card {
+	/* background & border */
+	background-color: rgba(255, 255, 255, 0.074);
+	border: 1px solid rgba(255, 255, 255, 0.222);
+	/* blur */
+	-webkit-backdrop-filter: blur(20px);
+	backdrop-filter: blur(20px);
+	/* radius & transition */
+	border-radius: 0.7rem;
+	transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+	z-index: 1; /* above ::before/::after */
+}
+
+.glass-card:hover {
+	box-shadow: 0 0 20px 1px #ffbb763f;
+	border-color: rgba(255, 255, 255, 0.454);
+}
+
+/* Soft input/card shadow used for auth forms */
+.shadow-input {
+	box-shadow: 0 0 0 1px rgba(0,0,0,0.06), 0 1px 1px rgba(0,0,0,0.04), 0 6px 16px rgba(0,0,0,0.06);
+}

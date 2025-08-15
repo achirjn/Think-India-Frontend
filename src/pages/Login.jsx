@@ -110,15 +110,23 @@ export default function Login() {
         const data = await response.json()
         const token = data.token
         const isAdmin = data.isAdmin
-        if (token) {
-          setToken(token)
-          if (isAdmin) {
-            localStorage.setItem('is_admin', 'true')
-            navigate('/admin')
-          } else {
-            localStorage.removeItem('is_admin')
-            navigate('/')
-          }
+        
+        console.log('🔍 Form login response:', data)
+        console.log('🔍 Token received:', token ? 'YES' : 'NO')
+        console.log('🔍 isAdmin value:', isAdmin)
+                  if (token) {
+            setToken(token)
+            if (isAdmin) {
+              console.log('✅ User is admin, redirecting to /admin')
+              localStorage.setItem('is_admin', 'true')
+              // Force reload to ensure navbar updates
+              window.location.href = '/admin'
+            } else {
+              console.log('✅ User is regular user, redirecting to /user/dashboard')
+              localStorage.removeItem('is_admin')
+              // Force reload to ensure navbar updates
+              window.location.href = '/user/dashboard'
+            }
         } else {
           setErrors({ submit: 'No token received from server. Please check backend configuration.' })
         }
@@ -139,7 +147,12 @@ export default function Login() {
       setIsLoading(false)
     }
   }
-
+  const handleGoogleLogin = () => {
+    console.log('🔍 Google OAuth button clicked')
+    console.log('🔍 Redirecting to:', 'http://localhost:8082/oauth2/authorization/google')
+    // This URL should point to your backend endpoint that initiates the Google OAuth flow
+    window.location.href = 'http://localhost:8082/oauth2/authorization/google'; 
+  };
   return (
     <section className="py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -216,7 +229,9 @@ export default function Login() {
 
             <div className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-300 to-transparent" />
 
-            <button type="button" className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black">
+            <button type="button" 
+            onClick={handleGoogleLogin}
+            className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black">
               <svg className="h-4 w-4" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" aria-hidden>
                 <path fill="#4285F4" d="M533.5 278.4c0-18.4-1.5-36.8-4.7-54.6H272.1v103.4h146.7c-6.3 34.2-26.8 63.2-57.1 82.5v68.3h92.4c54.1-49.8 79.4-123.2 79.4-199.6z"/>
                 <path fill="#34A853" d="M272.1 544.3c77.4 0 142.6-25.6 190.2-69.3l-92.4-68.3c-25.7 17.3-58.7 27.5-97.8 27.5-75 0-138.6-50.6-161.4-118.6H14.7v74.6c48.2 95.7 146.8 154.1 257.4 154.1z"/>

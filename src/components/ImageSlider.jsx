@@ -43,7 +43,7 @@ export default function ImageSlider({ images, intervalMs = 2000, className = '' 
 
   return (
     <div className={`relative w-full overflow-hidden rounded-2xl bg-black ${className}`}>
-      <div className="aspect-[16/9] w-full">
+      <div className="aspect-[19/9] w-full">
         <AnimatePresence mode="popLayout">
           <motion.img
             key={index}

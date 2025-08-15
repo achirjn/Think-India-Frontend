@@ -2,7 +2,7 @@ import './App.css'
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import AshokaChakra from './components/AshokaChakra.jsx'
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom'
 import Internships from './pages/Internships.jsx'
 import Teams from './pages/Teams.jsx'
 import Blogs from './pages/Blogs.jsx'
@@ -11,9 +11,12 @@ import Login from './pages/Login.jsx'
 import Signup from './pages/Signup.jsx'
 import SocialIcon from './components/SocialIcon.jsx'
 import SocialMediaCard from './components/SocialMediaCard.jsx'
+import Button from './components/Button.jsx'
+import SubmitCircleButton from './components/SubmitCircleButton.jsx'
 import ImageSlider from './components/ImageSlider.jsx'
 import Admin from './pages/Admin.jsx'
-import { getToken, removeToken } from './utils/auth'
+import UserDashboard from './pages/UserDashboard.jsx'
+import { getToken, removeToken, setToken } from './utils/auth'
 
 function NavBar() {
   const location = useLocation()
@@ -32,6 +35,35 @@ function NavBar() {
     window.addEventListener('storage', checkAuth)
     return () => window.removeEventListener('storage', checkAuth)
   }, [])
+
+  // Listen for authentication changes (for OAuth login)
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = getToken()
+      const isAdmin = localStorage.getItem('is_admin') === 'true'
+      const newAuthState = {
+        isAdmin: !!token && isAdmin,
+        isLoggedIn: !!token
+      }
+      
+      console.log('🔍 NavBar: Checking auth state:', {
+        token: token ? 'FOUND' : 'NOT FOUND',
+        isAdmin: isAdmin,
+        newAuthState: newAuthState
+      })
+      
+      setAuthState(newAuthState)
+    }
+    
+    // Check auth state when location changes (after OAuth redirect)
+    checkAuth()
+    
+    // Also check periodically for a short time after page load
+    const interval = setInterval(checkAuth, 500)
+    setTimeout(() => clearInterval(interval), 3000)
+    
+    return () => clearInterval(interval)
+  }, [location.pathname])
 
   // Hide nav when scrolling down, show when scrolling up
   useEffect(() => {
@@ -82,7 +114,7 @@ function NavBar() {
     >
       <div className="bg-gradient-to-r from-[color:var(--color-india-saffron)] via-white to-[color:var(--color-india-green)]">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-20 items-center justify-between">
+          <div className="flex h-16 md:h-18 items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
               <div className="flex items-center gap-3">
                 {/* think india Logo */}
@@ -100,8 +132,8 @@ function NavBar() {
                 </div>
               </div>
               <div className="flex flex-col items-center ml-3 sm:ml-4">
-                <span className="font-black text-3xl md:text-4xl tracking-wide text-[color:var(--color-ashoka-blue)]">Think India</span>
-                <span className="font-semibold text-xl md:text-2xl tracking-wide text-[color:var(--color-ashoka-blue)] -mt-1">SVNIT</span>
+                <span className="font-black text-2xl md:text-3xl tracking-wide text-[color:var(--color-ashoka-blue)]">Think India</span>
+                <span className="font-semibold text-xl md:text-2xl tracking-wide text-[color:var(--color-ashoka-blue)] -mt-2">SVNIT</span>
               </div>
             </Link>
             <nav className="hidden md:flex items-center gap-4 text-sm md:text-base font-semibold">
@@ -112,53 +144,21 @@ function NavBar() {
               <Link className="hover:text-[color:var(--color-ashoka-blue)]" to="/#events">Events</Link>
               <Link className="hover:text-[color:var(--color-ashoka-blue)]" to="/#contact">Contact Us</Link>
             </nav>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               {authState.isAdmin ? (
                 <>
-                  <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
-                    <Link
-                      to="/admin"
-                      className="hidden sm:inline-flex items-center rounded-md border border-[color:var(--color-ashoka-blue)] bg-white px-4 py-2 text-[color:var(--color-ashoka-blue)] shadow hover:bg-white"
-                    >
-                      Admin
-                    </Link>
-                  </motion.div>
-                  <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
-                    <button
-                      onClick={handleLogout}
-                      className="hidden sm:inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-white shadow hover:bg-red-700"
-                    >
-                      Logout
-                    </button>
-                  </motion.div>
+                  <Button as={Link} to="/admin" variant="secondary" size="sm" className="hidden sm:inline-block">Admin</Button>
+                  <Button onClick={handleLogout} variant="logout" size="sm" className="hidden sm:inline-block">Logout</Button>
                 </>
               ) : authState.isLoggedIn ? (
-                <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
-                  <button
-                    onClick={handleLogout}
-                    className="hidden sm:inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-white shadow hover:bg-red-700"
-                  >
-                    Logout
-                  </button>
-                </motion.div>
+                <>
+                  <Button as={Link} to="/user/dashboard" variant="secondary" size="sm" className="hidden sm:inline-block">Dashboard</Button>
+                  <Button onClick={handleLogout} variant="logout" size="sm" className="hidden sm:inline-block">Logout</Button>
+                </>
               ) : (
                 <>
-                  <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
-                    <Link
-                      to="/login"
-                      className="hidden sm:inline-flex items-center rounded-md border border-[color:var(--color-ashoka-blue)] bg-white px-4 py-2 text-[color:var(--color-ashoka-blue)] shadow hover:bg-white"
-                    >
-                      Login
-                    </Link>
-                  </motion.div>
-                  <motion.div whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
-                    <Link
-                      to="/signup"
-                      className="hidden sm:inline-flex items-center rounded-md bg-[color:var(--color-ashoka-blue)] px-4 py-2 text-white shadow hover:opacity-90"
-                    >
-                      Sign up
-                    </Link>
-                  </motion.div>
+                  <Button as={Link} to="/login" variant="secondary" size="sm" className="hidden sm:inline-block">Login</Button>
+                  <Button as={Link} to="/signup" variant="primary" size="sm" className="hidden sm:inline-block">Sign up</Button>
                 </>
               )}
             </div>
@@ -192,7 +192,9 @@ function Hero() {
             Bringing together the best talents with a "Nation First" attitude for national reconstruction.
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
-            <motion.a whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} href="#join" className="inline-flex items-center rounded-xl bg-[color:var(--color-india-saffron)] px-6 py-3 text-white font-semibold shadow-md">Join Our Mission</motion.a>
+            {(() => { const MotionLink = motion(Link); return (
+              <MotionLink whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} to="/signup" className="inline-flex items-center rounded-xl bg-[color:var(--color-india-saffron)] px-6 py-3 text-white font-semibold shadow-md">Join Our Mission</MotionLink>
+            )})()}
             <motion.a whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} href="#initiatives" className="inline-flex items-center rounded-xl bg-[color:var(--color-india-green)] px-6 py-3 text-white font-semibold shadow-md">Learn More</motion.a>
           </div>
         </motion.div>
@@ -203,7 +205,7 @@ function Hero() {
 
 function Section({ id, title, children }) {
   return (
-    <section id={id} className="py-20">
+    <section id={id} className="py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.h2 initial={{ y: 16, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ type: 'spring', stiffness: 120, damping: 18 }} className="text-3xl font-extrabold text-[color:var(--color-ashoka-blue)]">{title}</motion.h2>
         <motion.div initial={{ y: 18, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: 0.05, type: 'spring', stiffness: 120, damping: 18 }} className="mt-6">
@@ -250,7 +252,7 @@ function Footer() {
             </ul>
           </div>
           <div className="text-center md:text-left">
-            <div className="text-lg font-semibold">Follow Us</div>
+            <div className="text-lg font-semibold">Connect On</div>
             <div className="my-2 h-0.5 w-16 mx-auto md:mx-0 bg-white/30" />
             <div className="mt-3 flex justify-center md:justify-start">
               <SocialMediaCard />
@@ -310,7 +312,7 @@ function ContactSection() {
   }
 
   return (
-    <section id="contact" className="py-20 my-20">
+    <section id="contact" className="py-14 my-14">
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(80%_60%_at_10%_10%,#0F1C3F_0%,#0F1C3F_40%,#111827_100%)]" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -333,7 +335,7 @@ function ContactSection() {
                   <div>Email: <a className="underline hover:text-white" href="mailto:contact@thinkindia.org">contact@thinkindia.org</a></div>
                 </div>
                 <div>
-                  <div className="font-semibold mb-2">Follow us</div>
+                  <div className="font-semibold mb-2">Connect On</div>
                   <div className="flex flex-wrap gap-3">
                     <SocialMediaCard />
                   </div>
@@ -344,16 +346,16 @@ function ContactSection() {
               <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-xl ring-1 ring-[color:var(--color-india-green)]/40">
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-                    <input id="name" name="name" type="text" className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
+                    <label htmlFor="name" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Name</label>
+                    <input id="name" name="name" type="text" className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
-                    <input id="email" name="email" type="email" required className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
+                    <label htmlFor="email" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Email <span className="text-red-500">*</span></label>
+                    <input id="email" name="email" type="email" required className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
                   </div>
                   <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message <span className="text-red-500">*</span></label>
-                    <textarea id="message" name="message" required rows="4" className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
+                    <label htmlFor="message" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Message <span className="text-red-500">*</span></label>
+                    <textarea id="message" name="message" required rows="4" className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
                   </div>
                   {submitError && (
                     <div className="text-sm text-red-600">{submitError}</div>
@@ -362,9 +364,7 @@ function ContactSection() {
                     <div className="text-sm text-green-600">{submitSuccess}</div>
                   )}
                   <div className="flex justify-end">
-                    <button type="submit" disabled={submitting} aria-label="Send" className="h-12 w-12 rounded-full bg-black text-white grid place-content-center shadow hover:opacity-90 disabled:opacity-60">
-                      {submitting ? '…' : '→'}
-                    </button>
+                    <SubmitCircleButton type="submit" disabled={submitting} ariaLabel="Send" />
                   </div>
                 </form>
               </div>
@@ -526,13 +526,12 @@ function HomePage() {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {[
             { title: 'Internships', desc: 'Meaningful opportunities in governance, policy, and industry.', barClass: 'bg-[color:var(--color-india-saffron)]' },
-            // Note: The white bar for 'Research' will blend in. Changed to gray for visibility.
-            { title: 'Research', desc: 'Collaborative projects addressing national priorities.', barClass: 'bg-gray-400' },
+            { title: 'Research', desc: 'Collaborative projects addressing national priorities.', barClass: 'bg-white' },
             { title: 'Leadership', desc: 'Workshops and programs that build character and capability.', barClass: 'bg-[color:var(--color-india-green)]' },
           ].map((card) => (
             <div key={card.title} className="glass-card-container">
               <div
-                className="group relative overflow-hidden rounded-2xl border-2 border-[color:var(--color-ashoka-blue)] p-8 transition-all duration-300 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[4px_4px_0_0_var(--color-ashoka-blue)] glass-card"
+                className="relative overflow-hidden rounded-2xl p-8 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
               >
                 <div className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${card.barClass}`} />
                 <div className="mt-2 text-lg font-semibold text-[color:var(--color-ashoka-blue)]">{card.title}</div>
@@ -550,7 +549,62 @@ function HomePage() {
   )
 }
 
+function OAuthCallbackHandler() {
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    console.log('🔍 OAuthCallbackHandler: Checking for OAuth callback...')
+    console.log('🔍 Current URL:', window.location.href)
+    console.log('🔍 Search params:', searchParams.toString())
+    
+    const token = searchParams.get('token')
+    const isAdmin = searchParams.get('isAdmin')
+    
+    console.log('🔍 Token found:', token ? 'YES' : 'NO')
+    console.log('🔍 Token value:', token ? `${token.substring(0, 20)}...` : 'null')
+    console.log('🔍 isAdmin found:', isAdmin ? 'YES' : 'NO')
+    console.log('🔍 isAdmin value:', isAdmin)
+
+    if (token) {
+      console.log('✅ Token detected! Processing OAuth callback...')
+      
+      // 1. Save the token
+      setToken(token)
+      console.log('✅ Token saved to localStorage')
+
+      // 2. Handle admin status and redirect
+      if (isAdmin === 'true') {
+        console.log('✅ User is admin, redirecting to /admin')
+        localStorage.setItem('is_admin', 'true')
+        // Force reload to ensure navbar updates
+        window.location.href = '/admin'
+      } else {
+        console.log('✅ User is regular user, redirecting to /user/dashboard')
+        localStorage.removeItem('is_admin')
+        // Force reload to ensure navbar updates
+        window.location.href = '/user/dashboard'
+      }
+    } else {
+      console.log('❌ No token found in URL parameters')
+      console.log('🔍 All search params:', Object.fromEntries(searchParams.entries()))
+    }
+  }, [searchParams, navigate])
+
+  return null
+}
+
 export default function App() {
+  // Debug: Check localStorage on app start
+  useEffect(() => {
+    console.log('🔍 App: Component mounted')
+    console.log('🔍 localStorage contents:', {
+      token: localStorage.getItem('token') ? 'FOUND' : 'NOT FOUND',
+      is_admin: localStorage.getItem('is_admin'),
+      allKeys: Object.keys(localStorage)
+    })
+  }, [])
+
   // Smooth-scroll to in-page anchors when the hash changes, even across routes
   function ScrollToHash() {
     const location = useLocation()
@@ -583,6 +637,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToHash />
+      <OAuthCallbackHandler />
       <div className="min-h-screen flex flex-col">
         <NavBar />
         <main className="flex-1">
@@ -595,6 +650,7 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/user/dashboard" element={<UserDashboard />} />
           </Routes>
         </main>
         <Footer />

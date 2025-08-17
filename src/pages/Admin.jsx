@@ -393,19 +393,22 @@ function BlogsPanel() {
 }
 
 function TeamsPanel() {
-  const { get, post } = useJsonFetch()
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [form, setForm] = useState({ name: '', type: 'Core', photo: null })
+  const [success, setSuccess] = useState('')
+  const [form, setForm] = useState({ name: '', image: null, position: '', committee: '' })
   const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState('')
 
   const load = async () => {
     setLoading(true)
     setError('')
     try {
-      const data = await get('http://localhost:8082/api/admin/teams')
-      setMembers(Array.isArray(data) ? data : data.members || [])
+      const res = await fetch('http://localhost:8082/getTeamMember')
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      const data = await res.json()
+      setMembers(Array.isArray(data) ? data : [])
     } catch (e) {
       setError(e.message)
     } finally {
@@ -417,22 +420,29 @@ function TeamsPanel() {
     load()
   }, [])
 
-
-
   const onSubmit = async (e) => {
     e.preventDefault()
     setSubmitting(true)
     setError('')
+    setSuccess('')
     try {
       const formData = new FormData()
-      formData.append('name', form.name)
-      formData.append('type', form.type)
-      if (form.photo) {
-        formData.append('photo', form.photo)
+      formData.append('Name', form.name)
+      formData.append('Position', form.position)
+      formData.append('Committee', form.committee)
+      if (form.image) {
+        formData.append('Member_image', form.image)
       }
       
-      await post('http://localhost:8082/api/admin/teams', formData)
-      setForm({ name: '', type: 'Core', photo: null })
+      const res = await authFetch('http://localhost:8082/api/admin/addTeamMember', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      
+      setSuccess('Team member added successfully!')
+      setForm({ name: '', image: null, position: '', committee: '' })
       await load()
     } catch (e) {
       setError(e.message)
@@ -441,64 +451,150 @@ function TeamsPanel() {
     }
   }
 
+  const deleteMember = async (id) => {
+    if (!id) return
+    setDeleting(id)
+    setError('')
+    try {
+      const res = await authFetch(`http://localhost:8082/api/admin/deleteTeamMember/${id}`, {
+        method: 'DELETE'
+      })
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      await load()
+    } catch (e) {
+      setError(e.message)
+    } finally {
+      setDeleting('')
+    }
+  }
+
   return (
-    <PanelShell title="Manage Team Members" description="Add individual team members with their details.">
+    <PanelShell title="Manage Team Members" description="Add team members with name, image, position, and committee details.">
       <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-gray-700">Member Name</label>
-          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
+          <input 
+            value={form.name} 
+            onChange={(e) => setForm({ ...form, name: e.target.value })} 
+            required 
+            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
+            placeholder="Enter member name"
+          />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Member Type</label>
-          <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color-var(--color-ashoka-blue)]">
-            <option>Core</option>
-            <option>Cell Head</option>
-          </select>
+          <label className="block text-sm font-medium text-gray-700">Position</label>
+          <input 
+            value={form.position} 
+            onChange={(e) => setForm({ ...form, position: e.target.value })} 
+            required 
+            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
+            placeholder="e.g., President, Vice President"
+          />
         </div>
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-700">Member Photo</label>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Committee</label>
+          <input 
+            value={form.committee} 
+            onChange={(e) => setForm({ ...form, committee: e.target.value })} 
+            required 
+            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
+            placeholder="e.g., Core Team, Cell Heads"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Member Image</label>
           <input 
             type="file" 
             accept="image/*"
-            onChange={(e) => setForm({ ...form, photo: e.target.files[0] || null })} 
+            onChange={(e) => setForm({ ...form, image: e.target.files[0] || null })} 
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
           />
-          {form.photo && (
+          {form.image && (
             <p className="mt-2 text-sm text-gray-600">
-              Selected: {form.photo.name}
+              Selected: {form.image.name}
             </p>
           )}
         </div>
-        <div className="sm:col-span-2 flex justify-end">
-          <button disabled={submitting} className="rounded-lg bg-[color:var(--color-ashoka-blue)] px-5 py-3 text-white font-semibold shadow hover:opacity-90 disabled:opacity-60">
-            {submitting ? 'Saving…' : 'Add Team Member'}
+        <div className="sm:col-span-2 flex items-center justify-between">
+          <div>
+            {error && <div className="text-sm text-red-600">{error}</div>}
+            {success && <div className="text-sm text-green-600">{success}</div>}
+          </div>
+          <button 
+            disabled={submitting} 
+            className="rounded-lg bg-[color:var(--color-ashoka-blue)] px-5 py-3 text-white font-semibold shadow hover:opacity-90 disabled:opacity-60"
+          >
+            {submitting ? 'Adding…' : 'Add Team Member'}
           </button>
         </div>
       </form>
+      
       <div className="mt-8">
-        {loading && <div className="text-gray-600">Loading…</div>}
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">All Team Members</h3>
+        {loading && <div className="text-gray-600">Loading members…</div>}
         {error && <div className="text-red-600">{error}</div>}
         {!loading && !error && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {members.map((member) => (
-              <div key={member.id || member.name} className="rounded-xl border bg-white p-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  {member.photoUrl && (
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
-                      <img 
-                        src={member.photoUrl} 
-                        alt={member.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <div className="font-semibold text-[color:var(--color-ashoka-blue)]">{member.name}</div>
-                    <div className="text-sm text-gray-600 capitalize">{member.type}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">ID</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Image</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Name</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Position</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Committee</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {members.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                      No team members found. Add your first member above.
+                    </td>
+                  </tr>
+                )}
+                {members.map((member) => (
+                  <tr key={member.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-gray-700 font-medium">{member.id}</td>
+                    <td className="px-4 py-3">
+                      {member.imageId ? (
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                          <img 
+                            src={`http://localhost:8082/image/${member.imageId}`}
+                            alt={member.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = 'none'
+                              e.target.nextSibling.style.display = 'flex'
+                            }}
+                          />
+                          <div className="w-full h-full bg-[color:var(--color-ashoka-blue)] text-white text-xs font-bold flex items-center justify-center" style={{display: 'none'}}>
+                            {member.name?.charAt(0)?.toUpperCase() || '?'}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-[color:var(--color-ashoka-blue)] text-white text-xs font-bold flex items-center justify-center">
+                          {member.name?.charAt(0)?.toUpperCase() || '?'}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-gray-900 font-medium">{member.name}</td>
+                    <td className="px-4 py-3 text-gray-700">{member.position}</td>
+                    <td className="px-4 py-3 text-gray-700">{member.committee}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => deleteMember(member.id)}
+                        disabled={deleting === member.id}
+                        className="rounded-md bg-red-600 hover:bg-red-700 px-3 py-1.5 text-white text-sm font-medium disabled:opacity-60 transition-colors"
+                      >
+                        {deleting === member.id ? 'Deleting…' : 'Delete'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

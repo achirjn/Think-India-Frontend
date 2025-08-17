@@ -12,7 +12,141 @@
 html, body, #root {
   height: 100%;
 }
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 body {
-  @apply antialiased text-gray-900 bg-white;
+  @apply antialiased bg-white;
+  color: #111827;
   font-family: Poppins, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  line-height: 1.6;
+}
+
+/* Responsive utilities */
+.container-responsive {
+  @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.text-responsive-sm {
+  @apply text-lg sm:text-base md:text-sm;
+}
+
+.text-responsive-base {
+  @apply text-xl sm:text-lg md:text-base;
+}
+
+.text-responsive-lg {
+  @apply text-3xl sm:text-2xl md:text-xl lg:text-lg;
+}
+
+.text-responsive-xl {
+  @apply text-5xl sm:text-4xl md:text-3xl lg:text-2xl xl:text-xl;
+}
+
+.text-responsive-2xl {
+  @apply text-6xl sm:text-5xl md:text-4xl lg:text-3xl xl:text-2xl;
+}
+
+/* Inverse responsive text - larger on smaller screens */
+.text-inverse-sm {
+  @apply text-base sm:text-sm;
+}
+
+.text-inverse-base {
+  @apply text-lg sm:text-base;
+}
+
+.text-inverse-lg {
+  @apply text-2xl sm:text-xl md:text-lg;
+}
+
+.text-inverse-xl {
+  @apply text-4xl sm:text-3xl md:text-2xl lg:text-xl;
+}
+
+.text-inverse-2xl {
+  @apply text-5xl sm:text-4xl md:text-3xl lg:text-2xl;
+}
+
+/* Grid responsive utilities */
+.grid-responsive-1 {
+  @apply grid grid-cols-1;
+}
+
+.grid-responsive-2 {
+  @apply grid grid-cols-1 sm:grid-cols-2;
+}
+
+.grid-responsive-3 {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+}
+
+.grid-responsive-4 {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+}
+
+/* Flex responsive utilities */
+.flex-responsive {
+  @apply flex flex-col sm:flex-row;
+}
+
+.flex-responsive-reverse {
+  @apply flex flex-col-reverse sm:flex-row;
+}
+
+/* Spacing responsive utilities */
+.gap-responsive {
+  @apply gap-4 sm:gap-6 lg:gap-8;
+}
+
+.p-responsive {
+  @apply p-4 sm:p-6 lg:p-8;
+}
+
+.px-responsive {
+  @apply px-4 sm:px-6 lg:px-8;
+}
+
+.py-responsive {
+  @apply py-4 sm:py-6 lg:py-8;
+}
+
+/* Button responsive utilities */
+.btn-responsive {
+  @apply px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base;
+}
+
+/* Table responsive wrapper */
+.table-responsive {
+  @apply overflow-x-auto -mx-4 sm:mx-0;
+}
+
+.table-responsive table {
+  @apply min-w-full;
+}
+
+/* Card responsive utilities */
+.card-responsive {
+  @apply rounded-lg sm:rounded-xl p-4 sm:p-6;
+}
+
+/* Image responsive utilities */
+.img-responsive {
+  @apply w-full h-auto;
+}
+
+/* Hide/show utilities for different screen sizes */
+.mobile-only {
+  @apply block sm:hidden;
+}
+
+.tablet-up {
+  @apply hidden sm:block;
+}
+
+.desktop-only {
+  @apply hidden lg:block;
 }

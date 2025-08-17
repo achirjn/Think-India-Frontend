@@ -18,6 +18,7 @@ import Admin from './pages/Admin.jsx'
 import UserDashboard from './pages/UserDashboard.jsx'
 import LoadingPage from './components/LoadingPage.jsx'
 import { getToken, removeToken, setToken, isAuthenticated } from './utils/auth'
+import useWindowSize from './hooks/useWindowSize.jsx'
 
 function NavBar() {
   const location = useLocation()
@@ -26,6 +27,21 @@ function NavBar() {
     isLoggedIn: false
   })
   const [navHidden, setNavHidden] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [mobileMenuOpen])
 
   useEffect(() => {
     const checkAuth = () => {
@@ -126,7 +142,7 @@ function NavBar() {
       className="sticky top-0 z-50 border-b"
     >
       <div className="bg-gradient-to-r from-[color:var(--color-india-saffron)] via-white to-[color:var(--color-india-green)]">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="container-responsive">
           <div className="flex h-16 md:h-18 items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
               <motion.div 
@@ -163,19 +179,19 @@ function NavBar() {
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
-                className="flex flex-col items-center ml-3 sm:ml-4"
+                className="flex flex-col items-center ml-2 sm:ml-3 md:ml-4"
               >
                 <motion.span 
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="font-black text-2xl md:text-3xl tracking-wide text-[color:var(--color-ashoka-blue)]"
+                  className="font-black text-lg sm:text-xl md:text-2xl lg:text-3xl tracking-wide text-[color:var(--color-ashoka-blue)]"
                 >
                   Think India
                 </motion.span>
                 <motion.span 
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="font-semibold text-xl md:text-2xl tracking-wide text-[color:var(--color-ashoka-blue)] -mt-2"
+                  className="text-sm sm:text-base md:text-lg tracking-wide text-[color:var(--color-ashoka-blue)] -mt-1"
                 >
                   SVNIT
                 </motion.span>
@@ -201,16 +217,26 @@ function NavBar() {
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
                 >
-                  <Link 
-                    className="relative hover:text-[color:var(--color-ashoka-blue)] transition-colors duration-200 group" 
-                    to={item.to}
-                  >
-                    {item.text}
-                    <motion.span
-                      className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[color:var(--color-ashoka-blue)] group-hover:w-full transition-all duration-300"
-                      whileHover={{ width: "100%" }}
-                    />
-                  </Link>
+                  {item.to.startsWith('/#') ? (
+                    <a 
+                      href={item.to.substring(1)} 
+                      className="relative hover:text-[color:var(--color-ashoka-blue)] transition-colors duration-200 group"
+                    >
+                      {item.text}
+                      <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[color:var(--color-ashoka-blue)] transition-all duration-300 group-hover:w-full" />
+                    </a>
+                  ) : (
+                    <Link 
+                      className="relative hover:text-[color:var(--color-ashoka-blue)] transition-colors duration-200 group" 
+                      to={item.to}
+                    >
+                      {item.text}
+                      <motion.span
+                        className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[color:var(--color-ashoka-blue)] group-hover:w-full transition-all duration-300"
+                        whileHover={{ width: "100%" }}
+                      />
+                    </Link>
+                  )}
                 </motion.div>
               ))}
             </motion.nav>
@@ -220,6 +246,7 @@ function NavBar() {
               transition={{ delay: 0.6, duration: 0.6 }}
               className="flex items-center gap-2 md:gap-3"
             >
+              {/* Desktop Auth Buttons - Hidden on mobile */}
               {authState.isAdmin ? (
                 <>
                   <motion.div
@@ -227,14 +254,14 @@ function NavBar() {
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.8, type: "spring", stiffness: 200, damping: 15 }}
                   >
-                    <Button as={Link} to="/admin" variant="secondary" size="sm" className="hidden sm:inline-block">Admin</Button>
+                    <Button as={Link} to="/admin" variant="secondary" size="sm" className="hidden md:inline-block">Admin</Button>
                   </motion.div>
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.9, type: "spring", stiffness: 200, damping: 15 }}
                   >
-                    <Button onClick={handleLogout} variant="logout" size="sm" className="hidden sm:inline-block">Logout</Button>
+                    <Button onClick={handleLogout} variant="logout" size="sm" className="hidden md:inline-block">Logout</Button>
                   </motion.div>
                 </>
               ) : authState.isLoggedIn ? (
@@ -244,14 +271,14 @@ function NavBar() {
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.8, type: "spring", stiffness: 200, damping: 15 }}
                   >
-                    <Button as={Link} to="/user/dashboard" variant="secondary" size="sm" className="hidden sm:inline-block">Dashboard</Button>
+                    <Button as={Link} to="/user/dashboard" variant="secondary" size="sm" className="hidden md:inline-block">Dashboard</Button>
                   </motion.div>
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.9, type: "spring", stiffness: 200, damping: 15 }}
                   >
-                    <Button onClick={handleLogout} variant="logout" size="sm" className="hidden sm:inline-block">Logout</Button>
+                    <Button onClick={handleLogout} variant="logout" size="sm" className="hidden md:inline-block">Logout</Button>
                   </motion.div>
                 </>
               ) : (
@@ -260,18 +287,39 @@ function NavBar() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.8, type: "spring", stiffness: 200, damping: 15 }}
+                    className="hidden md:block"
                   >
-                    <Button as={Link} to="/login" variant="secondary" size="sm" className="hidden sm:inline-block">Login</Button>
+                    <Button as={Link} to="/login" variant="secondary" size="sm">Login</Button>
                   </motion.div>
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.9, type: "spring", stiffness: 200, damping: 15 }}
+                    className="hidden md:block"
                   >
-                    <Button as={Link} to="/signup" variant="primary" size="sm" className="hidden sm:inline-block">Sign up</Button>
+                    <Button as={Link} to="/signup" variant="primary" size="sm">Sign up</Button>
                   </motion.div>
                 </>
               )}
+              
+              {/* Mobile Menu Button */}
+              <motion.button
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.7, type: "spring", stiffness: 200, damping: 15 }}
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-colors"
+                aria-label="Toggle mobile menu"
+              >
+                <motion.div
+                  animate={{ rotate: mobileMenuOpen ? 45 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <svg className="w-6 h-6 text-[color:var(--color-ashoka-blue)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+                  </svg>
+                </motion.div>
+              </motion.button>
             </motion.div>
           </div>
         </div>
@@ -281,11 +329,148 @@ function NavBar() {
         <div className="bg-white" />
         <div className="bg-[color:var(--color-india-green)]" />
       </div>
+      
+      {/* Mobile Menu */}
+      <motion.div
+        initial={{ height: 0, opacity: 0 }}
+        animate={{ 
+          height: mobileMenuOpen ? 'auto' : 0,
+          opacity: mobileMenuOpen ? 1 : 0
+        }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        className="md:hidden overflow-hidden bg-white border-t border-gray-200 relative z-50"
+        style={{ maxHeight: mobileMenuOpen ? 'calc(100vh - 80px)' : '0' }}
+      >
+        <div className="container-responsive py-4 max-h-full overflow-y-auto">
+          <nav className="flex flex-col space-y-4">
+            {[
+              { to: "/#about", text: "About" },
+              { to: "/#events", text: "Events" },
+              { to: "/internships", text: "Internships" },
+              { to: "/blogs", text: "Blogs" },
+              { to: "/teams", text: "Team" },
+              { to: "/#contact", text: "Contact" }
+            ].map((item, index) => (
+              <motion.div
+                key={item.text}
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ 
+                  x: mobileMenuOpen ? 0 : -20,
+                  opacity: mobileMenuOpen ? 1 : 0
+                }}
+                transition={{ delay: index * 0.1, duration: 0.3 }}
+              >
+                {item.to.startsWith('/#') ? (
+                  <a 
+                    href={item.to.substring(1)}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-2 px-4 text-inverse-lg font-semibold text-[color:var(--color-ashoka-blue)] hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    {item.text}
+                  </a>
+                ) : (
+                  <Link 
+                    to={item.to}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-2 px-4 text-inverse-lg font-semibold text-[color:var(--color-ashoka-blue)] hover:bg-gray-50 rounded-lg transition-colors"
+                  >
+                    {item.text}
+                  </Link>
+                )}
+              </motion.div>
+            ))}
+            
+            {/* Mobile Auth Buttons */}
+            <div className="pt-4 border-t border-gray-200 space-y-3 pb-2">
+              {authState.isAdmin ? (
+                <>
+                  <Button as={Link} to="/admin" variant="secondary" size="sm" className="w-full" onClick={() => setMobileMenuOpen(false)}>
+                    Admin Dashboard
+                  </Button>
+                  <Button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} variant="logout" size="sm" className="w-full">
+                    Logout
+                  </Button>
+                </>
+              ) : authState.isLoggedIn ? (
+                <>
+                  <Button as={Link} to="/user/dashboard" variant="secondary" size="sm" className="w-full" onClick={() => setMobileMenuOpen(false)}>
+                    Dashboard
+                  </Button>
+                  <Button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} variant="logout" size="sm" className="w-full">
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button as={Link} to="/login" variant="secondary" size="sm" className="w-full" onClick={() => setMobileMenuOpen(false)}>
+                    Login
+                  </Button>
+                  <Button as={Link} to="/signup" variant="primary" size="sm" className="w-full" onClick={() => setMobileMenuOpen(false)}>
+                    Sign Up
+                  </Button>
+                </>
+              )}
+            </div>
+          </nav>
+        </div>
+      </motion.div>
     </motion.header>
   )
 }
 
 function Hero() {
+  const { width, height } = useWindowSize();
+  const isPortrait = height > width;
+  const isTooNarrow = width < 500;
+
+  const renderChakras = () => {
+    if (isTooNarrow) {
+      return null; // Hide on very narrow screens
+    }
+
+    if (isPortrait) {
+      // Show one centered chakra in portrait mode
+      return (
+        <motion.div
+          key="portrait-chakra"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.5, delay: 0.3, ease: 'easeOut' }}
+          className="absolute inset-0 flex items-center justify-center -z-10 overflow-hidden"
+        >
+          <AshokaChakra size={Math.min(width, height) * 0.8} opacity={0.08} />
+        </motion.div>
+      );
+    }
+
+    // Default: show two chakras on wider screens
+    return (
+      <>
+        <motion.div
+          key="desktop-chakra-1"
+          initial={{ x: 100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 1.5, delay: 0.3 }}
+        >
+          <AshokaChakra className="pointer-events-none absolute -right-24 top-10 -z-10" size={700} opacity={0.12} />
+        </motion.div>
+        <motion.div
+          key="desktop-chakra-2"
+          initial={{ x: -200, opacity: 0 }}
+          animate={{ x: 100, opacity: 1 }}
+          transition={{ 
+            duration: 2.5, 
+            delay: 0.5,
+            ease: "easeInOut",
+            opacity: { duration: 0.5, delay: 0.5 }
+          }}
+        >
+          <AshokaChakra className="pointer-events-none absolute -left-40 bottom-10 -z-10" size={420} opacity={0.08} rotate={30} />
+        </motion.div>
+      </>
+    );
+  };
+
   return (
     <section className="relative overflow-hidden min-h-[calc(100vh-4rem)] flex items-center">
       <motion.div 
@@ -296,26 +481,10 @@ function Hero() {
       >
         <div className="h-full bg-gradient-to-b from-[color:var(--color-india-saffron)] via-white to-[color:var(--color-india-green)]" />
       </motion.div>
-      <motion.div
-        initial={{ x: 100, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 1.5, delay: 0.3 }}
-      >
-        <AshokaChakra className="pointer-events-none absolute -right-24 top-10 -z-10" size={700} opacity={0.12} />
-      </motion.div>
-      <motion.div
-        initial={{ x: -200, opacity: 0 }}
-        animate={{ x: 100, opacity: 1 }}
-        transition={{ 
-          duration: 2.5, 
-          delay: 0.5,
-          ease: "easeInOut",
-          opacity: { duration: 0.5, delay: 0.5 }
-        }}
-      >
-        <AshokaChakra className="pointer-events-none absolute -left-40 bottom-10 -z-10" size={420} opacity={0.08} rotate={30} />
-      </motion.div>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24">
+      
+      {renderChakras()}
+
+      <div className="container-responsive py-12 sm:py-16 md:py-20 lg:py-24">
         <motion.div 
           initial={{ y: 50, opacity: 0 }} 
           animate={{ y: 0, opacity: 1 }} 
@@ -326,7 +495,7 @@ function Hero() {
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.4 }}
-            className="text-5xl sm:text-6xl font-extrabold leading-tight"
+            className="text-responsive-2xl font-extrabold leading-tight"
           >
             <motion.span 
               initial={{ x: -20, opacity: 0 }}
@@ -349,7 +518,7 @@ function Hero() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1.0, duration: 0.6 }}
-            className="mt-6 text-xl"
+            className="mt-6 text-responsive-lg"
           >
             A forum for students from premier institutions across India.
           </motion.p>
@@ -357,7 +526,7 @@ function Hero() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1.2, duration: 0.6 }}
-            className="mt-2 text-lg"
+            className="mt-2 text-responsive-base"
           >
             Bringing together the best talents with a "Nation First" attitude for national reconstruction.
           </motion.p>
@@ -365,7 +534,7 @@ function Hero() {
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1.4, duration: 0.8 }}
-            className="mt-10 flex flex-wrap gap-4"
+            className="mt-6 sm:mt-8 md:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4"
           >
             {(() => { const MotionLink = motion(Link); return (
               <MotionLink 
@@ -373,7 +542,7 @@ function Hero() {
                 whileTap={{ scale: 0.98 }} 
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 to="/signup" 
-                className="inline-flex items-center rounded-xl bg-[color:var(--color-india-saffron)] px-6 py-3 text-white font-semibold shadow-md"
+                className="btn-responsive inline-flex items-center justify-center rounded-xl bg-[color:var(--color-india-saffron)] text-white font-semibold shadow-md"
               >
                 Join Our Mission
               </MotionLink>
@@ -383,7 +552,7 @@ function Hero() {
               whileTap={{ scale: 0.98 }} 
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               href="#initiatives" 
-              className="inline-flex items-center rounded-xl bg-[color:var(--color-india-green)] px-6 py-3 text-white font-semibold shadow-md"
+              className="btn-responsive inline-flex items-center justify-center rounded-xl bg-[color:var(--color-india-green)] text-white font-semibold shadow-md"
             >
               Learn More
             </motion.a>
@@ -410,7 +579,7 @@ function Section({ id, title, children }) {
           whileInView={{ y: 0, opacity: 1 }} 
           viewport={{ once: true }} 
           transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.1 }} 
-          className="text-3xl font-extrabold text-[color:var(--color-ashoka-blue)]"
+          className="text-inverse-2xl font-extrabold text-[color:var(--color-ashoka-blue)]"
         >
           {title}
         </motion.h2>
@@ -436,7 +605,7 @@ function Footer() {
         <div className="bg-white" />
         <div className="bg-[color:var(--color-india-green)]" />
       </div>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+      <div className="container-responsive py-responsive">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="text-center md:text-left">
             <div className="mx-auto md:mx-0 h-12 w-12 rounded bg-white flex items-center justify-center text-[10px] font-bold text-[color:var(--color-footer-blue)]">TI</div>
@@ -471,9 +640,18 @@ function Footer() {
             </div>
           </div>
         </div>
-        <div className="mt-10 flex items-center justify-between border-t border-white/10 pt-6 text-white/70">
-          <div className="text-sm">© {new Date().getFullYear()} Think India, SVNIT</div>
-          <div className="text-md">Developed and maintained by  <span className="text-white font-bold">Achir Jain</span></div>
+        <div className="mt-10 border-t border-white/10 pt-6 text-white/70">
+          {/* Desktop Layout */}
+          <div className="hidden md:flex items-center justify-between">
+            <div className="text-sm"> 2023 Think India, SVNIT</div>
+            <div className="text-md">Developed and maintained by  <span className="text-white font-bold">Achir Jain</span></div>
+          </div>
+          
+          {/* Mobile Layout - Same content, different pattern */}
+          <div className="md:hidden text-center space-y-2">
+            <div className="text-sm"> 2023 Think India, SVNIT</div>
+            <div className="text-md">Developed and maintained by  <span className="text-white font-bold">Achir Jain</span></div>
+          </div>
         </div>
       </div>
       <div className="h-1 w-full grid grid-cols-3">
@@ -846,7 +1024,7 @@ function HomePage() {
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.4 + index * 0.1 }}
-                  className="mt-2 text-lg font-semibold text-[color:var(--color-ashoka-blue)]"
+                  className="mt-2 text-responsive-sm text-[color:var(--color-ashoka-blue)]"
                 >
                   {card.title}
                 </motion.div>
@@ -928,33 +1106,62 @@ export default function App() {
     })
   }, [])
 
-  // Smooth-scroll to in-page anchors when the hash changes, even across routes
+  // Smooth-scroll to in-page anchors when the hash changes
   function ScrollToHash() {
-    const location = useLocation()
-    const initializedRef = useRef(false)
-    useEffect(() => {
-      // On initial load, ignore any existing hash so we land on the Hero
-      if (!initializedRef.current) {
-        initializedRef.current = true
-        if (location.hash) {
-          // remove hash without adding a new history entry
-          window.history.replaceState({}, '', location.pathname + location.search)
-        }
-        window.scrollTo({ top: 0, behavior: 'auto' })
-        return
-      }
+    const location = useLocation();
+    const lastHash = useRef('');
 
+    useEffect(() => {
       if (location.hash) {
-        const id = location.hash.replace('#', '')
-        setTimeout(() => {
-          const el = document.getElementById(id)
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }, 0)
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' })
+        lastHash.current = location.hash.slice(1);
+      } else if (lastHash.current) {
+        // Optional: Smooth scroll to top if URL hash is removed
+        // window.scrollTo({ top: 0, behavior: 'smooth' });
+        lastHash.current = '';
       }
-    }, [location.pathname, location.hash])
-    return null
+    }, [location.hash]);
+
+    useEffect(() => {
+      const handleHashChange = () => {
+        const hash = window.location.hash.slice(1);
+        if (hash) {
+          const element = document.getElementById(hash);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      };
+
+      // Add a click listener to the document to handle clicks on <a> tags
+      const handleClick = (e) => {
+        const target = e.target.closest('a');
+
+        // Check if the link is a simple hash link for the current page
+        if (target && target.hash && target.getAttribute('href').startsWith('#')) {
+          e.preventDefault();
+          const hash = target.hash.slice(1);
+          const element = document.getElementById(hash);
+
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Update URL hash without causing a page reload
+            if (window.history.pushState) {
+              window.history.pushState(null, '', `#${hash}`);
+            }
+          }
+        }
+      };
+
+      document.addEventListener('click', handleClick);
+      window.addEventListener('hashchange', handleHashChange, false);
+
+      return () => {
+        document.removeEventListener('click', handleClick);
+        window.removeEventListener('hashchange', handleHashChange, false);
+      };
+    }, []);
+
+    return null;
   }
 
   const [isLoading, setIsLoading] = useState(true)

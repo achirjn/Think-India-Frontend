@@ -25,11 +25,33 @@ export const removeToken = () => {
 };
 
 /**
- * Checks if a user is authenticated by verifying the presence of a token.
+ * Checks if a user is authenticated by verifying the presence and validity of a token.
  * @returns {boolean}
  */
 export const isAuthenticated = () => {
-  return !!getToken();
+  const token = getToken();
+  if (!token) return false;
+  
+  try {
+    // Parse JWT token to check expiration
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Math.floor(Date.now() / 1000);
+    
+    // Check if token is expired
+    if (payload.exp && payload.exp < currentTime) {
+      console.log('🔍 Token expired, removing from localStorage');
+      removeToken();
+      localStorage.removeItem('is_admin');
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.log('🔍 Invalid token format, removing from localStorage');
+    removeToken();
+    localStorage.removeItem('is_admin');
+    return false;
+  }
 };
 
 /**

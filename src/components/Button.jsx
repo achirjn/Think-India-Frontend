@@ -1,6 +1,7 @@
 // components/Button.jsx
 import React from 'react';
 import styled from 'styled-components';
+import { motion } from 'framer-motion';
 
 const Button = ({
   variant = 'secondary',
@@ -12,10 +13,25 @@ const Button = ({
   as: asProp,
   ...props
 }) => {
-  const Comp = asProp || 'button';
+  const Comp = motion(asProp || 'button');
   return (
     <StyledWrapper>
       <Comp
+        whileHover={!disabled ? { 
+          scale: 1.02, 
+          y: -2,
+          boxShadow: "rgba(0, 0, 0, 0.25) 0 8px 15px"
+        } : {}}
+        whileTap={!disabled ? { 
+          scale: 0.98, 
+          y: 0,
+          boxShadow: "none"
+        } : {}}
+        transition={{ 
+          type: "spring", 
+          stiffness: 300, 
+          damping: 20 
+        }}
         className={`btn ${variant} ${size} ${className}`}
         onClick={onClick}
         disabled={disabled}
@@ -61,14 +77,13 @@ const StyledWrapper = styled.div`
     cursor: not-allowed;
   }
 
+  /* Remove default hover/active since Framer Motion handles it */
   .btn:hover:not(:disabled) {
-    box-shadow: rgba(0, 0, 0, 0.25) 0 8px 15px;
-    transform: translateY(-2px);
+    /* Framer Motion handles hover animations */
   }
 
   .btn:active:not(:disabled) {
-    box-shadow: none;
-    transform: translateY(0);
+    /* Framer Motion handles tap animations */
   }
 
   /* Secondary variant (Login/Admin) - white -> blue on hover */

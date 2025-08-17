@@ -218,99 +218,170 @@ export default function Blogs() {
   }, [])
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+      className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12"
+    >
       <motion.h1 
-        initial={{ y: 12, opacity: 0 }} 
+        initial={{ y: 30, opacity: 0 }} 
         animate={{ y: 0, opacity: 1 }} 
-        transition={{ type: 'spring', stiffness: 120, damping: 18 }} 
+        transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.1 }} 
         className="text-center text-4xl sm:text-5xl font-extrabold tracking-tight text-[color:var(--color-ashoka-blue)]"
       >
         Blog
       </motion.h1>
-      <SectionDivider variant="bars" className="mt-6" />
+      <motion.div
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ delay: 0.3, duration: 0.8 }}
+      >
+        <SectionDivider variant="bars" className="mt-6" />
+      </motion.div>
       
-      {loading && <div className="mt-6 text-gray-600">Loading...</div>}
+      {loading && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6 text-gray-600 text-center"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="inline-block w-6 h-6 border-2 border-[color:var(--color-ashoka-blue)] border-t-transparent rounded-full mr-2"
+          />
+          Loading...
+        </motion.div>
+      )}
       
       {error && (
-        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+          className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg"
+        >
           <div className="text-red-600 mb-3">{error}</div>
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => window.location.reload()} 
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
           >
             Retry
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       )}
       
       {!loading && !error && (
-        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.8 }}
+          className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        >
           {posts.length === 0 ? (
-            <div className="col-span-full text-center text-gray-500">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="col-span-full text-center text-gray-500"
+            >
               No blog posts found.
-            </div>
+            </motion.div>
           ) : (
-            posts.map((post) => (
-              <HoverCard key={post.id} className="rounded-xl">
-                <motion.article 
-                  initial={{ opacity: 0, y: 12 }} 
-                  whileInView={{ opacity: 1, y: 0 }} 
-                  viewport={{ once: true }} 
-                  className="group rounded-xl overflow-hidden border bg-white shadow-lg hover:shadow-2xl transition-all duration-200 h-[440px] flex flex-col"
-                >
-                  {post.imageSrc ? (
-                    <div className="h-56 w-full overflow-hidden">
-                      <img 
-                        src={post.imageSrc}
-                        alt={post.heading || 'Blog post image'} 
-                        className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300" 
-                        onError={(e) => {
-                          console.error('Image failed to load for post:', post.id)
-                          console.error('Image src length:', post.imageSrc?.length)
-                          console.error('Image type:', post.imageType)
-                          e.target.parentElement.innerHTML = `
-                            <div class=\"h-40 w-full bg-gray-200 flex items-center justify-center\">\n                              <span class=\"text-gray-500 text-sm\">Image failed to load</span>\n                            </div>
-                          `
-                        }}
-                        onLoad={() => {
-                          console.log('Image loaded successfully for post:', post.id)
-                        }}
-                      />
+            posts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 100, 
+                  damping: 20, 
+                  delay: 0.1 * index 
+                }}
+              >
+                <HoverCard className="rounded-xl">
+                  <motion.article 
+                    whileHover={{ 
+                      y: -8, 
+                      scale: 1.02,
+                      boxShadow: "0 25px 50px rgba(0,0,0,0.15)"
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    className="group rounded-xl overflow-hidden border bg-white shadow-lg h-[440px] flex flex-col cursor-pointer"
+                  >
+                    {post.imageSrc ? (
+                      <motion.div 
+                        className="h-56 w-full overflow-hidden"
+                        whileHover={{ scale: 1.05 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <img 
+                          src={post.imageSrc}
+                          alt={post.heading || 'Blog post image'} 
+                          className="h-full w-full object-cover transition-transform duration-300" 
+                          onError={(e) => {
+                            console.error('Image failed to load for post:', post.id)
+                            console.error('Image src length:', post.imageSrc?.length)
+                            console.error('Image type:', post.imageType)
+                            e.target.parentElement.innerHTML = `
+                              <div class=\"h-40 w-full bg-gray-200 flex items-center justify-center\">\n                                <span class=\"text-gray-500 text-sm\">Image failed to load</span>\n                              </div>
+                            `
+                          }}
+                          onLoad={() => {
+                            console.log('Image loaded successfully for post:', post.id)
+                          }}
+                        />
+                      </motion.div>
+                    ) : (
+                      <div className="h-40 w-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-gray-500 text-sm">No image available</span>
+                      </div>
+                    )}
+                    
+                    <div className="p-5 flex-1 flex flex-col">
+                      <motion.h3 
+                        whileHover={{ x: 5 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        className="text-lg font-bold text-[color:var(--color-ashoka-blue)] mb-2 line-clamp-2 group-hover:text-[color:var(--color-india-saffron)] transition-colors"
+                      >
+                        {post.heading || 'Untitled Post'}
+                      </motion.h3>
+                      <p className="text-xs text-gray-500 mb-2">
+                        {post.postTime ? new Date(post.postTime).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        }) : 'Date not available'}
+                      </p>
+                      <p className="text-gray-700 line-clamp-2 mb-3 text-sm">
+                        {post.content || 'No content available'}
+                      </p>
+                      <Link
+                        to={`/blogs/${encodeURIComponent(post.id ?? post.heading ?? '')}`}
+                        state={{ post }}
+                        className="mt-auto inline-flex items-center text-[color:var(--color-india-saffron)] font-semibold hover:text-orange-600 transition-colors text-sm group/link"
+                      >
+                        Read More 
+                        <motion.span 
+                          className="ml-1"
+                          animate={{ x: [0, 5, 0] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          →
+                        </motion.span>
+                      </Link>
                     </div>
-                  ) : (
-                    <div className="h-40 w-full bg-gray-200 flex items-center justify-center">
-                      <span className="text-gray-500 text-sm">No image available</span>
-                    </div>
-                  )}
-                  
-                  <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="text-lg font-bold text-[color:var(--color-ashoka-blue)] mb-2 line-clamp-2 group-hover:text-[color:var(--color-india-saffron)] transition-colors">
-                      {post.heading || 'Untitled Post'}
-                    </h3>
-                    <p className="text-xs text-gray-500 mb-2">
-                      {post.postTime ? new Date(post.postTime).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      }) : 'Date not available'}
-                    </p>
-                    <p className="text-gray-700 line-clamp-2 mb-3 text-sm">
-                      {post.content || 'No content available'}
-                    </p>
-                    <Link
-                      to={`/blogs/${encodeURIComponent(post.id ?? post.heading ?? '')}`}
-                      state={{ post }}
-                      className="mt-auto inline-flex items-center text-[color:var(--color-india-saffron)] font-semibold hover:text-orange-600 transition-colors text-sm"
-                    >
-                      Read More <span className="ml-1">→</span>
-                    </Link>
-                  </div>
-                </motion.article>
-              </HoverCard>
+                  </motion.article>
+                </HoverCard>
+              </motion.div>
             ))
           )}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   )
 }

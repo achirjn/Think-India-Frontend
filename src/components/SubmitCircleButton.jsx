@@ -1,5 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
+import { motion } from 'framer-motion'
 
 const SubmitCircleButton = ({
   type = 'submit',
@@ -11,8 +12,21 @@ const SubmitCircleButton = ({
   return (
     <StyledWrapper className={className}>
       <div className="styled-wrapper">
-        <button type={type} disabled={disabled} aria-label={ariaLabel} className="button" {...props}>
-          <div className="button-box">
+        <motion.button 
+          whileHover={!disabled ? { scale: 1.05, rotate: 5 } : {}}
+          whileTap={!disabled ? { scale: 0.95, rotate: -5 } : {}}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          type={type} 
+          disabled={disabled} 
+          aria-label={ariaLabel} 
+          className="button" 
+          {...props}
+        >
+          <motion.div 
+            whileHover={!disabled ? { x: 2 } : {}}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="button-box"
+          >
             <span className="button-elem">
               <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="arrow-icon">
                 <path fill="var(--color-ashoka-blue)" d="M4 13h12.17l-5.59 5.59L12 20l8-8-8-8-1.41 1.41L16.17 11H4v2z" />
@@ -23,8 +37,8 @@ const SubmitCircleButton = ({
                 <path d="M4 13h12.17l-5.59 5.59L12 20l8-8-8-8-1.41 1.41L16.17 11H4v2z" />
               </svg>
             </span>
-          </div>
-        </button>
+          </motion.div>
+        </motion.button>
       </div>
     </StyledWrapper>
   )

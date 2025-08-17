@@ -183,6 +183,13 @@ export default function Signup() {
     }
   }
 
+  const handleGoogleLogin = () => {
+    console.log('🔍 Google OAuth button clicked')
+    console.log('🔍 Redirecting to:', 'http://localhost:8082/oauth2/authorization/google')
+    // This URL should point to your backend endpoint that initiates the Google OAuth flow
+    window.location.href = 'http://localhost:8082/oauth2/authorization/google'; 
+  };
+
   return (
     <section className="py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -287,14 +294,20 @@ export default function Signup() {
             <div className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-300 to-transparent" />
 
             <div className="flex flex-col space-y-4">
-              <button
+              <motion.button
                 type="button"
+                onClick={handleGoogleLogin}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.9, duration: 0.5 }}
                 className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black"
               >
                 <GoogleIcon className="h-4 w-4" />
                 <span className="text-sm text-neutral-700">Continue with Google</span>
                 <BottomGradient />
-              </button>
+              </motion.button>
             </div>
 
             <p className="mt-6 text-sm text-gray-600">

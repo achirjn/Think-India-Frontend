@@ -20,10 +20,10 @@ function buildDataSvg({ width = 1600, height = 900, bg = '#0F1C3F', label = 'Sli
 export default function ImageSlider({ images, intervalMs = 2000, className = '' }) {
   const fallback = useMemo(
     () => [
-      { src: buildDataSvg({ label: 'Event 1', bg: '#0F1C3F' }), alt: 'Event 1' },
-      { src: buildDataSvg({ label: 'Event 2', bg: '#0B4F2E' }), alt: 'Event 2' },
-      { src: buildDataSvg({ label: 'Event 3', bg: '#C76A11' }), alt: 'Event 3' },
-      { src: buildDataSvg({ label: 'Event 4', bg: '#0F1C3F' }), alt: 'Event 4' },
+      { src: buildDataSvg({ label: 'Event 1', bg: '#0F1C3F' }), alt: 'Event 1', title: 'Event 1' },
+      { src: buildDataSvg({ label: 'Event 2', bg: '#0B4F2E' }), alt: 'Event 2', title: 'Event 2' },
+      { src: buildDataSvg({ label: 'Event 3', bg: '#C76A11' }), alt: 'Event 3', title: 'Event 3' },
+      { src: buildDataSvg({ label: 'Event 4', bg: '#0F1C3F' }), alt: 'Event 4', title: 'Event 4' },
     ],
     []
   )
@@ -58,7 +58,21 @@ export default function ImageSlider({ images, intervalMs = 2000, className = '' 
         </AnimatePresence>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent h-20" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent h-32" />
+
+      {/* Event Title Display */}
+      <motion.div 
+        key={`title-${index}`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="absolute bottom-16 left-6 pointer-events-none"
+      >
+        <h3 className="text-white text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">
+          {slides[index].title || slides[index].alt}
+        </h3>
+      </motion.div>
 
       <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
         {slides.map((_, i) => (

@@ -35,42 +35,77 @@ export default function Admin() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-      <div className="flex justify-between items-center">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+      className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10"
+    >
+      <motion.div 
+        initial={{ y: 30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.1 }}
+        className="flex justify-between items-center"
+      >
         <motion.h1
-          initial={{ y: 12, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+          initial={{ x: -20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.2 }}
           className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[color:var(--color-ashoka-blue)]"
         >
           Admin Dashboard
         </motion.h1>
-      </div>
+      </motion.div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
-        {TABS.map((t) => (
-          <button
+      <motion.div 
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.6 }}
+        className="mt-8 flex flex-wrap gap-3"
+      >
+        {TABS.map((t, index) => (
+          <motion.button
             key={t.key}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 200, 
+              damping: 15, 
+              delay: 0.4 + index * 0.1 
+            }}
+            whileHover={{ 
+              scale: 1.05, 
+              y: -2,
+              boxShadow: "0 10px 20px rgba(0,0,0,0.1)"
+            }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setActiveTab(t.key)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold border transition ${
+            className={`rounded-full px-4 py-2 text-sm font-semibold border transition-all duration-200 ${
               activeTab === t.key
-                ? 'bg-[color:var(--color-ashoka-blue)] text-white border-[color:var(--color-ashoka-blue)]'
+                ? 'bg-[color:var(--color-ashoka-blue)] text-white border-[color:var(--color-ashoka-blue)] shadow-lg'
                 : 'bg-white text-[color:var(--color-ashoka-blue)] border-[color:var(--color-ashoka-blue)] hover:bg-[rgba(0,0,128,0.04)]'
             }`}
           >
             {t.label}
-          </button>
+          </motion.button>
         ))}
-      </div>
+      </motion.div>
 
-      <div className="mt-8">
+      <motion.div 
+        key={activeTab}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mt-8"
+      >
         {activeTab === 'blogs' && <BlogsPanel />}
         {activeTab === 'teams' && <TeamsPanel />}
         {activeTab === 'events' && <EventsPanel />}
         {activeTab === 'recommendations' && <RecommendationsPanel />}
         {activeTab === 'internships' && <InternshipsPanel />}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
@@ -122,14 +157,56 @@ async function safeMessage(res) {
 
 function PanelShell({ title, description, children, footer }) {
   return (
-    <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
-      <div className="p-6 bg-[color:var(--color-ashoka-blue)] text-white border-b border-white/20">
-        <div className="text-xl font-bold">{title}</div>
-        {description && <p className="mt-1 text-sm text-white/90">{description}</p>}
-      </div>
-      <div className="p-6">{children}</div>
-      {footer && <div className="p-4 border-t bg-gray-50">{footer}</div>}
-    </div>
+    <motion.div 
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: "spring", stiffness: 100, damping: 20 }}
+      className="rounded-2xl border bg-white shadow-sm overflow-hidden"
+    >
+      <motion.div 
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.5 }}
+        className="p-6 bg-[color:var(--color-ashoka-blue)] text-white border-b border-white/20"
+      >
+        <motion.div 
+          initial={{ x: -10, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+          className="text-xl font-bold"
+        >
+          {title}
+        </motion.div>
+        {description && (
+          <motion.p 
+            initial={{ x: -10, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+            className="mt-1 text-sm text-white/90"
+          >
+            {description}
+          </motion.p>
+        )}
+      </motion.div>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.6 }}
+        className="p-6"
+      >
+        {children}
+      </motion.div>
+      {footer && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.4 }}
+          className="p-4 border-t bg-gray-50"
+        >
+          {footer}
+        </motion.div>
+      )}
+    </motion.div>
   )
 }
 

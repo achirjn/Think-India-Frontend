@@ -16,21 +16,30 @@ import SubmitCircleButton from './components/SubmitCircleButton.jsx'
 import ImageSlider from './components/ImageSlider.jsx'
 import Admin from './pages/Admin.jsx'
 import UserDashboard from './pages/UserDashboard.jsx'
-import { getToken, removeToken, setToken } from './utils/auth'
+import LoadingPage from './components/LoadingPage.jsx'
+import { getToken, removeToken, setToken, isAuthenticated } from './utils/auth'
 
 function NavBar() {
   const location = useLocation()
   const [authState, setAuthState] = useState({
-    isAdmin: !!getToken() && localStorage.getItem('is_admin') === 'true',
-    isLoggedIn: !!getToken()
+    isAdmin: false,
+    isLoggedIn: false
   })
   const [navHidden, setNavHidden] = useState(false)
 
   useEffect(() => {
-    const checkAuth = () => setAuthState({
-      isAdmin: !!getToken() && localStorage.getItem('is_admin') === 'true',
-      isLoggedIn: !!getToken()
-    })
+    const checkAuth = () => {
+      const token = getToken()
+      const isAdmin = localStorage.getItem('is_admin') === 'true'
+      
+      // Use isAuthenticated() which checks token validity
+      const isValidAuth = token && isAuthenticated()
+      
+      setAuthState({
+        isAdmin: isValidAuth && isAdmin,
+        isLoggedIn: isValidAuth
+      })
+    }
     checkAuth()
     window.addEventListener('storage', checkAuth)
     return () => window.removeEventListener('storage', checkAuth)
@@ -41,9 +50,13 @@ function NavBar() {
     const checkAuth = () => {
       const token = getToken()
       const isAdmin = localStorage.getItem('is_admin') === 'true'
+      
+      // Use isAuthenticated() which checks token validity
+      const isValidAuth = token && isAuthenticated()
+      
       const newAuthState = {
-        isAdmin: !!token && isAdmin,
-        isLoggedIn: !!token
+        isAdmin: isValidAuth && isAdmin,
+        isLoggedIn: isValidAuth
       }
       
       console.log('🔍 NavBar: Checking auth state:', {
@@ -116,52 +129,150 @@ function NavBar() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 md:h-18 items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
-              <div className="flex items-center gap-3">
+              <motion.div 
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
+                className="flex items-center gap-3"
+              >
                 {/* think india Logo */}
-                <div className="h-12 w-12 rounded-full bg-blue-800 flex items-center justify-center ring-2 ring-white shadow-lg">
+                <motion.div 
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="h-12 w-12 rounded-full bg-blue-800 flex items-center justify-center ring-2 ring-white shadow-lg"
+                >
                   <div className="text-white text-sm font-bold text-center leading-tight">
                     <div>राष्ट्रीय</div>
                     <div>सेवा योजना</div>
                   </div>
-                </div>
+                </motion.div>
                 {/* SVNIT Logo */}
-                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center ring-2 ring-blue-300 shadow-lg">
+                <motion.div 
+                  whileHover={{ scale: 1.1, rotate: -5 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center ring-2 ring-blue-300 shadow-lg"
+                >
                   <div className="text-blue-800 text-sm font-bold text-center leading-tight">
                     <div>SVNIT</div>
                   </div>
-                </div>
-              </div>
-              <div className="flex flex-col items-center ml-3 sm:ml-4">
-                <span className="font-black text-2xl md:text-3xl tracking-wide text-[color:var(--color-ashoka-blue)]">Think India</span>
-                <span className="font-semibold text-xl md:text-2xl tracking-wide text-[color:var(--color-ashoka-blue)] -mt-2">SVNIT</span>
-              </div>
+                </motion.div>
+              </motion.div>
+              <motion.div 
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+                className="flex flex-col items-center ml-3 sm:ml-4"
+              >
+                <motion.span 
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="font-black text-2xl md:text-3xl tracking-wide text-[color:var(--color-ashoka-blue)]"
+                >
+                  Think India
+                </motion.span>
+                <motion.span 
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="font-semibold text-xl md:text-2xl tracking-wide text-[color:var(--color-ashoka-blue)] -mt-2"
+                >
+                  SVNIT
+                </motion.span>
+              </motion.div>
             </Link>
-            <nav className="hidden md:flex items-center gap-4 text-sm md:text-base font-semibold">
-              <Link className="hover:text-[color:var(--color-ashoka-blue)]" to="/#about">About</Link>
-              <Link className="hover:text-[color:var(--color-ashoka-blue)]" to="/internships">Internships</Link>
-              <Link className="hover:text-[color:var(--color-ashoka-blue)]" to="/teams">Teams</Link>
-              <Link className="hover:text-[color:var(--color-ashoka-blue)]" to="/blogs">Blogs</Link>
-              <Link className="hover:text-[color:var(--color-ashoka-blue)]" to="/#events">Events</Link>
-              <Link className="hover:text-[color:var(--color-ashoka-blue)]" to="/#contact">Contact Us</Link>
-            </nav>
-            <div className="flex items-center gap-2 md:gap-3">
+            <motion.nav 
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+              className="hidden md:flex items-center gap-4 text-sm md:text-base font-semibold"
+            >
+              {[
+                { to: "/#about", text: "About" },
+                { to: "/#events", text: "Events" },
+                { to: "/internships", text: "Internships" },
+                { to: "/blogs", text: "Blogs" },
+                { to: "/teams", text: "Team" },
+                { to: "/#contact", text: "Contact" }
+              ].map((item, index) => (
+                <motion.div
+                  key={item.text}
+                  initial={{ y: -10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
+                >
+                  <Link 
+                    className="relative hover:text-[color:var(--color-ashoka-blue)] transition-colors duration-200 group" 
+                    to={item.to}
+                  >
+                    {item.text}
+                    <motion.span
+                      className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[color:var(--color-ashoka-blue)] group-hover:w-full transition-all duration-300"
+                      whileHover={{ width: "100%" }}
+                    />
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.nav>
+            <motion.div 
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.6 }}
+              className="flex items-center gap-2 md:gap-3"
+            >
               {authState.isAdmin ? (
                 <>
-                  <Button as={Link} to="/admin" variant="secondary" size="sm" className="hidden sm:inline-block">Admin</Button>
-                  <Button onClick={handleLogout} variant="logout" size="sm" className="hidden sm:inline-block">Logout</Button>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.8, type: "spring", stiffness: 200, damping: 15 }}
+                  >
+                    <Button as={Link} to="/admin" variant="secondary" size="sm" className="hidden sm:inline-block">Admin</Button>
+                  </motion.div>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.9, type: "spring", stiffness: 200, damping: 15 }}
+                  >
+                    <Button onClick={handleLogout} variant="logout" size="sm" className="hidden sm:inline-block">Logout</Button>
+                  </motion.div>
                 </>
               ) : authState.isLoggedIn ? (
                 <>
-                  <Button as={Link} to="/user/dashboard" variant="secondary" size="sm" className="hidden sm:inline-block">Dashboard</Button>
-                  <Button onClick={handleLogout} variant="logout" size="sm" className="hidden sm:inline-block">Logout</Button>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.8, type: "spring", stiffness: 200, damping: 15 }}
+                  >
+                    <Button as={Link} to="/user/dashboard" variant="secondary" size="sm" className="hidden sm:inline-block">Dashboard</Button>
+                  </motion.div>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.9, type: "spring", stiffness: 200, damping: 15 }}
+                  >
+                    <Button onClick={handleLogout} variant="logout" size="sm" className="hidden sm:inline-block">Logout</Button>
+                  </motion.div>
                 </>
               ) : (
                 <>
-                  <Button as={Link} to="/login" variant="secondary" size="sm" className="hidden sm:inline-block">Login</Button>
-                  <Button as={Link} to="/signup" variant="primary" size="sm" className="hidden sm:inline-block">Sign up</Button>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.8, type: "spring", stiffness: 200, damping: 15 }}
+                  >
+                    <Button as={Link} to="/login" variant="secondary" size="sm" className="hidden sm:inline-block">Login</Button>
+                  </motion.div>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.9, type: "spring", stiffness: 200, damping: 15 }}
+                  >
+                    <Button as={Link} to="/signup" variant="primary" size="sm" className="hidden sm:inline-block">Sign up</Button>
+                  </motion.div>
                 </>
               )}
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -177,26 +288,106 @@ function NavBar() {
 function Hero() {
   return (
     <section className="relative overflow-hidden min-h-[calc(100vh-4rem)] flex items-center">
-      <div className="absolute inset-0 -z-10">
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.2 }}
+        className="absolute inset-0 -z-10"
+      >
         <div className="h-full bg-gradient-to-b from-[color:var(--color-india-saffron)] via-white to-[color:var(--color-india-green)]" />
-      </div>
-      <AshokaChakra className="pointer-events-none absolute -right-24 top-10 -z-10" size={700} opacity={0.12} />
-      <AshokaChakra className="pointer-events-none absolute -left-40 bottom-10 -z-10" size={420} opacity={0.08} rotate={30} />
+      </motion.div>
+      <motion.div
+        initial={{ x: 100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 1.5, delay: 0.3 }}
+      >
+        <AshokaChakra className="pointer-events-none absolute -right-24 top-10 -z-10" size={700} opacity={0.12} />
+      </motion.div>
+      <motion.div
+        initial={{ x: -200, opacity: 0 }}
+        animate={{ x: 100, opacity: 1 }}
+        transition={{ 
+          duration: 2.5, 
+          delay: 0.5,
+          ease: "easeInOut",
+          opacity: { duration: 0.5, delay: 0.5 }
+        }}
+      >
+        <AshokaChakra className="pointer-events-none absolute -left-40 bottom-10 -z-10" size={420} opacity={0.08} rotate={30} />
+      </motion.div>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24">
-        <motion.div initial={{ y: 24, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true, amount: 0.6 }} transition={{ type: 'spring', stiffness: 120, damping: 18 }} className="max-w-3xl text-[color:var(--color-ashoka-blue)]">
-          <h1 className="text-5xl sm:text-6xl font-extrabold leading-tight"><span className="text-[color:var(--color-india-saffron)]">Think</span> <span className="text-[color:var(--color-india-green)]">India</span></h1>
-          <p className="mt-6 text-xl">
+        <motion.div 
+          initial={{ y: 50, opacity: 0 }} 
+          animate={{ y: 0, opacity: 1 }} 
+          transition={{ type: 'spring', stiffness: 100, damping: 20, delay: 0.2 }} 
+          className="max-w-3xl text-[color:var(--color-ashoka-blue)]"
+        >
+          <motion.h1 
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.4 }}
+            className="text-5xl sm:text-6xl font-extrabold leading-tight"
+          >
+            <motion.span 
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.8 }}
+              className="text-[color:var(--color-india-saffron)]"
+            >
+              Think
+            </motion.span>{' '}
+            <motion.span 
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.8, duration: 0.8 }}
+              className="text-[color:var(--color-india-green)]"
+            >
+              India
+            </motion.span>
+          </motion.h1>
+          <motion.p 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1.0, duration: 0.6 }}
+            className="mt-6 text-xl"
+          >
             A forum for students from premier institutions across India.
-          </p>
-          <p className="mt-2 text-lg">
+          </motion.p>
+          <motion.p 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1.2, duration: 0.6 }}
+            className="mt-2 text-lg"
+          >
             Bringing together the best talents with a "Nation First" attitude for national reconstruction.
-          </p>
-          <div className="mt-10 flex flex-wrap gap-4">
+          </motion.p>
+          <motion.div 
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 1.4, duration: 0.8 }}
+            className="mt-10 flex flex-wrap gap-4"
+          >
             {(() => { const MotionLink = motion(Link); return (
-              <MotionLink whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} to="/signup" className="inline-flex items-center rounded-xl bg-[color:var(--color-india-saffron)] px-6 py-3 text-white font-semibold shadow-md">Join Our Mission</MotionLink>
+              <MotionLink 
+                whileHover={{ y: -3, scale: 1.02, boxShadow: "0 10px 25px rgba(255, 153, 51, 0.3)" }} 
+                whileTap={{ scale: 0.98 }} 
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                to="/signup" 
+                className="inline-flex items-center rounded-xl bg-[color:var(--color-india-saffron)] px-6 py-3 text-white font-semibold shadow-md"
+              >
+                Join Our Mission
+              </MotionLink>
             )})()}
-            <motion.a whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} href="#initiatives" className="inline-flex items-center rounded-xl bg-[color:var(--color-india-green)] px-6 py-3 text-white font-semibold shadow-md">Learn More</motion.a>
-          </div>
+            <motion.a 
+              whileHover={{ y: -3, scale: 1.02, boxShadow: "0 10px 25px rgba(19, 136, 8, 0.3)" }} 
+              whileTap={{ scale: 0.98 }} 
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              href="#initiatives" 
+              className="inline-flex items-center rounded-xl bg-[color:var(--color-india-green)] px-6 py-3 text-white font-semibold shadow-md"
+            >
+              Learn More
+            </motion.a>
+          </motion.div>
         </motion.div>
       </div>
     </section>
@@ -205,14 +396,35 @@ function Hero() {
 
 function Section({ id, title, children }) {
   return (
-    <section id={id} className="py-14">
+    <motion.section 
+      id={id} 
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.6 }}
+      className="py-14"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.h2 initial={{ y: 16, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} transition={{ type: 'spring', stiffness: 120, damping: 18 }} className="text-3xl font-extrabold text-[color:var(--color-ashoka-blue)]">{title}</motion.h2>
-        <motion.div initial={{ y: 18, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true, amount: 0.3 }} transition={{ delay: 0.05, type: 'spring', stiffness: 120, damping: 18 }} className="mt-6">
+        <motion.h2 
+          initial={{ y: 30, opacity: 0 }} 
+          whileInView={{ y: 0, opacity: 1 }} 
+          viewport={{ once: true }} 
+          transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.1 }} 
+          className="text-3xl font-extrabold text-[color:var(--color-ashoka-blue)]"
+        >
+          {title}
+        </motion.h2>
+        <motion.div 
+          initial={{ y: 40, opacity: 0 }} 
+          whileInView={{ y: 0, opacity: 1 }} 
+          viewport={{ once: true, amount: 0.2 }} 
+          transition={{ delay: 0.2, type: 'spring', stiffness: 100, damping: 20 }} 
+          className="mt-6"
+        >
           {children}
         </motion.div>
       </div>
-    </section>
+    </motion.section>
   )
 }
 
@@ -342,33 +554,103 @@ function ContactSection() {
                 </div>
               </div>
             </div>
-            <div className="relative">
-              <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-xl ring-1 ring-[color:var(--color-india-green)]/40">
+            <motion.div 
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="relative"
+            >
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }}
+                whileInView={{ scale: 1, opacity: 1 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="rounded-2xl bg-white p-6 sm:p-8 shadow-xl ring-1 ring-[color:var(--color-india-green)]/40"
+              >
                 <form onSubmit={handleSubmit} className="space-y-5">
-                  <div>
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.6, duration: 0.4 }}
+                  >
                     <label htmlFor="name" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Name</label>
-                    <input id="name" name="name" type="text" className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
-                  </div>
-                  <div>
+                    <motion.input 
+                      whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(15, 28, 63, 0.1)" }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      id="name" 
+                      name="name" 
+                      type="text" 
+                      className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
+                    />
+                  </motion.div>
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.7, duration: 0.4 }}
+                  >
                     <label htmlFor="email" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Email <span className="text-red-500">*</span></label>
-                    <input id="email" name="email" type="email" required className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
-                  </div>
-                  <div>
+                    <motion.input 
+                      whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(15, 28, 63, 0.1)" }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      id="email" 
+                      name="email" 
+                      type="email" 
+                      required 
+                      className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
+                    />
+                  </motion.div>
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.8, duration: 0.4 }}
+                  >
                     <label htmlFor="message" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Message <span className="text-red-500">*</span></label>
-                    <textarea id="message" name="message" required rows="4" className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
-                  </div>
+                    <motion.textarea 
+                      whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(15, 28, 63, 0.1)" }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      id="message" 
+                      name="message" 
+                      required 
+                      rows="4" 
+                      className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
+                    />
+                  </motion.div>
                   {submitError && (
-                    <div className="text-sm text-red-600">{submitError}</div>
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      className="text-sm text-red-600"
+                    >
+                      {submitError}
+                    </motion.div>
                   )}
                   {submitSuccess && (
-                    <div className="text-sm text-green-600">{submitSuccess}</div>
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      className="text-sm text-green-600"
+                    >
+                      {submitSuccess}
+                    </motion.div>
                   )}
-                  <div className="flex justify-end">
+                  <motion.div 
+                    initial={{ y: 20, opacity: 0 }}
+                    whileInView={{ y: 0, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.9, duration: 0.4 }}
+                    className="flex justify-end"
+                  >
                     <SubmitCircleButton type="submit" disabled={submitting} ariaLabel="Send" />
-                  </div>
+                  </motion.div>
                 </form>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -528,16 +810,57 @@ function HomePage() {
             { title: 'Internships', desc: 'Meaningful opportunities in governance, policy, and industry.', barClass: 'bg-[color:var(--color-india-saffron)]' },
             { title: 'Research', desc: 'Collaborative projects addressing national priorities.', barClass: 'bg-white' },
             { title: 'Leadership', desc: 'Workshops and programs that build character and capability.', barClass: 'bg-[color:var(--color-india-green)]' },
-          ].map((card) => (
-            <div key={card.title} className="glass-card-container">
-              <div
-                className="relative overflow-hidden rounded-2xl p-8 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+          ].map((card, index) => (
+            <motion.div 
+              key={card.title} 
+              initial={{ y: 50, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ 
+                type: 'spring', 
+                stiffness: 100, 
+                damping: 20, 
+                delay: index * 0.1 
+              }}
+              className="glass-card-container"
+            >
+              <motion.div
+                whileHover={{ 
+                  y: -8, 
+                  scale: 1.02,
+                  boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
+                }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="relative overflow-hidden rounded-2xl p-8 bg-white shadow-sm cursor-pointer"
               >
-                <div className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${card.barClass}`} />
-                <div className="mt-2 text-lg font-semibold text-[color:var(--color-ashoka-blue)]">{card.title}</div>
-                <p className="mt-2 text-gray-600">{card.desc}</p>
-              </div>
-            </div>
+                <motion.div 
+                  initial={{ scaleX: 0 }}
+                  whileInView={{ scaleX: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 + index * 0.1, duration: 0.8 }}
+                  className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${card.barClass} origin-left`} 
+                />
+                <motion.div 
+                  initial={{ y: 10, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.4 + index * 0.1 }}
+                  className="mt-2 text-lg font-semibold text-[color:var(--color-ashoka-blue)]"
+                >
+                  {card.title}
+                </motion.div>
+                <motion.p 
+                  initial={{ y: 10, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                  className="mt-2 text-gray-600"
+                >
+                  {card.desc}
+                </motion.p>
+              </motion.div>
+            </motion.div>
           ))}
         </div>
       </Section>
@@ -632,6 +955,21 @@ export default function App() {
       }
     }, [location.pathname, location.hash])
     return null
+  }
+
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // Show loading page for 3 seconds on first load
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (isLoading) {
+    return <LoadingPage />
   }
 
   return (

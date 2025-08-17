@@ -1,12 +1,23 @@
 import React from 'react';
 import styled from 'styled-components';
+import { motion } from 'framer-motion';
 
 const Card = () => {
   return (
     <StyledWrapper>
-      <div className="card">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="card"
+      >
         <ul>
-          <li className="iso-pro">
+          <motion.li 
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="iso-pro"
+          >
             <span />
             <span />
             <a href>
@@ -21,8 +32,13 @@ const Card = () => {
               </svg>
             </a>
             <div className="text">Globe</div>
-          </li>
-          <li className="iso-pro">
+          </motion.li>
+          <motion.li 
+            whileHover={{ scale: 1.1, rotate: -5 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="iso-pro"
+          >
             <span />
             <span />
             <a href>
@@ -32,8 +48,13 @@ const Card = () => {
               </svg>
             </a>
             <div className="text">Gmail</div>
-          </li>
-          <li className="iso-pro">
+          </motion.li>
+          <motion.li 
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="iso-pro"
+          >
             <span />
             <span />
             <a href>
@@ -42,9 +63,9 @@ const Card = () => {
               </svg>
             </a>
             <div className="text">Instagram</div>
-          </li>
+          </motion.li>
         </ul>
-      </div>
+      </motion.div>
     </StyledWrapper>
   );
 }

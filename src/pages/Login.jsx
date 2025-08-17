@@ -154,28 +154,66 @@ export default function Login() {
     window.location.href = 'http://localhost:8082/oauth2/authorization/google'; 
   };
   return (
-    <section className="py-16">
+    <motion.section 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+      className="py-16"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-md shadow-input rounded-none bg-white p-4 md:rounded-2xl md:p-8">
+        <motion.div 
+          initial={{ y: 50, opacity: 0, scale: 0.9 }}
+          animate={{ y: 0, opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', stiffness: 100, damping: 20, delay: 0.1 }}
+          className="mx-auto w-full max-w-md shadow-input rounded-none bg-white p-4 md:rounded-2xl md:p-8"
+        >
           <motion.h1
-            initial={{ y: 16, opacity: 0 }}
+            initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+            transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.2 }}
             className="text-xl font-bold text-neutral-800"
           >
             Welcome back
           </motion.h1>
-          <p className="mt-2 max-w-sm text-sm text-neutral-600">Login to your account</p>
+          <motion.p 
+            initial={{ y: 15, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="mt-2 max-w-sm text-sm text-neutral-600"
+          >
+            Login to your account
+          </motion.p>
 
-          <div className="mt-6">
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="mt-6"
+          >
             {errors.submit && (
-              <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-4">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="mb-4 rounded-lg bg-red-50 border border-red-200 p-4"
+              >
                 <p className="text-sm text-red-800">{errors.submit}</p>
-              </div>
+              </motion.div>
             )}
 
-            <form className="my-6" onSubmit={handleSubmit}>
-              <div className="mb-4">
+            <motion.form 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+              className="my-6" 
+              onSubmit={handleSubmit}
+            >
+              <motion.div 
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+                className="mb-4"
+              >
                 <label htmlFor="email" className="text-sm font-medium text-gray-700">Email</label>
                 <FieldHover className="mt-2">
                 <input 
@@ -185,17 +223,28 @@ export default function Login() {
                   required 
                   value={formData.email}
                   onChange={handleInputChange}
-                    className={`w-full rounded-md border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)] hover:border-[color:var(--color-ashoka-blue)] ${
+                    className={`w-full rounded-md border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)] hover:border-[color:var(--color-ashoka-blue)] transition-all duration-200 ${
                     errors.email ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 </FieldHover>
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  <motion.p 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-1 text-sm text-red-600"
+                  >
+                    {errors.email}
+                  </motion.p>
                 )}
-              </div>
+              </motion.div>
               
-              <div className="mb-6">
+              <motion.div 
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.7, duration: 0.5 }}
+                className="mb-6"
+              >
                 <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
                 <FieldHover className="mt-2">
                 <input 
@@ -205,33 +254,67 @@ export default function Login() {
                   required 
                   value={formData.password}
                   onChange={handleInputChange}
-                    className={`w-full rounded-md border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)] hover:border-[color:var(--color-ashoka-blue)] ${
+                    className={`w-full rounded-md border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)] hover:border-[color:var(--color-ashoka-blue)] transition-all duration-200 ${
                     errors.password ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
                 </FieldHover>
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  <motion.p 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-1 text-sm text-red-600"
+                  >
+                    {errors.password}
+                  </motion.p>
                 )}
-              </div>
+              </motion.div>
               
-              <button 
+              <motion.button 
                 type="submit" 
                 disabled={isLoading}
-                className={`group/btn relative block h-11 w-full rounded-md bg-gradient-to-br from-black to-neutral-700 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] ${
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.8, duration: 0.5 }}
+                className={`group/btn relative block h-11 w-full rounded-md bg-gradient-to-br from-black to-neutral-700 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] transition-all duration-200 ${
                   isLoading ? 'opacity-70 cursor-not-allowed' : ''
                 }`}
               >
-                {isLoading ? 'Logging in…' : 'Login →'}
+                {isLoading ? (
+                  <span className="flex items-center justify-center">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      className="w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"
+                    />
+                    Logging in…
+                  </span>
+                ) : (
+                  'Login →'
+                )}
                 <BottomGradient />
-              </button>
-            </form>
+              </motion.button>
+            </motion.form>
 
-            <div className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-300 to-transparent" />
+            <motion.div 
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ delay: 0.9, duration: 0.8 }}
+              className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-300 to-transparent" 
+            />
 
-            <button type="button" 
-            onClick={handleGoogleLogin}
-            className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black">
+            <motion.button 
+              type="button" 
+              onClick={handleGoogleLogin}
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 1.0, duration: 0.5 }}
+              className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black transition-all duration-200"
+            >
               <svg className="h-4 w-4" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" aria-hidden>
                 <path fill="#4285F4" d="M533.5 278.4c0-18.4-1.5-36.8-4.7-54.6H272.1v103.4h146.7c-6.3 34.2-26.8 63.2-57.1 82.5v68.3h92.4c54.1-49.8 79.4-123.2 79.4-199.6z"/>
                 <path fill="#34A853" d="M272.1 544.3c77.4 0 142.6-25.6 190.2-69.3l-92.4-68.3c-25.7 17.3-58.7 27.5-97.8 27.5-75 0-138.6-50.6-161.4-118.6H14.7v74.6c48.2 95.7 146.8 154.1 257.4 154.1z"/>
@@ -240,14 +323,19 @@ export default function Login() {
               </svg>
               <span className="text-sm text-neutral-700">Continue with Google</span>
               <BottomGradient />
-            </button>
+            </motion.button>
 
-            <p className="mt-6 text-sm text-gray-600">
-              New here? <Link to="/signup" className="text-[color:var(--color-ashoka-blue)] underline">Create an account</Link>
-            </p>
-          </div>
-        </div>
+            <motion.p 
+              initial={{ y: 15, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 1.1, duration: 0.5 }}
+              className="mt-6 text-sm text-gray-600"
+            >
+              New here? <Link to="/signup" className="text-[color:var(--color-ashoka-blue)] underline hover:text-[color:var(--color-india-saffron)] transition-colors">Create an account</Link>
+            </motion.p>
+          </motion.div>
+        </motion.div>
       </div>
-    </section>
+    </motion.section>
   )
 }

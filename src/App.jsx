@@ -17,17 +17,40 @@ import ImageSlider from './components/ImageSlider.jsx'
 import Admin from './pages/Admin.jsx'
 import UserDashboard from './pages/UserDashboard.jsx'
 import LoadingPage from './components/LoadingPage.jsx'
+import ProfileDropdown from './components/ProfileDropdown.jsx'
 import { getToken, removeToken, setToken, isAuthenticated } from './utils/auth'
 import useWindowSize from './hooks/useWindowSize.jsx'
 
 function NavBar() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [authState, setAuthState] = useState({
     isAdmin: false,
     isLoggedIn: false
   })
   const [navHidden, setNavHidden] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Handle navigation to home page sections
+  const handleSectionNavigation = (sectionId) => {
+    if (location.pathname === '/') {
+      // Already on home page, just scroll to section
+      const element = document.getElementById(sectionId)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    } else {
+      // Navigate to home page first, then scroll to section
+      navigate('/')
+      // Use setTimeout to ensure the page has loaded before scrolling
+      setTimeout(() => {
+        const element = document.getElementById(sectionId)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 100)
+    }
+  }
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -66,32 +89,24 @@ function NavBar() {
     const checkAuth = () => {
       const token = getToken()
       const isAdmin = localStorage.getItem('is_admin') === 'true'
-      
-      // Use isAuthenticated() which checks token validity
       const isValidAuth = token && isAuthenticated()
       
-      const newAuthState = {
+      setAuthState({
         isAdmin: isValidAuth && isAdmin,
         isLoggedIn: isValidAuth
-      }
-      
-      console.log('🔍 NavBar: Checking auth state:', {
-        token: token ? 'FOUND' : 'NOT FOUND',
-        isAdmin: isAdmin,
-        newAuthState: newAuthState
       })
-      
-      setAuthState(newAuthState)
     }
     
-    // Check auth state when location changes (after OAuth redirect)
     checkAuth()
     
-    // Also check periodically for a short time after page load
+    // Check periodically for a short time after page load
     const interval = setInterval(checkAuth, 500)
-    setTimeout(() => clearInterval(interval), 3000)
+    const timeout = setTimeout(() => clearInterval(interval), 3000)
     
-    return () => clearInterval(interval)
+    return () => {
+      clearInterval(interval)
+      clearTimeout(timeout)
+    }
   }, [location.pathname])
 
   // Hide nav when scrolling down, show when scrolling up
@@ -120,10 +135,11 @@ function NavBar() {
   }, [])
 
   useEffect(() => {
-    // Also update on route change (for instant UI update after login/logout)
+    // Update on route change (for instant UI update after login/logout)
+    const token = getToken()
     setAuthState({
-      isAdmin: !!getToken() && localStorage.getItem('is_admin') === 'true',
-      isLoggedIn: !!getToken()
+      isAdmin: !!token && localStorage.getItem('is_admin') === 'true',
+      isLoggedIn: !!token
     })
   }, [location])
 
@@ -151,28 +167,31 @@ function NavBar() {
                 transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
                 className="flex items-center gap-3"
               >
-                {/* think india Logo */}
+                {/* Think India Logo */}
                 <motion.div 
                   whileHover={{ scale: 1.1, rotate: 5 }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="h-12 w-12 rounded-full bg-blue-800 flex items-center justify-center ring-2 ring-white shadow-lg"
+                  className="h-12 w-12 rounded-full overflow-hidden ring-2 ring-white shadow-lg"
                 >
-                  <div className="text-white text-sm font-bold text-center leading-tight">
-                    <div>राष्ट्रीय</div>
-                    <div>सेवा योजना</div>
-                  </div>
+                  <img 
+                    src="/src/assets/Think_India_Logo.svg" 
+                    alt="Think India Logo" 
+                    className="h-full w-full object-cover"
+                  />
                 </motion.div>
                 {/* SVNIT Logo */}
                 <motion.div 
                   whileHover={{ scale: 1.1, rotate: -5 }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center ring-2 ring-blue-300 shadow-lg"
+                  className="h-12 w-12 flex items-center justify-center"
                 >
-                  <div className="text-blue-800 text-sm font-bold text-center leading-tight">
-                    <div>SVNIT</div>
-                  </div>
+                  <img 
+                    src="/src/assets/NIT_Surat_Logo.svg" 
+                    alt="NIT Surat Logo" 
+                    className="h-full w-full object-contain"
+                  />
                 </motion.div>
               </motion.div>
               <motion.div 
@@ -218,13 +237,13 @@ function NavBar() {
                   transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
                 >
                   {item.to.startsWith('/#') ? (
-                    <a 
-                      href={item.to.substring(1)} 
+                    <button 
+                      onClick={() => handleSectionNavigation(item.to.substring(2))}
                       className="relative hover:text-[color:var(--color-ashoka-blue)] transition-colors duration-200 group"
                     >
                       {item.text}
                       <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[color:var(--color-ashoka-blue)] transition-all duration-300 group-hover:w-full" />
-                    </a>
+                    </button>
                   ) : (
                     <Link 
                       className="relative hover:text-[color:var(--color-ashoka-blue)] transition-colors duration-200 group" 
@@ -247,40 +266,10 @@ function NavBar() {
               className="flex items-center gap-2 md:gap-3"
             >
               {/* Desktop Auth Buttons - Hidden on mobile */}
-              {authState.isAdmin ? (
-                <>
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.8, type: "spring", stiffness: 200, damping: 15 }}
-                  >
-                    <Button as={Link} to="/admin" variant="secondary" size="sm" className="hidden md:inline-block">Admin</Button>
-                  </motion.div>
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.9, type: "spring", stiffness: 200, damping: 15 }}
-                  >
-                    <Button onClick={handleLogout} variant="logout" size="sm" className="hidden md:inline-block">Logout</Button>
-                  </motion.div>
-                </>
-              ) : authState.isLoggedIn ? (
-                <>
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.8, type: "spring", stiffness: 200, damping: 15 }}
-                  >
-                    <Button as={Link} to="/user/dashboard" variant="secondary" size="sm" className="hidden md:inline-block">Dashboard</Button>
-                  </motion.div>
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.9, type: "spring", stiffness: 200, damping: 15 }}
-                  >
-                    <Button onClick={handleLogout} variant="logout" size="sm" className="hidden md:inline-block">Logout</Button>
-                  </motion.div>
-                </>
+              {authState.isLoggedIn ? (
+                <div className="hidden md:block">
+                  <ProfileDropdown authState={authState} handleLogout={handleLogout} />
+                </div>
               ) : (
                 <>
                   <motion.div
@@ -361,13 +350,15 @@ function NavBar() {
                 transition={{ delay: index * 0.1, duration: 0.3 }}
               >
                 {item.to.startsWith('/#') ? (
-                  <a 
-                    href={item.to.substring(1)}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block py-2 px-4 text-inverse-lg font-semibold text-[color:var(--color-ashoka-blue)] hover:bg-gray-50 rounded-lg transition-colors"
+                  <button 
+                    onClick={() => {
+                      handleSectionNavigation(item.to.substring(2))
+                      setMobileMenuOpen(false)
+                    }}
+                    className="block py-2 px-4 text-inverse-lg font-semibold text-[color:var(--color-ashoka-blue)] hover:bg-gray-50 rounded-lg transition-colors w-full text-left"
                   >
                     {item.text}
-                  </a>
+                  </button>
                 ) : (
                   <Link 
                     to={item.to}
@@ -489,13 +480,13 @@ function Hero() {
           initial={{ y: 50, opacity: 0 }} 
           animate={{ y: 0, opacity: 1 }} 
           transition={{ type: 'spring', stiffness: 100, damping: 20, delay: 0.2 }} 
-          className="max-w-3xl text-[color:var(--color-ashoka-blue)]"
+          className="max-w-3xl text-[color:var(--color-ashoka-blue)] md:ml-12 lg:ml-20"
         >
           <motion.h1 
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.4 }}
-            className="text-responsive-2xl font-extrabold leading-tight"
+            className="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-tight"
           >
             <motion.span 
               initial={{ x: -20, opacity: 0 }}
@@ -518,7 +509,7 @@ function Hero() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1.0, duration: 0.6 }}
-            className="mt-6 text-responsive-lg"
+            className="mt-6 text-xl sm:text-2xl"
           >
             A forum for students from premier institutions across India.
           </motion.p>
@@ -526,7 +517,7 @@ function Hero() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1.2, duration: 0.6 }}
-            className="mt-2 text-responsive-base"
+            className="mt-2 text-lg sm:text-xl"
           >
             Bringing together the best talents with a "Nation First" attitude for national reconstruction.
           </motion.p>
@@ -579,7 +570,7 @@ function Section({ id, title, children }) {
           whileInView={{ y: 0, opacity: 1 }} 
           viewport={{ once: true }} 
           transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.1 }} 
-          className="text-inverse-2xl font-extrabold text-[color:var(--color-ashoka-blue)]"
+          className="text-4xl sm:text-5xl font-extrabold text-[color:var(--color-ashoka-blue)]"
         >
           {title}
         </motion.h2>
@@ -608,7 +599,13 @@ function Footer() {
       <div className="container-responsive py-responsive">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="text-center md:text-left">
-            <div className="mx-auto md:mx-0 h-12 w-12 rounded bg-white flex items-center justify-center text-[10px] font-bold text-[color:var(--color-footer-blue)]">TI</div>
+            <div className="mx-auto md:mx-0 h-12 w-12 rounded-full overflow-hidden ring-2 ring-white shadow-lg flex items-center justify-center bg-white">
+              <img 
+                src="/src/assets/Think_India_Logo.svg" 
+                alt="Think India Logo" 
+                className="h-full w-full object-cover"
+              />
+            </div>
             <div className="mt-4 text-2xl font-extrabold">Think India</div>
             <p className="mt-3 text-white/75 max-w-sm mx-auto md:mx-0">Empowering students to shape the future of India.</p>
           </div>
@@ -839,7 +836,6 @@ function ContactSection() {
 function HomePage() {
   const [eventImages, setEventImages] = useState([])
 
-  // ... your existing useEffect for fetching data remains unchanged ...
   useEffect(() => {
     let cancelled = false
     const load = async () => {
@@ -857,57 +853,58 @@ function HomePage() {
         const events = await res.json()
         const list = Array.isArray(events) ? events : []
 
-        const detectImageMime = (b64) => {
-          if (!b64 || typeof b64 !== 'string') return ''
-          const head = b64.slice(0, 16)
-          if (head.startsWith('/9j/')) return 'image/jpeg'
-          if (head.startsWith('iVBORw0KGgo')) return 'image/png'
-          if (head.startsWith('R0lGOD')) return 'image/gif'
-          if (head.startsWith('UklGR')) return 'image/webp'
-          return ''
-        }
-
-        const sanitizeBase64 = (raw) => {
-          if (!raw || typeof raw !== 'string') return ''
-          let cleaned = raw.trim()
-          if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
-            try { cleaned = JSON.parse(cleaned) } catch {}
-          }
-          cleaned = String(cleaned).replace(/^data:[^;]+;base64,/, '')
-          cleaned = cleaned.replace(/[^A-Za-z0-9+/=]/g, '')
-          return cleaned
-        }
-
-        const extractBase64 = (payload) => {
-          let mime = ''
-          let dataUri = ''
-          let base64 = ''
-          if (payload == null) return { base64, mime, dataUri }
-          if (typeof payload === 'string') {
-            const trimmed = payload.trim()
-            if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
-              try {
-                const unwrapped = JSON.parse(trimmed)
-                if (typeof unwrapped === 'string') return extractBase64(unwrapped)
-              } catch {}
+        const imageUtils = {
+          detectMime: (b64) => {
+            if (!b64 || typeof b64 !== 'string') return ''
+            const head = b64.slice(0, 16)
+            if (head.startsWith('/9j/')) return 'image/jpeg'
+            if (head.startsWith('iVBORw0KGgo')) return 'image/png'
+            if (head.startsWith('R0lGOD')) return 'image/gif'
+            if (head.startsWith('UklGR')) return 'image/webp'
+            return ''
+          },
+          
+          sanitizeBase64: (raw) => {
+            if (!raw || typeof raw !== 'string') return ''
+            let cleaned = raw.trim()
+            if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+              try { cleaned = JSON.parse(cleaned) } catch {}
             }
-            if (trimmed.startsWith('data:')) {
-              dataUri = trimmed
-              const match = trimmed.match(/^data:([^;]+);base64,(.*)$/)
-              if (match) { mime = match[1]; base64 = match[2] }
+            cleaned = String(cleaned).replace(/^data:[^;]+;base64,/, '')
+            return cleaned.replace(/[^A-Za-z0-9+/=]/g, '')
+          },
+          
+          extractBase64: (payload) => {
+            let mime = '', dataUri = '', base64 = ''
+            if (payload == null) return { base64, mime, dataUri }
+            
+            if (typeof payload === 'string') {
+              const trimmed = payload.trim()
+              if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+                try {
+                  const unwrapped = JSON.parse(trimmed)
+                  if (typeof unwrapped === 'string') return imageUtils.extractBase64(unwrapped)
+                } catch {}
+              }
+              if (trimmed.startsWith('data:')) {
+                dataUri = trimmed
+                const match = trimmed.match(/^data:([^;]+);base64,(.*)$/)
+                if (match) { mime = match[1]; base64 = match[2] }
+                return { base64, mime, dataUri }
+              }
+              base64 = imageUtils.sanitizeBase64(trimmed)
               return { base64, mime, dataUri }
             }
-            base64 = sanitizeBase64(trimmed)
+            
+            const candidates = [payload.base64Image, payload.base64, payload.data, payload.image, payload.base64EncodedImage]
+            for (const c of candidates) {
+              if (typeof c === 'string' && c.trim()) return imageUtils.extractBase64(c)
+            }
+            mime = payload.imageType || payload.mimeType || payload.contentType || mime
+            const anyString = Object.values(payload).find((v) => typeof v === 'string')
+            if (anyString) return imageUtils.extractBase64(anyString)
             return { base64, mime, dataUri }
           }
-          const candidates = [payload.base64Image, payload.base64, payload.data, payload.image, payload.base64EncodedImage]
-          for (const c of candidates) {
-            if (typeof c === 'string' && c.trim()) return extractBase64(c)
-          }
-          mime = payload.imageType || payload.mimeType || payload.contentType || mime
-          const anyString = Object.values(payload).find((v) => typeof v === 'string')
-          if (anyString) return extractBase64(anyString)
-          return { base64, mime, dataUri }
         }
 
         // Fetch each image by imageId
@@ -926,14 +923,13 @@ function HomePage() {
               }
               if (!imgRes.ok) throw new Error('image fetch error')
               const contentType = imgRes.headers.get('content-type') || ''
-              let base64 = ''
-              let mime = ''
-              let dataUri = ''
+              let base64 = '', mime = '', dataUri = ''
+              
               if (contentType.includes('application/json')) {
                 const json = await imgRes.json()
-                const ext = extractBase64(json)
-                base64 = sanitizeBase64(ext.base64)
-                mime = ext.mime || detectImageMime(base64) || 'image/jpeg'
+                const ext = imageUtils.extractBase64(json)
+                base64 = imageUtils.sanitizeBase64(ext.base64)
+                mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
                 dataUri = ext.dataUri
               } else {
                 const text = await imgRes.text()
@@ -941,17 +937,17 @@ function HomePage() {
                 if (maybeJson.startsWith('{') || maybeJson.startsWith('[') || (maybeJson.startsWith('"') && maybeJson.endsWith('"'))) {
                   try {
                     const parsed = JSON.parse(maybeJson)
-                    const ext = extractBase64(parsed)
-                    base64 = sanitizeBase64(ext.base64)
-                    mime = ext.mime || detectImageMime(base64) || 'image/jpeg'
+                    const ext = imageUtils.extractBase64(parsed)
+                    base64 = imageUtils.sanitizeBase64(ext.base64)
+                    mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
                     dataUri = ext.dataUri
                   } catch {
-                    base64 = sanitizeBase64(maybeJson)
-                    mime = detectImageMime(base64) || 'image/jpeg'
+                    base64 = imageUtils.sanitizeBase64(maybeJson)
+                    mime = imageUtils.detectMime(base64) || 'image/jpeg'
                   }
                 } else {
-                  base64 = sanitizeBase64(maybeJson)
-                  mime = detectImageMime(base64) || 'image/jpeg'
+                  base64 = imageUtils.sanitizeBase64(maybeJson)
+                  mime = imageUtils.detectMime(base64) || 'image/jpeg'
                 }
               }
               const src = dataUri || (base64 ? `data:${mime};base64,${base64}` : '')
@@ -978,12 +974,12 @@ function HomePage() {
     <>
       <Hero />
       <Section id="about" title="About Us">
-        <p className="text-gray-700 max-w-3xl">
+        <p className="text-gray-700 max-w-3xl text-lg sm:text-xl">
           Think India is a student and young professionals movement aiming to bring together intellectuals, policymakers, and leaders to work towards a prosperous and self-reliant Bharat.
         </p>
       </Section>
       <Section id="initiatives" title="Key Initiatives">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-3">
           {[
             { title: 'Internships', desc: 'Meaningful opportunities in governance, policy, and industry.', barClass: 'bg-[color:var(--color-india-saffron)]' },
             { title: 'Research', desc: 'Collaborative projects addressing national priorities.', barClass: 'bg-white' },
@@ -1024,7 +1020,7 @@ function HomePage() {
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.4 + index * 0.1 }}
-                  className="mt-2 text-responsive-sm text-[color:var(--color-ashoka-blue)]"
+                  className="mt-2 text-xl font-semibold text-[color:var(--color-ashoka-blue)]"
                 >
                   {card.title}
                 </motion.div>
@@ -1033,7 +1029,7 @@ function HomePage() {
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.5 + index * 0.1 }}
-                  className="mt-2 text-gray-600"
+                  className="mt-2 text-gray-600 text-base"
                 >
                   {card.desc}
                 </motion.p>
@@ -1055,40 +1051,19 @@ function OAuthCallbackHandler() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    console.log('🔍 OAuthCallbackHandler: Checking for OAuth callback...')
-    console.log('🔍 Current URL:', window.location.href)
-    console.log('🔍 Search params:', searchParams.toString())
-    
     const token = searchParams.get('token')
     const isAdmin = searchParams.get('isAdmin')
-    
-    console.log('🔍 Token found:', token ? 'YES' : 'NO')
-    console.log('🔍 Token value:', token ? `${token.substring(0, 20)}...` : 'null')
-    console.log('🔍 isAdmin found:', isAdmin ? 'YES' : 'NO')
-    console.log('🔍 isAdmin value:', isAdmin)
 
     if (token) {
-      console.log('✅ Token detected! Processing OAuth callback...')
-      
-      // 1. Save the token
       setToken(token)
-      console.log('✅ Token saved to localStorage')
 
-      // 2. Handle admin status and redirect
       if (isAdmin === 'true') {
-        console.log('✅ User is admin, redirecting to /admin')
         localStorage.setItem('is_admin', 'true')
-        // Force reload to ensure navbar updates
         window.location.href = '/admin'
       } else {
-        console.log('✅ User is regular user, redirecting to /user/dashboard')
         localStorage.removeItem('is_admin')
-        // Force reload to ensure navbar updates
         window.location.href = '/user/dashboard'
       }
-    } else {
-      console.log('❌ No token found in URL parameters')
-      console.log('🔍 All search params:', Object.fromEntries(searchParams.entries()))
     }
   }, [searchParams, navigate])
 
@@ -1096,15 +1071,6 @@ function OAuthCallbackHandler() {
 }
 
 export default function App() {
-  // Debug: Check localStorage on app start
-  useEffect(() => {
-    console.log('🔍 App: Component mounted')
-    console.log('🔍 localStorage contents:', {
-      token: localStorage.getItem('token') ? 'FOUND' : 'NOT FOUND',
-      is_admin: localStorage.getItem('is_admin'),
-      allKeys: Object.keys(localStorage)
-    })
-  }, [])
 
   // Smooth-scroll to in-page anchors when the hash changes
   function ScrollToHash() {
@@ -1170,7 +1136,7 @@ export default function App() {
     // Show loading page for 3 seconds on first load
     const timer = setTimeout(() => {
       setIsLoading(false)
-    }, 3000)
+    }, 2000)
 
     return () => clearTimeout(timer)
   }, [])

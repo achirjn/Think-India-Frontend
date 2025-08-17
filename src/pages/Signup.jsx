@@ -198,11 +198,11 @@ export default function Signup() {
             initial={{ y: 16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 120, damping: 18 }}
-            className="text-xl font-bold text-neutral-800"
+            className="text-xl font-bold text-[color:var(--color-ashoka-blue)]"
           >
             Welcome to Think India
           </motion.h1>
-          <p className="mt-2 max-w-sm text-sm text-neutral-600">
+          <p className="mt-2 max-w-sm text-sm text-[color:var(--color-ashoka-blue)]/70">
             Create your account to join the community
           </p>
 
@@ -219,7 +219,7 @@ export default function Signup() {
 
           <form className="my-6" onSubmit={handleSubmit}>
             <LabelInputContainer className="mb-4">
-              <label htmlFor="name" className="text-sm font-medium text-gray-700">Name</label>
+              <label htmlFor="name" className="text-sm font-medium text-[color:var(--color-ashoka-blue)]">Name</label>
               <FieldHover className="mt-2">
                 <input
                   id="name"
@@ -235,7 +235,7 @@ export default function Signup() {
             </LabelInputContainer>
 
             <LabelInputContainer className="mb-4">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</label>
+              <label htmlFor="email" className="text-sm font-medium text-[color:var(--color-ashoka-blue)]">Email Address</label>
               <FieldHover className="mt-2">
                 <input
                   id="email"
@@ -251,7 +251,7 @@ export default function Signup() {
             </LabelInputContainer>
 
             <LabelInputContainer className="mb-4">
-              <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
+              <label htmlFor="password" className="text-sm font-medium text-[color:var(--color-ashoka-blue)]">Password</label>
               <FieldHover className="mt-2">
                 <input
                   id="password"
@@ -267,7 +267,7 @@ export default function Signup() {
             </LabelInputContainer>
 
             <LabelInputContainer className="mb-6">
-              <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirm Password</label>
+              <label htmlFor="confirmPassword" className="text-sm font-medium text-[color:var(--color-ashoka-blue)]">Confirm Password</label>
               <FieldHover className="mt-2">
                 <input
                   id="confirmPassword"
@@ -285,7 +285,7 @@ export default function Signup() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`group/btn relative block h-11 w-full rounded-md bg-gradient-to-br from-black to-neutral-700 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`group/btn relative block h-11 w-full rounded-md bg-gradient-to-br from-[color:var(--color-ashoka-blue)] to-[color:var(--color-ashoka-blue)]/80 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] transition-all duration-200 hover:from-[color:var(--color-ashoka-blue)]/90 hover:to-[color:var(--color-ashoka-blue)]/70 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {isLoading ? 'Creating account…' : 'Sign up →'}
               <BottomGradient />
@@ -302,15 +302,15 @@ export default function Signup() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.9, duration: 0.5 }}
-                className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black"
+                className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-[color:var(--color-ashoka-blue)] transition-all duration-200 hover:bg-gray-100"
               >
                 <GoogleIcon className="h-4 w-4" />
-                <span className="text-sm text-neutral-700">Continue with Google</span>
+                <span className="text-sm text-[color:var(--color-ashoka-blue)]/80">Continue with Google</span>
                 <BottomGradient />
               </motion.button>
             </div>
 
-            <p className="mt-6 text-sm text-gray-600">
+            <p className="mt-6 text-sm text-[color:var(--color-ashoka-blue)]/70">
               Already have an account? <Link to="/login" className="text-[color:var(--color-ashoka-blue)] underline">Login</Link>
             </p>
           </form>

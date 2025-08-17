@@ -87,13 +87,3 @@ export default function ImageSlider({ images, intervalMs = 2000, className = '' 
     </div>
   )
 }
-
-
-
-
-
-
-
-
-
-

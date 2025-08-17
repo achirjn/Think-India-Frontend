@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react'
+import { useCallback, useRef } from 'react'
 
 /**
  * HoverCard adds a subtle spotlight/radial gradient effect that follows
@@ -49,5 +49,3 @@ export function HoverEffect({ children, className = '' }) {
 }
 
 export default HoverCard
-
-

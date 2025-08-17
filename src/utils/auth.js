@@ -6,23 +6,23 @@ const TOKEN_KEY = 'auth_token';
  * @param {string} token - The raw JWT token string (without "Bearer ").
  */
 export const setToken = (token) => {
-  localStorage.setItem(TOKEN_KEY, token);
-};
+  localStorage.setItem(TOKEN_KEY, token)
+}
 
 /**
  * Retrieves the authentication token from localStorage.
  * @returns {string | null}
  */
 export const getToken = () => {
-  return localStorage.getItem(TOKEN_KEY);
-};
+  return localStorage.getItem(TOKEN_KEY)
+}
 
 /**
  * Removes the authentication token to log the user out.
  */
 export const removeToken = () => {
-  localStorage.removeItem(TOKEN_KEY);
-};
+  localStorage.removeItem(TOKEN_KEY)
+}
 
 /**
  * Checks if a user is authenticated by verifying the presence and validity of a token.
@@ -65,36 +65,35 @@ export const authFetch = async (url, options = {}) => {
   const token = getToken();
 
   // Start with any headers that were passed in the options
-  const headers = { ...options.headers };
+  const headers = { ...options.headers }
 
   // If a token exists, add the Authorization header
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers['Authorization'] = `Bearer ${token}`
   }
 
-  // ✅ KEY CHANGE: Only set Content-Type if the body exists and is NOT FormData.
-  // This allows the browser to correctly set the multipart header for file uploads.
+  // Only set Content-Type if the body exists and is NOT FormData
   if (options.body && !(options.body instanceof FormData)) {
-    headers['Content-Type'] = 'application/json';
+    headers['Content-Type'] = 'application/json'
   }
 
   // Construct the final options for the fetch call
   const finalOptions = {
     ...options,
     headers,
-  };
-
-  const response = await fetch(url, finalOptions);
-
-  // Handles expired tokens by redirecting to the login page.
-  if (response.status === 401) {
-    removeToken();
-    window.location.href = '/login';
-    throw new Error('Authentication expired. Please login again.');
   }
 
-  return response;
-};
+  const response = await fetch(url, finalOptions)
+
+  // Handles expired tokens by redirecting to the login page
+  if (response.status === 401) {
+    removeToken()
+    window.location.href = '/login'
+    throw new Error('Authentication expired. Please login again.')
+  }
+
+  return response
+}
 
 /**
  * A simple wrapper for public API calls that do not require authentication.
@@ -103,5 +102,5 @@ export const authFetch = async (url, options = {}) => {
  * @returns {Promise<Response>}
  */
 export const publicFetch = async (url, options = {}) => {
-  return fetch(url, options);
-};
+  return fetch(url, options)
+}

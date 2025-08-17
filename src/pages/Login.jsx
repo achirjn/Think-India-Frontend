@@ -171,7 +171,7 @@ export default function Login() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.2 }}
-            className="text-xl font-bold text-neutral-800"
+            className="text-xl font-bold text-[color:var(--color-ashoka-blue)]"
           >
             Welcome back
           </motion.h1>
@@ -179,7 +179,7 @@ export default function Login() {
             initial={{ y: 15, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.6 }}
-            className="mt-2 max-w-sm text-sm text-neutral-600"
+            className="mt-2 max-w-sm text-sm text-[color:var(--color-ashoka-blue)]/70"
           >
             Login to your account
           </motion.p>
@@ -214,7 +214,7 @@ export default function Login() {
                 transition={{ delay: 0.6, duration: 0.5 }}
                 className="mb-4"
               >
-                <label htmlFor="email" className="text-sm font-medium text-gray-700">Email</label>
+                <label htmlFor="email" className="text-sm font-medium text-[color:var(--color-ashoka-blue)]">Email</label>
                 <FieldHover className="mt-2">
                 <input 
                   id="email" 
@@ -245,7 +245,7 @@ export default function Login() {
                 transition={{ delay: 0.7, duration: 0.5 }}
                 className="mb-6"
               >
-                <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
+                <label htmlFor="password" className="text-sm font-medium text-[color:var(--color-ashoka-blue)]">Password</label>
                 <FieldHover className="mt-2">
                 <input 
                   id="password" 
@@ -278,7 +278,7 @@ export default function Login() {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.8, duration: 0.5 }}
-                className={`group/btn relative block h-11 w-full rounded-md bg-gradient-to-br from-black to-neutral-700 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] transition-all duration-200 ${
+                className={`group/btn relative block h-11 w-full rounded-md bg-gradient-to-br from-[color:var(--color-ashoka-blue)] to-[color:var(--color-ashoka-blue)]/80 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] transition-all duration-200 hover:from-[color:var(--color-ashoka-blue)]/90 hover:to-[color:var(--color-ashoka-blue)]/70 ${
                   isLoading ? 'opacity-70 cursor-not-allowed' : ''
                 }`}
               >
@@ -313,7 +313,7 @@ export default function Login() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 1.0, duration: 0.5 }}
-              className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black transition-all duration-200"
+              className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-[color:var(--color-ashoka-blue)] transition-all duration-200 hover:bg-gray-100"
             >
               <svg className="h-4 w-4" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" aria-hidden>
                 <path fill="#4285F4" d="M533.5 278.4c0-18.4-1.5-36.8-4.7-54.6H272.1v103.4h146.7c-6.3 34.2-26.8 63.2-57.1 82.5v68.3h92.4c54.1-49.8 79.4-123.2 79.4-199.6z"/>
@@ -321,7 +321,7 @@ export default function Login() {
                 <path fill="#FBBC05" d="M110.7 315.6c-12.3-36.9-12.3-76.4 0-113.3V127.7H14.7c-47.2 94.3-47.2 206.3 0 300.6l95.9-72.7z"/>
                 <path fill="#EA4335" d="M272.1 106.8c41.9-.6 82.4 14.9 113.2 43.7l84.2-84.2C428.4 24.1 353.6-1 272.1 0 161.5 0 62.9 58.4 14.7 154.1l96 74.6C133.4 160.7 197 110.1 272.1 110.1z"/>
               </svg>
-              <span className="text-sm text-neutral-700">Continue with Google</span>
+              <span className="text-sm text-[color:var(--color-ashoka-blue)]/80">Continue with Google</span>
               <BottomGradient />
             </motion.button>
 
@@ -329,7 +329,7 @@ export default function Login() {
               initial={{ y: 15, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 1.1, duration: 0.5 }}
-              className="mt-6 text-sm text-gray-600"
+              className="mt-6 text-sm text-[color:var(--color-ashoka-blue)]/70"
             >
               New here? <Link to="/signup" className="text-[color:var(--color-ashoka-blue)] underline hover:text-[color:var(--color-india-saffron)] transition-colors">Create an account</Link>
             </motion.p>

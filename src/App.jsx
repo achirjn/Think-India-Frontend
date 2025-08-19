@@ -33,22 +33,24 @@ function NavBar() {
 
   // Handle navigation to home page sections
   const handleSectionNavigation = (sectionId) => {
-    if (location.pathname === '/') {
-      // Already on home page, just scroll to section
+    const scrollToTarget = () => {
       const element = document.getElementById(sectionId)
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
+      // If targeting hero, also ensure window is at the very top
+      if (sectionId === 'hero') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    }
+
+    if (location.pathname === '/') {
+      // Already on home page
+      scrollToTarget()
     } else {
-      // Navigate to home page first, then scroll to section
+      // Navigate to home first, then scroll
       navigate('/')
-      // Use setTimeout to ensure the page has loaded before scrolling
-      setTimeout(() => {
-        const element = document.getElementById(sectionId)
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }
-      }, 100)
+      setTimeout(scrollToTarget, 100)
     }
   }
 
@@ -160,39 +162,43 @@ function NavBar() {
       <div className="bg-gradient-to-r from-[color:var(--color-india-saffron)] via-white to-[color:var(--color-india-green)]">
         <div className="container-responsive">
           <div className="flex h-16 md:h-18 items-center justify-between">
-            <Link to="/" className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <motion.div 
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
                 className="flex items-center gap-3"
               >
-                {/* Think India Logo */}
-                <motion.div 
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="h-12 w-12 rounded-full overflow-hidden ring-2 ring-white shadow-lg"
-                >
-                  <img 
-                    src="/src/assets/Think_India_Logo.svg" 
-                    alt="Think India Logo" 
-                    className="h-full w-full object-cover"
-                  />
-                </motion.div>
+                {/* Think India Logo (scroll to Hero) */}
+                <button onClick={() => handleSectionNavigation('hero')} className="contents" aria-label="Go to Hero">
+                  <motion.div 
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    className="h-12 w-12 rounded-full overflow-hidden ring-2 ring-white shadow-lg cursor-pointer"
+                  >
+                    <img 
+                      src="/src/assets/Think_India_Logo.svg" 
+                      alt="Think India Logo" 
+                      className="h-full w-full object-cover"
+                    />
+                  </motion.div>
+                </button>
                 {/* SVNIT Logo */}
-                <motion.div 
-                  whileHover={{ scale: 1.1, rotate: -5 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="h-12 w-12 flex items-center justify-center"
-                >
-                  <img 
-                    src="/src/assets/NIT_Surat_Logo.svg" 
-                    alt="NIT Surat Logo" 
-                    className="h-full w-full object-contain"
-                  />
-                </motion.div>
+                <a href="https://www.svnit.ac.in/index.php" target="_blank" rel="noopener noreferrer">
+                  <motion.div 
+                    whileHover={{ scale: 1.1, rotate: -5 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    className="h-12 w-12 flex items-center justify-center"
+                  >
+                    <img 
+                      src="/src/assets/NIT_Surat_Logo.svg" 
+                      alt="NIT Surat Logo" 
+                      className="h-full w-full object-contain"
+                    />
+                  </motion.div>
+                </a>
               </motion.div>
               <motion.div 
                 initial={{ x: -20, opacity: 0 }}
@@ -200,22 +206,26 @@ function NavBar() {
                 transition={{ delay: 0.3, duration: 0.6 }}
                 className="flex flex-col items-center ml-2 sm:ml-3 md:ml-4"
               >
-                <motion.span 
+                <motion.button 
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="font-black text-lg sm:text-xl md:text-2xl lg:text-3xl tracking-wide text-[color:var(--color-ashoka-blue)]"
+                  onClick={() => handleSectionNavigation('hero')}
+                  className="font-black text-lg sm:text-xl md:text-2xl lg:text-3xl tracking-wide text-[color:var(--color-ashoka-blue)] text-left"
                 >
                   Think India
-                </motion.span>
-                <motion.span 
+                </motion.button>
+                <motion.a 
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="text-sm sm:text-base md:text-lg tracking-wide text-[color:var(--color-ashoka-blue)] -mt-1"
+                  href="https://www.svnit.ac.in/index.php"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm sm:text-base md:text-lg tracking-wide text-[color:var(--color-ashoka-blue)] font-bold -mt-1"
                 >
                   SVNIT
-                </motion.span>
+                </motion.a>
               </motion.div>
-            </Link>
+            </div>
             <motion.nav 
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -463,7 +473,7 @@ function Hero() {
   };
 
   return (
-    <section className="relative overflow-hidden min-h-[calc(100vh-4rem)] flex items-center">
+    <section id="hero" className="relative overflow-hidden min-h-[calc(100vh-4rem)] flex items-center">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -492,7 +502,7 @@ function Hero() {
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.6, duration: 0.8 }}
-              className="text-[color:var(--color-india-saffron)]"
+              className="text-[color:var(--color-india-saffron)] font-black tracking-tight drop-shadow-[0_1px_0_rgba(0,0,0,0.25)]"
             >
               Think
             </motion.span>{' '}
@@ -554,7 +564,7 @@ function Hero() {
   )
 }
 
-function Section({ id, title, children }) {
+function Section({ id, title, children, className = '' }) {
   return (
     <motion.section 
       id={id} 
@@ -562,7 +572,7 @@ function Section({ id, title, children }) {
       whileInView={{ opacity: 1 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.6 }}
-      className="py-14"
+      className={`py-8 sm:py-10 md:py-14 ${className}`}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.h2 
@@ -599,14 +609,16 @@ function Footer() {
       <div className="container-responsive py-responsive">
         <div className="grid gap-10 md:grid-cols-4">
           <div className="text-center md:text-left">
-            <div className="mx-auto md:mx-0 h-12 w-12 rounded-full overflow-hidden ring-2 ring-white shadow-lg flex items-center justify-center bg-white">
-              <img 
-                src="/src/assets/Think_India_Logo.svg" 
-                alt="Think India Logo" 
-                className="h-full w-full object-cover"
-              />
+            <div className="flex items-center justify-center md:justify-start gap-3">
+              <div className="h-12 w-12 rounded-full overflow-hidden ring-2 ring-white shadow-lg flex items-center justify-center bg-white shrink-0">
+                <img 
+                  src="/src/assets/Think_India_Logo.svg" 
+                  alt="Think India Logo" 
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="text-2xl font-extrabold">Think India</div>
             </div>
-            <div className="mt-4 text-2xl font-extrabold">Think India</div>
             <p className="mt-3 text-white/75 max-w-sm mx-auto md:mx-0">Empowering students to shape the future of India.</p>
           </div>
           <div className="text-center md:text-left">
@@ -699,7 +711,7 @@ function ContactSection() {
   }
 
   return (
-    <section id="contact" className="py-14 my-14">
+    <section id="contact" className="py-8 sm:py-10 md:py-12 mt-0 md:mt-6 mb-0">
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(80%_60%_at_10%_10%,#0F1C3F_0%,#0F1C3F_40%,#111827_100%)]" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -716,11 +728,6 @@ function ContactSection() {
                 need help with? Reach out to us, we are happy to help!
               </p>
               <div className="mt-8 space-y-4">
-                <div className="text-white/90">
-                  <div className="font-semibold">Contact</div>
-                  <div className="mt-1">Phone: <a className="underline hover:text-white" href="tel:+919876543210">+91 98765 43210</a></div>
-                  <div>Email: <a className="underline hover:text-white" href="mailto:contact@thinkindia.org">contact@thinkindia.org</a></div>
-                </div>
                 <div>
                   <div className="font-semibold mb-2">Connect On</div>
                   <div className="flex flex-wrap gap-3">
@@ -1006,7 +1013,7 @@ function HomePage() {
                 }}
                 whileTap={{ scale: 0.98 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="relative overflow-hidden rounded-2xl p-8 bg-white shadow-sm cursor-pointer"
+                className="relative overflow-hidden rounded-2xl p-8 bg-[var(--bg-saffron-50)] shadow-sm cursor-pointer"
               >
                 <motion.div 
                   initial={{ scaleX: 0 }}
@@ -1020,7 +1027,7 @@ function HomePage() {
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.4 + index * 0.1 }}
-                  className="mt-2 text-xl font-semibold text-[color:var(--color-ashoka-blue)]"
+                  className="mt-2 text-xl font-extrabold text-[color:var(--color-ashoka-blue)]"
                 >
                   {card.title}
                 </motion.div>
@@ -1029,7 +1036,7 @@ function HomePage() {
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: 0.5 + index * 0.1 }}
-                  className="mt-2 text-gray-600 text-base"
+                  className="mt-2 text-base text-[color:var(--color-ashoka-blue)]/80"
                 >
                   {card.desc}
                 </motion.p>
@@ -1038,8 +1045,8 @@ function HomePage() {
           ))}
         </div>
       </Section>
-      <Section id="events" title="Events">
-        <ImageSlider className="mb-2" intervalMs={8000} images={eventImages} overlay={false} />
+      <Section id="events" title="Events" className="pb-0">
+        <ImageSlider className="mb-0" intervalMs={8000} images={eventImages} overlay={false} />
       </Section>
       <ContactSection />
     </>

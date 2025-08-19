@@ -6,6 +6,8 @@
   --color-india-green: #138808;
   --color-footer-blue: #0F1C3F;
   --color-ashoka-blue: var(--color-footer-blue);
+  /* Site background token */
+  --bg-saffron-50: #FFF9F2;
 }
 
 /* Base page defaults */
@@ -19,7 +21,9 @@ html, body {
 }
 
 body {
-  @apply antialiased bg-white;
+  @apply antialiased;
+  /* Even lighter saffron background */
+  background-color: var(--bg-saffron-50);
   color: #111827;
   font-family: Poppins, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   line-height: 1.6;

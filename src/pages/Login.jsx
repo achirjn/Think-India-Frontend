@@ -111,22 +111,17 @@ export default function Login() {
         const token = data.token
         const isAdmin = data.isAdmin
         
-        console.log('🔍 Form login response:', data)
-        console.log('🔍 Token received:', token ? 'YES' : 'NO')
-        console.log('🔍 isAdmin value:', isAdmin)
-                  if (token) {
-            setToken(token)
-            if (isAdmin) {
-              console.log('✅ User is admin, redirecting to /admin')
+        if (token) {
+          setToken(token)
+          if (isAdmin) {
               localStorage.setItem('is_admin', 'true')
               // Force reload to ensure navbar updates
               window.location.href = '/admin'
-            } else {
-              console.log('✅ User is regular user, redirecting to /user/dashboard')
+          } else {
               localStorage.removeItem('is_admin')
               // Force reload to ensure navbar updates
               window.location.href = '/user/dashboard'
-            }
+          }
         } else {
           setErrors({ submit: 'No token received from server. Please check backend configuration.' })
         }
@@ -148,8 +143,6 @@ export default function Login() {
     }
   }
   const handleGoogleLogin = () => {
-    console.log('🔍 Google OAuth button clicked')
-    console.log('🔍 Redirecting to:', 'http://localhost:8082/oauth2/authorization/google')
     // This URL should point to your backend endpoint that initiates the Google OAuth flow
     window.location.href = 'http://localhost:8082/oauth2/authorization/google'; 
   };

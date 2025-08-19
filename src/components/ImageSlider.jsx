@@ -67,14 +67,14 @@ export default function ImageSlider({ images, intervalMs = 2000, className = '' 
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="absolute bottom-16 left-6 pointer-events-none"
+        className="absolute bottom-2 left-3 sm:bottom-4 sm:left-4 md:bottom-16 md:left-6 pointer-events-none"
       >
-        <h3 className="text-white text-3xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">
+        <h3 className="text-white text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">
           {slides[index].title || slides[index].alt}
         </h3>
       </motion.div>
 
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 hidden sm:flex items-center gap-2">
         {slides.map((_, i) => (
           <button
             key={i}

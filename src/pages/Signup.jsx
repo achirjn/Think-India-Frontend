@@ -134,20 +134,14 @@ export default function Signup() {
       formDataToSend.append('name', formData.name)
       formDataToSend.append('email', formData.email)
       formDataToSend.append('password', formData.password)
-      
-      console.log('Attempting to register with:', { name: formData.name, email: formData.email })
-      
+
       const response = await fetch('http://localhost:8082/auth/register', {
         method: 'POST',
         body: formDataToSend
       })
-      
-      console.log('Response status:', response.status)
-      console.log('Response headers:', response.headers)
-      
+
       if (response.ok) {
         const result = await response.text()
-        console.log('Registration successful:', result)
         setSuccessMessage('Registration successful! Redirecting to login...')
         
         // Clear form
@@ -164,12 +158,9 @@ export default function Signup() {
         }, 2000)
       } else {
         const errorData = await response.text()
-        console.error('Registration failed:', response.status, errorData)
         setErrors({ submit: `Registration failed (${response.status}): ${errorData || 'Please try again.'}` })
       }
     } catch (error) {
-      console.error('Network error details:', error)
-      
       // Provide more specific error messages based on the error type
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
         setErrors({ submit: 'Cannot connect to server. Please ensure the backend is running on http://localhost:8082' })
@@ -184,8 +175,6 @@ export default function Signup() {
   }
 
   const handleGoogleLogin = () => {
-    console.log('🔍 Google OAuth button clicked')
-    console.log('🔍 Redirecting to:', 'http://localhost:8082/oauth2/authorization/google')
     // This URL should point to your backend endpoint that initiates the Google OAuth flow
     window.location.href = 'http://localhost:8082/oauth2/authorization/google'; 
   };

@@ -194,7 +194,6 @@ export default function Blogs() {
               const imageSrc = dataUri || (base64 ? `data:${mime || 'image/jpeg'};base64,${base64}` : '')
               return { ...post, imageData: base64, imageType: (mime || 'image/jpeg').replace('image/', ''), imageSrc }
             } catch (e) {
-              console.warn('Image load failed:', e)
               return post
             }
           })
@@ -202,7 +201,6 @@ export default function Blogs() {
 
         setPosts(postsWithImages)
       } catch (e) {
-        console.error('Error fetching blogs:', e) // Debug log
         if (e.message.includes('CORS') || e.message.includes('cross-origin')) {
           setError('CORS error: Backend needs to allow cross-origin requests from your frontend')
         } else if (e.message.includes('fetch')) {
@@ -324,16 +322,11 @@ export default function Blogs() {
                           alt={post.heading || 'Blog post image'} 
                           className="h-full w-full object-cover transition-transform duration-300" 
                           onError={(e) => {
-                            console.error('Image failed to load for post:', post.id)
-                            console.error('Image src length:', post.imageSrc?.length)
-                            console.error('Image type:', post.imageType)
                             e.target.parentElement.innerHTML = `
                               <div class=\"h-40 w-full bg-gray-200 flex items-center justify-center\">\n                                <span class=\"text-gray-500 text-sm\">Image failed to load</span>\n                              </div>
                             `
                           }}
-                          onLoad={() => {
-                            console.log('Image loaded successfully for post:', post.id)
-                          }}
+                          onLoad={() => {}}
                         />
                       </motion.div>
                     ) : (

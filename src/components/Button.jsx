@@ -91,10 +91,7 @@ const StyledWrapper = styled.div`
     color: var(--color-ashoka-blue);
     border-color: var(--color-ashoka-blue);
   }
-  .btn.secondary:hover:not(:disabled) {
-    color: #fff;
-    background-color: var(--color-ashoka-blue);
-  }
+  /* Hover color unchanged for secondary */
 
   /* Primary variant (Sign up) - blue -> white with blue text on hover */
   .btn.primary {
@@ -102,10 +99,7 @@ const StyledWrapper = styled.div`
     color: #fff;
     border-color: var(--color-ashoka-blue);
   }
-  .btn.primary:hover:not(:disabled) {
-    background-color: #fff;
-    color: var(--color-ashoka-blue);
-  }
+  /* Hover color unchanged for primary */
 
   /* Logout variant - red -> white with red text on hover */
   .btn.logout {

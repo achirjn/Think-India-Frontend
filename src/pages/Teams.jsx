@@ -9,17 +9,14 @@ const TeamMemberCard = ({ member, index }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: index * 0.1, duration: 0.5 }}
-      className="relative bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+      className="relative rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 bg-[color:var(--color-ashoka-blue)] w-full sm:max-w-[360px] md:max-w-[380px] lg:max-w-[400px] mx-auto"
     >
-      {/* Tricolor Border */}
-      <div className="absolute inset-0 rounded-2xl p-1 bg-gradient-to-r from-[color:var(--color-india-saffron)] via-white to-[color:var(--color-india-green)]">
-        <div className="h-full w-full rounded-xl bg-gradient-to-br from-[color:var(--color-india-saffron)]/10 via-white/90 to-[color:var(--color-india-green)]/10"></div>
-      </div>
+      {/* Blue themed card (tricolour fill removed) */}
       
       {/* Card Content */}
       <div className="relative z-10 text-center">
         {/* Profile Photo */}
-        <div className="mx-auto w-32 h-32 md:w-40 md:h-40 lg:w-44 lg:h-44 rounded-full bg-gradient-to-br from-[color:var(--color-ashoka-blue)] to-[color:var(--color-india-green)] p-1 mb-4">
+        <div className="mx-auto w-32 h-32 md:w-40 md:h-40 lg:w-44 lg:h-44 rounded-full bg-white p-1 mb-4">
           <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
             {member.image ? (
               <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
@@ -32,13 +29,13 @@ const TeamMemberCard = ({ member, index }) => {
         </div>
         
         {/* Name */}
-        <h3 className="text-lg md:text-xl font-bold text-[color:var(--color-ashoka-blue)] mb-2">
+        <h3 className="text-lg md:text-xl font-bold text-white mb-2">
           {member.name || 'Name'}
         </h3>
         
         {/* Committee */}
         {member.committee && (
-          <p className="text-sm md:text-base text-[color:var(--color-ashoka-blue)] font-medium">
+          <p className="text-sm md:text-base text-white/85 font-medium">
             {member.committee}
           </p>
         )}

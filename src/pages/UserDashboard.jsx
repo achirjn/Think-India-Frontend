@@ -22,52 +22,35 @@ export default function UserDashboard() {
   })
 
   useEffect(() => {
-    console.log('🔍 UserDashboard: Component loaded')
-    console.log('🔍 Current URL:', window.location.href)
-    
-    // This is the ONLY check needed here.
     const token = getToken()
-    console.log('🔍 Token from localStorage:', token ? 'FOUND' : 'NOT FOUND')
-    console.log('🔍 Token value:', token ? `${token.substring(0, 20)}...` : 'null')
     
     if (!token) {
-      console.log('❌ No token found, redirecting to /login')
       navigate('/login')
       return // Stop execution if not logged in
     }
 
-    console.log('✅ Token found, proceeding to fetch user data')
-    console.log('✅ User successfully logged in and reached dashboard')
-
     // Now that we know the user is logged in, fetch their data.
     const fetchUserData = async () => {
       try {
-        console.log('🔍 Fetching user data from backend...')
         const response = await fetch('http://localhost:8082/user/profile', {
           headers: { 'Authorization': `Bearer ${token}` }
         })
-        console.log('🔍 Backend response status:', response.status)
         
         if (response.ok) {
           const data = await response.json()
-          console.log('✅ User data fetched successfully:', data)
           setUserData(data)
         } else if (response.status === 404) {
           // Backend endpoint doesn't exist yet, use mock data
-          console.log('⚠️ Backend endpoint /user/profile not found (404), using mock data')
           // Keep using the existing mock data in userData state
         } else if (response.status === 401) {
           // Unauthorized - token is invalid
-          console.error('❌ Unauthorized (401), token might be invalid')
           localStorage.clear()
           navigate('/login')
         } else {
           // Other errors - don't log out, just use mock data
-          console.log(`⚠️ Backend error (${response.status}), using mock data`)
           // Keep using the existing mock data in userData state
         }
       } catch (error) {
-        console.log('⚠️ Network error fetching user data, using mock data:', error.message)
         // Keep using the existing mock data in userData state
       }
     }

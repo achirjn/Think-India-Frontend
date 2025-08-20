@@ -1,5 +1,5 @@
-import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getToken } from '../utils/auth'
 
@@ -20,6 +20,22 @@ export default function UserDashboard() {
       { id: 3, title: 'Marketing Intern', company: 'GrowthCo', status: 'Rejected', appliedDate: '2024-03-01' }
     ]
   })
+
+  // Modal state
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isPassOpen, setIsPassOpen] = useState(false)
+
+  // Edit profile form
+  const [editName, setEditName] = useState('')
+  const [editFile, setEditFile] = useState(null)
+  const [savingEdit, setSavingEdit] = useState(false)
+  const fileInputRef = useRef(null)
+
+  // Change password form
+  const [oldPassword, setOldPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [savingPass, setSavingPass] = useState(false)
+  const [feedback, setFeedback] = useState('')
 
   useEffect(() => {
     const token = getToken()
@@ -108,7 +124,7 @@ export default function UserDashboard() {
                       userData.name.split(' ').map(n => n[0]).join('').toUpperCase()
                     )}
                   </div>
-                  <button className="absolute bottom-0 right-0 bg-[color:var(--color-ashoka-blue)] text-white p-2 rounded-full shadow-lg hover:bg-opacity-90 transition-colors">
+                  <button onClick={() => { setIsEditOpen(true); setEditName(userData.name) }} className="absolute bottom-0 right-0 bg-[color:var(--color-ashoka-blue)] text-white p-2 rounded-full shadow-lg hover:bg-opacity-90 transition-colors">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
@@ -118,10 +134,10 @@ export default function UserDashboard() {
                 <p className="text-gray-600">{userData.email}</p>
                 
                 <div className="mt-6 space-y-3">
-                  <button className="w-full bg-[color:var(--color-ashoka-blue)] text-white py-2 px-4 rounded-lg hover:bg-opacity-90 transition-colors">
+                  <button onClick={() => { setIsEditOpen(true); setEditName(userData.name) }} className="w-full bg-[color:var(--color-ashoka-blue)] text-white py-2 px-4 rounded-lg hover:bg-opacity-90 transition-colors">
                     Edit Profile
                   </button>
-                  <button className="w-full border border-[color:var(--color-ashoka-blue)] text-[color:var(--color-ashoka-blue)] py-2 px-4 rounded-lg hover:bg-[color:var(--color-ashoka-blue)] hover:text-white transition-colors">
+                  <button onClick={() => setIsPassOpen(true)} className="w-full border border-[color:var(--color-ashoka-blue)] text-[color:var(--color-ashoka-blue)] py-2 px-4 rounded-lg hover:bg-[color:var(--color-ashoka-blue)] hover:text-white transition-colors">
                     Change Password
                   </button>
                 </div>
@@ -203,6 +219,119 @@ export default function UserDashboard() {
           </motion.div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      <AnimatePresence>
+        {isEditOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 10, opacity: 0 }} className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-[color:var(--color-ashoka-blue)]">Edit Profile</h3>
+                <button onClick={() => setIsEditOpen(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+              </div>
+              <form className="mt-4 space-y-4" onSubmit={async (e) => {
+                e.preventDefault()
+                if (!userData.email) return
+                const token = getToken()
+                const formData = new FormData()
+                formData.append('UserName', editName)
+                if (editFile) formData.append('profile_pic', editFile)
+                setSavingEdit(true)
+                setFeedback('')
+                try {
+                  const res = await fetch(`http://localhost:8082/user/editProfile/${encodeURIComponent(userData.email)}` ,{
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                  })
+                  if (!res.ok) throw new Error('Failed to update profile')
+                  // Optimistically update UI
+                  setUserData((prev) => ({ ...prev, name: editName }))
+                  if (editFile) {
+                    const imgUrl = URL.createObjectURL(editFile)
+                    setUserData((prev) => ({ ...prev, profileImage: imgUrl }))
+                  }
+                  setIsEditOpen(false)
+                } catch (err) {
+                  setFeedback(err.message || 'Error while updating profile')
+                } finally {
+                  setSavingEdit(false)
+                }
+              }}>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Name</label>
+                  <input value={editName} onChange={(e)=>setEditName(e.target.value)} className="mt-1 w-full rounded-lg border-gray-300 focus:ring-[color:var(--color-ashoka-blue)] focus:border-[color:var(--color-ashoka-blue)]" type="text" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Profile Picture</label>
+                  <input ref={fileInputRef} onChange={(e)=>setEditFile(e.target.files?.[0]||null)} className="mt-1 w-full" type="file" accept="image/*" />
+                </div>
+                {feedback && <p className="text-sm text-red-600">{feedback}</p>}
+                <div className="flex justify-end gap-3 pt-2">
+                  <button type="button" onClick={()=>setIsEditOpen(false)} className="px-4 py-2 rounded-lg border">Cancel</button>
+                  <button disabled={savingEdit} type="submit" className="px-4 py-2 rounded-lg bg-[color:var(--color-ashoka-blue)] text-white disabled:opacity-60">{savingEdit ? 'Saving...' : 'Save'}</button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Change Password Modal */}
+      <AnimatePresence>
+        {isPassOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 10, opacity: 0 }} className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-[color:var(--color-ashoka-blue)]">Change Password</h3>
+                <button onClick={() => setIsPassOpen(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+              </div>
+              <form className="mt-4 space-y-4" onSubmit={async (e)=>{
+                e.preventDefault()
+                if (!userData.email) return
+                const token = getToken()
+                setSavingPass(true)
+                setFeedback('')
+                try {
+                  const body = new URLSearchParams()
+                  body.set('old_password', oldPassword)
+                  body.set('new_password', newPassword)
+                  const res = await fetch(`http://localhost:8082/user/changePassword/${encodeURIComponent(userData.email)}` ,{
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body
+                  })
+                  if (!res.ok) {
+                    const text = await res.text()
+                    throw new Error(text || 'Failed to change password')
+                  }
+                  setIsPassOpen(false)
+                  setOldPassword('')
+                  setNewPassword('')
+                } catch (err) {
+                  setFeedback(typeof err === 'string' ? err : (err.message || 'Error while changing password'))
+                } finally {
+                  setSavingPass(false)
+                }
+              }}>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Current Password</label>
+                  <input value={oldPassword} onChange={(e)=>setOldPassword(e.target.value)} className="mt-1 w-full rounded-lg border-gray-300 focus:ring-[color:var(--color-ashoka-blue)] focus:border-[color:var(--color-ashoka-blue)]" type="password" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">New Password</label>
+                  <input value={newPassword} onChange={(e)=>setNewPassword(e.target.value)} className="mt-1 w-full rounded-lg border-gray-300 focus:ring-[color:var(--color-ashoka-blue)] focus:border-[color:var(--color-ashoka-blue)]" type="password" required />
+                </div>
+                {feedback && <p className="text-sm text-red-600">{feedback}</p>}
+                <div className="flex justify-end gap-3 pt-2">
+                  <button type="button" onClick={()=>setIsPassOpen(false)} className="px-4 py-2 rounded-lg border">Cancel</button>
+                  <button disabled={savingPass} type="submit" className="px-4 py-2 rounded-lg bg-[color:var(--color-ashoka-blue)] text-white disabled:opacity-60">{savingPass ? 'Saving...' : 'Update'}</button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   )
 }

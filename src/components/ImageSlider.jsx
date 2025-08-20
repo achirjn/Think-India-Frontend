@@ -17,7 +17,7 @@ function buildDataSvg({ width = 1600, height = 900, bg = '#0F1C3F', label = 'Sli
   return `data:image/svg+xml;charset=utf-8,${svg}`
 }
 
-export default function ImageSlider({ images, intervalMs = 2000, className = '' }) {
+export default function ImageSlider({ images, intervalMs = 2000, className = '', showTitle = true, showDots = true, heightClass = 'h-[46vh] sm:h-[55vh] md:h-[60vh] lg:h-[75vh] xl:h-[75vh] 2xl:h-[75vh]' }) {
   const fallback = useMemo(
     () => [
       { src: buildDataSvg({ label: 'Event 1', bg: '#0F1C3F' }), alt: 'Event 1', title: 'Event 1' },
@@ -42,8 +42,8 @@ export default function ImageSlider({ images, intervalMs = 2000, className = '' 
   const goTo = (i) => setIndex(i % slides.length)
 
   return (
-    <div className={`relative w-full overflow-hidden rounded-2xl bg-black ${className}`}>
-      <div className="aspect-[19/9] w-full">
+    <div className={`relative w-full overflow-hidden rounded-2xl bg-black max-h-screen ${className}`}>
+      <div className={`w-full ${heightClass} max-h-screen`}>
         <AnimatePresence mode="popLayout">
           <motion.img
             key={index}
@@ -57,33 +57,37 @@ export default function ImageSlider({ images, intervalMs = 2000, className = '' 
           />
         </AnimatePresence>
       </div>
+      {showTitle && (
+        <>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent h-32" />
+          {/* Event Title Display */}
+          <motion.div 
+            key={`title-${index}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="absolute bottom-2 left-3 sm:bottom-4 sm:left-4 md:bottom-16 md:left-6 pointer-events-none"
+          >
+            <h3 className="text-white text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">
+              {slides[index].title || slides[index].alt}
+            </h3>
+          </motion.div>
+        </>
+      )}
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent h-32" />
-
-      {/* Event Title Display */}
-      <motion.div 
-        key={`title-${index}`}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="absolute bottom-2 left-3 sm:bottom-4 sm:left-4 md:bottom-16 md:left-6 pointer-events-none"
-      >
-        <h3 className="text-white text-xl sm:text-2xl md:text-4xl lg:text-5xl font-bold drop-shadow-lg">
-          {slides[index].title || slides[index].alt}
-        </h3>
-      </motion.div>
-
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 hidden sm:flex items-center gap-2">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => goTo(i)}
-            className={`h-2.5 w-2.5 rounded-full transition ${i === index ? 'bg-[color:var(--color-india-saffron)] scale-110' : 'bg-white/70 hover:bg-white'}`}
-            aria-label={`Go to slide ${i + 1}`}
-          />
-        ))}
-      </div>
+      {showDots && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 hidden sm:flex items-center gap-2">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              className={`h-2.5 w-2.5 rounded-full transition ${i === index ? 'bg-[color:var(--color-india-saffron)] scale-110' : 'bg-white/70 hover:bg-white'}`}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

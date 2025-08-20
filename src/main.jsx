@@ -7,6 +7,7 @@ import '@fontsource/poppins/700.css'
 import './index.css'
 import App from './App.jsx'
 import thinkIndiaFavicon from './assets/Think_India_Logo.svg'
+import { AuthProvider } from './hooks/useAuth.jsx'
 
 // Ensure favicon uses Think India logo in both dev and build
 function setFavicon(href) {
@@ -29,6 +30,8 @@ setFavicon(thinkIndiaFavicon)
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <AuthProvider>
+      <App />
+    </AuthProvider>
   </StrictMode>,
 )

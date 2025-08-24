@@ -115,13 +115,11 @@ export default function Login() {
           setToken(token)
           if (isAdmin) {
               localStorage.setItem('is_admin', 'true')
-              // Force reload to ensure navbar updates
-              window.location.href = '/admin'
           } else {
               localStorage.removeItem('is_admin')
-              // Force reload to ensure navbar updates
-              window.location.href = '/user/dashboard'
           }
+          // Redirect all users to home (Hero section)
+          window.location.href = '/'
         } else {
           setErrors({ submit: 'No token received from server. Please check backend configuration.' })
         }

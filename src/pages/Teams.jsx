@@ -52,12 +52,18 @@ const SeniorExecutivesTable = ({ executives }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className="bg-white rounded-2xl shadow-lg overflow-hidden"
+      className="bg-white rounded-2xl shadow-lg overflow-hidden max-w-5xl mx-auto"
     >
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-[color:var(--color-ashoka-blue)]">
             <tr>
+              <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
+                S.No
+              </th>
+              <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
+                Photo
+              </th>
               <th className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">
                 Name
               </th>
@@ -79,13 +85,27 @@ const SeniorExecutivesTable = ({ executives }) => {
                 transition={{ delay: index * 0.05, duration: 0.4 }}
                 className="hover:bg-gray-50 transition-colors"
               >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[color:var(--color-ashoka-blue)]">
+                <td className="px-6 py-2 whitespace-nowrap text-sm text-[color:var(--color-ashoka-blue)]">
+                  {index + 1}
+                </td>
+                <td className="px-6 py-2 whitespace-nowrap">
+                  <div className="h-12 w-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center shadow-sm">
+                    {executive.image ? (
+                      <img src={executive.image} alt={executive.name || 'Member photo'} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-semibold text-[color:var(--color-ashoka-blue)]">
+                        {(executive.name || '?').charAt(0)}
+                      </span>
+                    )}
+                  </div>
+                </td>
+                <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-[color:var(--color-ashoka-blue)]">
                   {executive.name || 'Name'}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[color:var(--color-ashoka-blue)]">
+                <td className="px-6 py-2 whitespace-nowrap text-sm text-[color:var(--color-ashoka-blue)]">
                   {executive.position || 'Position'}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-[color:var(--color-ashoka-blue)]">
+                <td className="px-6 py-2 whitespace-nowrap text-sm text-[color:var(--color-ashoka-blue)]">
                   {executive.committee || 'Committee'}
                 </td>
               </motion.tr>

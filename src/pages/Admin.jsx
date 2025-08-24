@@ -6,7 +6,8 @@ import { authFetch, isAuthenticated, removeToken, getToken } from '../utils/auth
 const TABS = [
   { key: 'blogs', label: 'Blogs' },
   { key: 'teams', label: 'Teams' },
-  { key: 'events', label: 'Event Images' },
+  { key: 'events', label: 'Events' },
+  { key: 'glimpses', label: 'Glimpses' },
   { key: 'recommendations', label: 'Recommendations' },
   { key: 'internships', label: 'Internships' },
 ]
@@ -102,6 +103,7 @@ export default function Admin() {
         {activeTab === 'blogs' && <BlogsPanel />}
         {activeTab === 'teams' && <TeamsPanel />}
         {activeTab === 'events' && <EventsPanel />}
+        {activeTab === 'glimpses' && <GlimpsesPanel />}
         {activeTab === 'recommendations' && <RecommendationsPanel />}
         {activeTab === 'internships' && <InternshipsPanel />}
       </motion.div>
@@ -603,6 +605,280 @@ function TeamsPanel() {
 }
 
 function EventsPanel() {
+  const navigate = useNavigate()
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [form, setForm] = useState({
+    name: '',
+    details: '',
+    message: '',
+    dateTime: '',
+    isActive: false,
+    showEvent: false,
+    images: []
+  })
+
+  // Inline events management state
+  const [eventsError, setEventsError] = useState('')
+  const [upLoading, setUpLoading] = useState(false)
+  const [pastLoading, setPastLoading] = useState(false)
+  const [upcoming, setUpcoming] = useState([])
+  const [past, setPast] = useState([])
+
+  const parseDate = (ev) => {
+    const d = ev?.dateTime || ev?.date || ev?.eventDate || ev?.event_date || ev?.when || null
+    if (!d) return null
+    const dt = new Date(d)
+    return isNaN(dt.getTime()) ? null : dt
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    const loadLists = async () => {
+      setEventsError('')
+      setUpLoading(true)
+      setPastLoading(true)
+      try {
+        const [upRes, pastRes] = await Promise.all([
+          authFetch('http://localhost:8082/user/upcommingEvents', { headers: { Accept: 'application/json' } }),
+          authFetch('http://localhost:8082/user/pastEvents', { headers: { Accept: 'application/json' } })
+        ])
+        const upList = upRes.ok ? await upRes.json().catch(() => []) : []
+        const pastList = pastRes.ok ? await pastRes.json().catch(() => []) : []
+        if (!cancelled) {
+          setUpcoming(Array.isArray(upList) ? upList : [])
+          setPast(Array.isArray(pastList) ? pastList : [])
+        }
+        if (!upRes.ok && !pastRes.ok) {
+          throw new Error(`Failed to fetch events: UPC ${upRes.status}, PAST ${pastRes.status}`)
+        }
+      } catch (e) {
+        if (!cancelled) setEventsError(e?.message || 'Failed to load events')
+      } finally {
+        if (!cancelled) {
+          setUpLoading(false)
+          setPastLoading(false)
+        }
+      }
+    }
+    loadLists()
+    return () => { cancelled = true }
+  }, [])
+  const onSubmit = async (e) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setError('')
+    setSuccess('')
+    try {
+      const fd = new FormData()
+      fd.append('Name', form.name || '')
+      fd.append('Details', form.details || '')
+      fd.append('Message', form.message || '')
+      if (form.dateTime) fd.append('DateTime', form.dateTime)
+      fd.append('IsActive', form.isActive ? '1' : '0')
+      fd.append('ShowEvent', form.showEvent ? '1' : '0')
+      for (const f of form.images) fd.append('Images', f)
+
+      let res = await authFetch('http://localhost:8082/api/admin/addEvent', { method: 'POST', body: fd })
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      const text = await res.text().catch(() => '')
+      setSuccess(text ? `Created event (id: ${text})` : 'Event created successfully')
+      setForm({ name: '', details: '', message: '', dateTime: '', isActive: false, showEvent: false, images: [] })
+    } catch (e2) {
+      setError(typeof e2?.message === 'string' ? e2.message : 'Failed to create event')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <PanelShell title="Manage Events" description="Create and manage full events.">
+      {/* Inline tables replace navigation to separate upcoming/past pages */}
+      <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2 mt-2">
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-gray-700">Name</label>
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            required
+            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+            placeholder="Event title"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-gray-700">Details</label>
+          <textarea
+            value={form.details}
+            onChange={(e) => setForm({ ...form, details: e.target.value })}
+            rows={4}
+            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+            placeholder="Describe the event"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-gray-700">Message</label>
+          <input
+            value={form.message}
+            onChange={(e) => setForm({ ...form, message: e.target.value })}
+            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+            placeholder="Optional message"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Date & Time</label>
+          <input
+            type="datetime-local"
+            value={form.dateTime}
+            onChange={(e) => setForm({ ...form, dateTime: e.target.value })}
+            className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <label className="inline-flex items-center gap-2 text-[color:var(--color-ashoka-blue)] font-semibold">
+            <input
+              type="checkbox"
+              checked={form.isActive}
+              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+              className="h-4 w-4"
+            />
+            Is Active
+          </label>
+          <label className="inline-flex items-center gap-2 text-[color:var(--color-ashoka-blue)] font-semibold">
+            <input
+              type="checkbox"
+              checked={form.showEvent}
+              onChange={(e) => setForm({ ...form, showEvent: e.target.checked })}
+              className="h-4 w-4"
+            />
+            Show Event
+          </label>
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-gray-700">Images</label>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => setForm({ ...form, images: Array.from(e.target.files || []) })}
+            className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border file:border-gray-300 file:bg-white file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-50"
+          />
+          {form.images?.length > 0 && (
+            <p className="mt-2 text-xs text-gray-600">Selected: {form.images.length} file(s)</p>
+          )}
+        </div>
+        <div className="sm:col-span-2 flex items-center justify-between">
+          <div>
+            {error && <div className="text-sm text-red-600">{error}</div>}
+            {success && <div className="text-sm text-green-600">{success}</div>}
+          </div>
+          <button
+            disabled={submitting}
+            className="rounded-lg bg-[color:var(--color-ashoka-blue)] px-5 py-3 text-white font-semibold shadow hover:opacity-90 disabled:opacity-60"
+          >
+            {submitting ? 'Submitting…' : 'Create Event'}
+          </button>
+        </div>
+      </form>
+      {/* Upcoming Events Table */}
+      <div className="mt-10">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">Upcoming Events</h3>
+        {eventsError && <div className="mb-3 text-sm text-red-600">{eventsError}</div>}
+        {upLoading ? (
+          <div className="text-gray-600">Loading upcoming…</div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">#</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Name</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Date/Time</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Active</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Show</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Images</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {(!upcoming || upcoming.length === 0) && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-6 text-center text-gray-500">No upcoming events.</td>
+                  </tr>
+                )}
+                {upcoming?.map((ev, i) => {
+                  const name = ev.eventName || ev.name || 'Event'
+                  const dt = parseDate(ev)
+                  const isActive = ev.isActive === true || ev.isActive === 1 || ev.is_active === 1
+                  const show = ev.showEvent === true || ev.showEvent === 1 || ev.show_event === 1
+                  const imgCount = Array.isArray(ev.imageIdList || ev.imageIDs || ev.imageIds) ? (ev.imageIdList || ev.imageIDs || ev.imageIds).length : 0
+                  return (
+                    <tr key={ev.id ?? ev.eventId ?? i} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 text-gray-700">{ev.id ?? ev.eventId ?? i + 1}</td>
+                      <td className="px-4 py-2 text-gray-900 font-medium">{name}</td>
+                      <td className="px-4 py-2 text-gray-700">{dt ? dt.toLocaleString() : ''}</td>
+                      <td className="px-4 py-2 text-gray-700">{isActive ? 'Yes' : 'No'}</td>
+                      <td className="px-4 py-2 text-gray-700">{show ? 'Yes' : 'No'}</td>
+                      <td className="px-4 py-2 text-gray-700">{imgCount}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      {/* Past Events Table */}
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">Past Events</h3>
+        {eventsError && <div className="mb-3 text-sm text-red-600">{eventsError}</div>}
+        {pastLoading ? (
+          <div className="text-gray-600">Loading past…</div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">#</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Name</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Active</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Show</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Images</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {(!past || past.length === 0) && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-6 text-center text-gray-500">No past events.</td>
+                  </tr>
+                )}
+                {past?.map((ev, i) => {
+                  const name = ev.eventName || ev.name || 'Event'
+                  const dt = parseDate(ev)
+                  const isActive = ev.isActive === true || ev.isActive === 1 || ev.is_active === 1
+                  const show = ev.showEvent === true || ev.showEvent === 1 || ev.show_event === 1
+                  const imgCount = Array.isArray(ev.imageIdList || ev.imageIDs || ev.imageIds) ? (ev.imageIdList || ev.imageIDs || ev.imageIds).length : 0
+                  return (
+                    <tr key={ev.id ?? ev.eventId ?? i} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 text-gray-700">{ev.id ?? ev.eventId ?? i + 1}</td>
+                      <td className="px-4 py-2 text-gray-900 font-medium">{name}</td>
+                      <td className="px-4 py-2 text-gray-700">{dt ? dt.toLocaleDateString() : ''}</td>
+                      <td className="px-4 py-2 text-gray-700">{isActive ? 'Yes' : 'No'}</td>
+                      <td className="px-4 py-2 text-gray-700">{show ? 'Yes' : 'No'}</td>
+                      <td className="px-4 py-2 text-gray-700">{imgCount}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </PanelShell>
+  )
+}
+
+function GlimpsesPanel() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -615,10 +891,9 @@ function EventsPanel() {
   const load = async () => {
     setLoading(true)
     try {
-      // Fetch events list for table display
-      let res = await fetch('http://localhost:8082/events', { method: 'GET', headers: { 'Accept': 'application/json' } })
+      let res = await fetch('http://localhost:8082/glimpses', { method: 'GET', headers: { 'Accept': 'application/json' } })
       if (!res.ok) {
-        res = await fetch('http://localhost:8082/events', { method: 'GET', mode: 'cors' })
+        res = await fetch('http://localhost:8082/glimpses', { method: 'GET', mode: 'cors' })
       }
       if (!res.ok) throw new Error(res.statusText)
       const data = await res.json().catch(() => [])
@@ -630,7 +905,7 @@ function EventsPanel() {
       }))
       setItems(normalized)
     } catch (e) {
-      console.warn('Events list load skipped:', e.message)
+      setError(e.message)
       setItems([])
     } finally {
       setLoading(false)
@@ -648,35 +923,34 @@ function EventsPanel() {
     setError('')
     setSuccess('')
     try {
-      // Match backend expected field names from Postman: Name, Event_image
       const form = new FormData()
       form.append('Name', name)
-      form.append('Event_image', file)
+      form.append('Glimpse_image', file)
 
-      let res = await authFetch('http://localhost:8082/api/admin/addEvent', {
+      let res = await authFetch('http://localhost:8082/api/admin/addGlimpse', {
         method: 'POST',
         body: form
       })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       const text = await res.text().catch(() => '')
-      setSuccess(text ? `Created event (id: ${text})` : 'Created event successfully')
+      setSuccess(text ? `Created glimpse (id: ${text})` : 'Created glimpse successfully')
       setFile(null)
       setName('')
       try { await load() } catch {}
     } catch (e) {
-      setError(typeof e?.message === 'string' ? e.message : 'Failed to create event')
+      setError(typeof e?.message === 'string' ? e.message : 'Failed to create glimpse')
     } finally {
       setSubmitting(false)
     }
   }
 
-  const deleteEvent = async (rawName) => {
+  const deleteGlimpse = async (rawName) => {
     const clean = String(rawName || '').trim()
-    if (!clean) { setError('Cannot delete: Missing event name'); return }
+    if (!clean) { setError('Cannot delete: Missing glimpse name'); return }
     try {
       setDeleting(clean)
       setError('')
-      const url = `http://localhost:8082/api/admin/deleteEvent/${encodeURIComponent(clean)}`
+      const url = `http://localhost:8082/api/admin/deleteGlimpse/${encodeURIComponent(clean)}`
       const res = await authFetch(url, { method: 'DELETE' })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       await load()
@@ -688,7 +962,7 @@ function EventsPanel() {
   }
 
   return (
-    <PanelShell title="Manage Event Images" description="Upload and review event images.">
+    <PanelShell title="Manage Glimpses" description="Upload and review glimpses.">
       <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-gray-700">Name</label>
@@ -702,7 +976,7 @@ function EventsPanel() {
           <div className="text-sm text-red-600">{error}</div>
           {success && <div className="text-sm text-green-600">{success}</div>}
           <button disabled={submitting} className="rounded-lg bg-[color:var(--color-ashoka-blue)] px-5 py-3 text-white font-semibold shadow hover:opacity-90 disabled:opacity-60">
-            {submitting ? 'Saving…' : 'Create Event'}
+            {submitting ? 'Saving…' : 'Create Glimpse'}
           </button>
         </div>
       </form>
@@ -723,17 +997,17 @@ function EventsPanel() {
               <tbody className="divide-y divide-gray-200">
                 {items.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-4 py-4 text-center text-gray-500">No events found.</td>
+                    <td colSpan={4} className="px-4 py-4 text-center text-gray-500">No glimpses found.</td>
                   </tr>
                 )}
                 {items.map((ev) => (
                   <tr key={ev.id}>
                     <td className="px-4 py-2 text-gray-700">{ev.id}</td>
-                    <td className="px-4 py-2 text-gray-700">{ev.name || 'Untitled Event'}</td>
+                    <td className="px-4 py-2 text-gray-700">{ev.name || 'Untitled Glimpse'}</td>
                     <td className="px-4 py-2 text-gray-700">{ev.imageId}</td>
                     <td className="px-4 py-2 text-gray-700">
                       <button
-                        onClick={() => deleteEvent(ev.name)}
+                        onClick={() => deleteGlimpse(ev.name)}
                         className="rounded-md bg-red-600 px-3 py-1.5 text-white disabled:opacity-60"
                         disabled={!ev.name || deleting === ev.name}
                       >
@@ -939,6 +1213,11 @@ function InternshipsPanel() {
   const [error, setError] = useState('')
   const [form, setForm] = useState({ title: '', description: '', applyUrl: '', category: 'current' })
   const [submitting, setSubmitting] = useState(false)
+  // Additional state for successful internship stories (placements)
+  const [placeForm, setPlaceForm] = useState({ name: '', institute: '', image: null })
+  const [placeSubmitting, setPlaceSubmitting] = useState(false)
+  const [placeError, setPlaceError] = useState('')
+  const [placeSuccess, setPlaceSuccess] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -972,8 +1251,90 @@ function InternshipsPanel() {
     }
   }
 
+  // Submit handler for successful internship stories
+  const onSubmitPlacement = async (e) => {
+    e.preventDefault()
+    setPlaceSubmitting(true)
+    setPlaceError('')
+    setPlaceSuccess('')
+    try {
+      const fd = new FormData()
+      // Match backend @RequestParam names exactly
+      fd.append('Name', placeForm.name || '')
+      fd.append('Institute', placeForm.institute || '')
+      if (placeForm.image) fd.append('Image', placeForm.image)
+
+      const res = await authFetch('http://localhost:8082/api/admin/addInternPlacements', {
+        method: 'POST',
+        body: fd,
+      })
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      // Backend likely returns empty body or OK
+      await res.text().catch(() => '')
+      setPlaceSuccess('Internship story added successfully!')
+      setPlaceForm({ name: '', institute: '', image: null })
+    } catch (e2) {
+      setPlaceError(typeof e2?.message === 'string' ? e2.message : 'Failed to add story')
+    } finally {
+      setPlaceSubmitting(false)
+    }
+  }
+
   return (
     <PanelShell title="Manage Internships" description="Add current opportunities and list previous internships.">
+      {/* Add Successful Internship Stories */}
+      <div className="mb-10">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Successful Internship Story</h3>
+        <form onSubmit={onSubmitPlacement} className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Student Name</label>
+            <input
+              value={placeForm.name}
+              onChange={(e) => setPlaceForm({ ...placeForm, name: e.target.value })}
+              required
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+              placeholder="Enter student's name"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Institute Name</label>
+            <input
+              value={placeForm.institute}
+              onChange={(e) => setPlaceForm({ ...placeForm, institute: e.target.value })}
+              required
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+              placeholder="e.g., SVNIT Surat"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Image</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setPlaceForm({ ...placeForm, image: e.target.files?.[0] || null })}
+              required
+              className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border file:border-gray-300 file:bg-white file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-50"
+            />
+            {placeForm.image && (
+              <p className="mt-2 text-sm text-gray-600">Selected: {placeForm.image.name}</p>
+            )}
+          </div>
+          <div className="sm:col-span-2 flex items-center justify-between">
+            <div>
+              {placeError && <div className="text-sm text-red-600">{placeError}</div>}
+              {placeSuccess && <div className="text-sm text-green-600">{placeSuccess}</div>}
+            </div>
+            <button
+              disabled={placeSubmitting}
+              className="rounded-lg bg-[color:var(--color-ashoka-blue)] px-5 py-3 text-white font-semibold shadow hover:opacity-90 disabled:opacity-60"
+            >
+              {placeSubmitting ? 'Submitting…' : 'Add Story'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Existing Internships form */}
       <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-gray-700">Title</label>

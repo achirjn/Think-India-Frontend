@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import SectionDivider from '../components/SectionDivider.jsx'
 import useAuth from '../hooks/useAuth.jsx'
 import Button from '../components/Button.jsx'
+import { authFetch } from '../utils/auth'
 
 export default function UserEvents() {
   const { isLoggedIn, loading: authLoading } = useAuth()
@@ -73,7 +74,7 @@ export default function UserEvents() {
   }), [])
 
   const parseDate = (ev) => {
-    const d = ev.date || ev.eventDate || ev.event_date || ev.when || null
+    const d = ev.dateTime || ev.date || ev.eventDate || ev.event_date || ev.when || null
     if (!d) return null
     const dt = new Date(d)
     return isNaN(dt.getTime()) ? null : dt
@@ -86,90 +87,78 @@ export default function UserEvents() {
       setLoading(true)
       setError(null)
       try {
-        let res = await fetch('http://localhost:8082/events', {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' },
-        })
-        if (!res.ok) {
-          res = await fetch('http://localhost:8082/events', { method: 'GET', mode: 'cors' })
-        }
-        if (!res.ok) throw new Error(`Failed to fetch events: HTTP ${res.status}`)
+        // Fetch upcoming and past lists from authenticated endpoints
+        const [upRes, pastRes] = await Promise.all([
+          authFetch('http://localhost:8082/user/upcommingEvents', { headers: { Accept: 'application/json' } }),
+          authFetch('http://localhost:8082/user/pastEvents', { headers: { Accept: 'application/json' } })
+        ])
+        if (!upRes.ok && !pastRes.ok) throw new Error(`Failed to fetch events: UPC ${upRes.status}, PAST ${pastRes.status}`)
 
-        const events = await res.json()
-        const list = Array.isArray(events) ? events : []
+        const upListRaw = upRes.ok ? await upRes.json() : []
+        const pastListRaw = pastRes.ok ? await pastRes.json() : []
+        const upList = Array.isArray(upListRaw) ? upListRaw : []
+        const pastList = Array.isArray(pastListRaw) ? pastListRaw : []
 
-        // Fetch images for each event
-        const withImages = await Promise.all(
-          list.map(async (ev, i) => {
-            const imageId = ev.imageId ?? ev.imageID ?? ev.image_id ?? ev.imageid
-            const alt = ev.eventName || ev.name || `Event ${i + 1}`
-            let src = ''
-            if (imageId !== undefined && imageId !== null) {
-              try {
-                let imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(imageId)}`, {
-                  method: 'GET',
-                  headers: { 'Accept': 'application/json, text/plain, */*' },
-                })
-                if (!imgRes.ok) {
-                  imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(imageId)}`, { method: 'GET', mode: 'cors' })
-                }
-                if (!imgRes.ok) throw new Error('image fetch error')
-                const contentType = imgRes.headers.get('content-type') || ''
-                let base64 = '', mime = '', dataUri = ''
-                if (contentType.includes('application/json')) {
-                  const json = await imgRes.json()
-                  const ext = imageUtils.extractBase64(json)
-                  base64 = imageUtils.sanitizeBase64(ext.base64)
-                  mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
-                  dataUri = ext.dataUri
-                } else {
-                  const text = await imgRes.text()
-                  const maybeJson = text.trim()
-                  if (maybeJson.startsWith('{') || maybeJson.startsWith('[') || (maybeJson.startsWith('"') && maybeJson.endsWith('"'))) {
-                    try {
-                      const parsed = JSON.parse(maybeJson)
-                      const ext = imageUtils.extractBase64(parsed)
-                      base64 = imageUtils.sanitizeBase64(ext.base64)
-                      mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
-                      dataUri = ext.dataUri
-                    } catch {
-                      base64 = imageUtils.sanitizeBase64(maybeJson)
-                      mime = imageUtils.detectMime(base64) || 'image/jpeg'
-                    }
-                  } else {
+        // Helper to load first image for an event (imageIdList)
+        const loadFirstImage = async (ev, i) => {
+          const ids = ev.imageIdList || ev.imageIDs || ev.imageIds || []
+          const firstId = Array.isArray(ids) && ids.length ? ids[0] : null
+          const alt = ev.eventName || ev.name || `Event ${i + 1}`
+          let src = ''
+          if (firstId !== null && firstId !== undefined) {
+            try {
+              let imgRes = await authFetch(`http://localhost:8082/image/${encodeURIComponent(firstId)}`, { headers: { 'Accept': 'application/json, text/plain, */*' } })
+              if (!imgRes.ok) imgRes = await authFetch(`http://localhost:8082/image/${encodeURIComponent(firstId)}`, { mode: 'cors' })
+              if (!imgRes.ok) throw new Error('image fetch error')
+              const contentType = imgRes.headers.get('content-type') || ''
+              let base64 = '', mime = '', dataUri = ''
+              if (contentType.includes('application/json')) {
+                const json = await imgRes.json()
+                const ext = imageUtils.extractBase64(json)
+                base64 = imageUtils.sanitizeBase64(ext.base64)
+                mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
+                dataUri = ext.dataUri
+              } else {
+                const text = await imgRes.text()
+                const maybeJson = text.trim()
+                if (maybeJson.startsWith('{') || maybeJson.startsWith('[') || (maybeJson.startsWith('"') && maybeJson.endsWith('"'))) {
+                  try {
+                    const parsed = JSON.parse(maybeJson)
+                    const ext = imageUtils.extractBase64(parsed)
+                    base64 = imageUtils.sanitizeBase64(ext.base64)
+                    mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
+                    dataUri = ext.dataUri
+                  } catch {
                     base64 = imageUtils.sanitizeBase64(maybeJson)
                     mime = imageUtils.detectMime(base64) || 'image/jpeg'
                   }
+                } else {
+                  base64 = imageUtils.sanitizeBase64(maybeJson)
+                  mime = imageUtils.detectMime(base64) || 'image/jpeg'
                 }
-                src = dataUri || (base64 ? `data:${mime};base64,${base64}` : '')
-              } catch {
-                src = ''
               }
-            }
+              src = dataUri || (base64 ? `data:${mime};base64,${base64}` : '')
+            } catch { src = '' }
+          }
+          return {
+            ...ev,
+            _imgSrc: src,
+            _alt: alt,
+            _date: parseDate(ev),
+            _name: ev.eventName || ev.name || 'Event',
+            _desc: ev.details || ev.description || ev.eventDescription || ev.summary || '',
+            _register: ev.registrationLink || ev.formLink || ev.registerUrl || ev.link || ''
+          }
+        }
 
-            return {
-              ...ev,
-              _imgSrc: src,
-              _alt: alt,
-              _date: parseDate(ev),
-              _name: ev.eventName || ev.name || 'Event',
-              _desc: ev.description || ev.eventDescription || ev.summary || '',
-              _register: ev.registrationLink || ev.formLink || ev.registerUrl || ev.link || ''
-            }
-          })
-        )
-
-        const now = new Date()
-        const up = withImages
-          .filter(e => e._date && e._date >= now)
-          .sort((a, b) => a._date - b._date)
-        const past = withImages
-          .filter(e => e._date && e._date < now)
-          .sort((a, b) => b._date - a._date)
+        const [upWith, pastWith] = await Promise.all([
+          Promise.all(upList.map((ev, i) => loadFirstImage(ev, i))),
+          Promise.all(pastList.map((ev, i) => loadFirstImage(ev, i)))
+        ])
 
         if (!cancelled) {
-          setUpcoming(up)
-          setPast(past)
+          setUpcoming(upWith)
+          setPast(pastWith)
         }
       } catch (e) {
         if (!cancelled) setError(e.message || 'Failed to load events')
@@ -224,7 +213,10 @@ export default function UserEvents() {
               ))}
             </div>
           ) : upcoming.length === 0 ? (
-            <p className="text-[color:var(--color-ashoka-blue)]/80">No upcoming events right now.</p>
+            <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+              <p className="text-[color:var(--color-ashoka-blue)] font-semibold">No upcoming events</p>
+              <p className="mt-1 text-[color:var(--color-ashoka-blue)]/70">Stay with us for interesting events in the future.</p>
+            </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {upcoming.map((ev, idx) => (
@@ -270,7 +262,10 @@ export default function UserEvents() {
               ))}
             </div>
           ) : past.length === 0 ? (
-            <p className="text-[color:var(--color-ashoka-blue)]/80">No past events found.</p>
+            <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
+              <p className="text-[color:var(--color-ashoka-blue)] font-semibold">No past events to show</p>
+              <p className="mt-1 text-[color:var(--color-ashoka-blue)]/70">Check back later for highlights from our previous activities.</p>
+            </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {past.map((ev, idx) => (

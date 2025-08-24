@@ -14,15 +14,15 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
     setLoading(true)
     setError(null)
     try {
-      // Mirror Events section fetching from App.jsx
-      let res = await fetch('http://localhost:8082/events', {
+      // Mirror Glimpses section fetching from App.jsx
+      let res = await fetch('http://localhost:8082/glimpses', {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
       })
       if (!res.ok) {
-        res = await fetch('http://localhost:8082/events', { method: 'GET', mode: 'cors' })
+        res = await fetch('http://localhost:8082/glimpses', { method: 'GET', mode: 'cors' })
       }
-      if (!res.ok) throw new Error(`Failed to fetch events: HTTP ${res.status}`)
+      if (!res.ok) throw new Error(`Failed to fetch glimpses: HTTP ${res.status}`)
 
       const events = await res.json()
       const list = Array.isArray(events) ? events : []
@@ -149,13 +149,22 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
   
   return (
     <section className="relative overflow-hidden min-h-fit lg:min-h-screen flex items-center lg:items-stretch">
+      {/* Tricolor background for logged-in hero */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.0 }}
+        className="absolute inset-0 -z-10"
+      >
+        <div className="h-full bg-gradient-to-b from-[color:var(--color-india-saffron)] via-white to-[color:var(--color-india-green)]" />
+      </motion.div>
       <div className="container-responsive py-4 sm:py-6 md:py-8 lg:py-0 grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-center lg:items-stretch lg:min-h-screen">
         {/* Left side - Text content */}
         <motion.div 
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="order-2 lg:order-1 flex flex-col items-start lg:py-10"
+          className="order-2 lg:order-1 flex flex-col items-start mt-6 sm:mt-10 lg:mt-14 lg:py-10"
         >
           <motion.h1 
             initial={{ y: 20, opacity: 0 }}
@@ -163,8 +172,7 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[color:var(--color-ashoka-blue)] leading-tight"
           >
-            Build Better <br />
-            Products
+            Contribute to a Stronger India
           </motion.h1>
           
           <motion.p
@@ -173,7 +181,7 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
             transition={{ delay: 0.4, duration: 0.5 }}
             className="mt-2 text-base text-gray-700 max-w-md"
           >
-            Introducing a new way for your brand to reach the creative community.
+            Discover new events, internships, and research opportunities tailored for you.
           </motion.p>
           
           <motion.div
@@ -184,20 +192,20 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
           >
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
-                variant="primary" 
-                className="whitespace-nowrap flex-1"
-                as={Link}
-                to="/events"
-              >
-                Register for upcoming events
-              </Button>
-              <Button 
                 variant="secondary" 
                 className="whitespace-nowrap flex-1"
                 as={Link}
                 to="/internships"
               >
-                Explore Internship opportunities
+                Explore Opportunities
+              </Button>
+              <Button 
+                variant="primary" 
+                className="whitespace-nowrap flex-1"
+                as={Link}
+                to="/user/events"
+              >
+                Register for Upcoming Events
               </Button>
             </div>
           </motion.div>
@@ -208,7 +216,7 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="order-1 lg:order-2 w-full h-full lg:mt-6"
+          className="order-1 lg:order-2 w-full h-full lg:mt-6 lg:max-w-[90%] lg:mx-auto"
         >
           {loading ? (
             <div className="w-full h-[46vh] sm:h-[55vh] md:h-[60vh] lg:h-[75vh] xl:h-[75vh] 2xl:h-[75vh] max-h-screen bg-gray-200 rounded-xl animate-pulse"></div>

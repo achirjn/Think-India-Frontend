@@ -16,7 +16,6 @@ import SubmitCircleButton from './components/SubmitCircleButton.jsx'
 import ImageSlider from './components/ImageSlider.jsx'
 import Admin from './pages/Admin.jsx'
 import UserDashboard from './pages/UserDashboard.jsx'
-import UserEvents from './pages/UserEvents.jsx'
 import LoadingPage from './components/LoadingPage.jsx'
 import ProfileDropdown from './components/ProfileDropdown.jsx'
 import { getToken, removeToken, setToken, isAuthenticated } from './utils/auth'
@@ -236,7 +235,7 @@ function NavBar() {
             >
               {[
                 { to: "/#about", text: "About" },
-                { to: authState.isLoggedIn ? "/user/events" : "/#events", text: "Events" },
+                { to: "/#events", text: "Events" },
                 { to: "/internships", text: "Internships" },
                 { to: "/blogs", text: "Blogs" },
                 { to: "/teams", text: "Team" },
@@ -346,7 +345,7 @@ function NavBar() {
           <nav className="flex flex-col space-y-4">
             {[
               { to: "/#about", text: "About" },
-              { to: authState.isLoggedIn ? "/user/events" : "/#events", text: "Events" },
+              { to: "/#events", text: "Events" },
               { to: "/internships", text: "Internships" },
               { to: "/blogs", text: "Blogs" },
               { to: "/teams", text: "Team" },
@@ -855,17 +854,11 @@ function ContactSection() {
 
 function HomePage() {
   const [eventImages, setEventImages] = useState([])
-  const { isLoggedIn } = useAuth()
 
   useEffect(() => {
     let cancelled = false
     const load = async () => {
       try {
-        // Skip fetching events for logged-in users
-        if (isLoggedIn) {
-          setEventImages([])
-          return
-        }
         // Fetch events list
         let res = await fetch('http://localhost:8082/events', {
           method: 'GET',
@@ -994,7 +987,7 @@ function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [isLoggedIn])
+  }, [])
 
   return (
     <>
@@ -1064,17 +1057,9 @@ function HomePage() {
           ))}
         </div>
       </Section>
-      {!isLoggedIn && (
-        <Section id="events" title="Events" className="pb-0">
-          <ImageSlider 
-            className="mb-0" 
-            intervalMs={8000} 
-            images={eventImages} 
-            overlay={false}
-            heightClass="h-[46vh] sm:h-[55vh] md:h-[60vh] lg:h-screen xl:h-screen 2xl:h-screen"
-          />
-        </Section>
-      )}
+      <Section id="events" title="Events" className="pb-0">
+        <ImageSlider className="mb-0" intervalMs={8000} images={eventImages} overlay={false} />
+      </Section>
       <ContactSection />
     </>
   )
@@ -1190,7 +1175,6 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/internships" element={<Internships />} />
             <Route path="/teams" element={<Teams />} />
-            <Route path="/user/events" element={<UserEvents />} />
             <Route path="/blogs" element={<Blogs />} />
             <Route path="/blogs/:slug" element={<BlogDetail />} />
             <Route path="/login" element={<Login />} />

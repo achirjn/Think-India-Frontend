@@ -209,7 +209,13 @@ export default function Internships() {
                     }}
                   >
                     <div className="h-1 w-14 bg-[color:var(--color-india-green)] rounded" />
-                    <div className="mt-3 font-semibold text-[color:var(--color-ashoka-blue)]">{it.title || it.company || 'Internship'}</div>
+                    <div className="mt-3 font-semibold text-[color:var(--color-ashoka-blue)]">
+                      {(() => {
+                        const role = it.role || it.title || 'Internship'
+                        const institute = it.institute || it.company || ''
+                        return institute ? `${role} — ${institute}` : role
+                      })()}
+                    </div>
                     {it.description && <p className="mt-1 text-sm text-gray-600">{it.description}</p>}
                     {it.applyUrl && (
                       <a

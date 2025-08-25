@@ -623,8 +623,10 @@ function EventsPanel() {
   const [eventsError, setEventsError] = useState('')
   const [upLoading, setUpLoading] = useState(false)
   const [pastLoading, setPastLoading] = useState(false)
+  const [hiddenLoading, setHiddenLoading] = useState(false)
   const [upcoming, setUpcoming] = useState([])
   const [past, setPast] = useState([])
+  const [hidden, setHidden] = useState([])
 
   const parseDate = (ev) => {
     const d = ev?.dateTime || ev?.date || ev?.eventDate || ev?.event_date || ev?.when || null
@@ -633,36 +635,75 @@ function EventsPanel() {
     return isNaN(dt.getTime()) ? null : dt
   }
 
+  // Admin actions for events and a reusable refresh
+  const refreshEvents = async () => {
+    setEventsError('')
+    setUpLoading(true)
+    setPastLoading(true)
+    setHiddenLoading(true)
+    try {
+      const [upRes, pastRes, hiddenRes] = await Promise.all([
+        authFetch('http://localhost:8082/user/upcommingEvents', { headers: { Accept: 'application/json' } }),
+        authFetch('http://localhost:8082/user/pastEvents', { headers: { Accept: 'application/json' } }),
+        authFetch('http://localhost:8082/api/admin/getHiddenEvents', { headers: { Accept: 'application/json' } })
+      ])
+      const upList = upRes.ok ? await upRes.json().catch(() => []) : []
+      const pastList = pastRes.ok ? await pastRes.json().catch(() => []) : []
+      const hiddenList = hiddenRes.ok ? await hiddenRes.json().catch(() => []) : []
+      setUpcoming(Array.isArray(upList) ? upList : [])
+      setPast(Array.isArray(pastList) ? pastList : [])
+      setHidden(Array.isArray(hiddenList) ? hiddenList : [])
+      if (!upRes.ok && !pastRes.ok && !hiddenRes.ok) throw new Error(`Failed to fetch events`)
+    } catch (e) {
+      setEventsError(e?.message || 'Failed to load events')
+    } finally {
+      setUpLoading(false)
+      setPastLoading(false)
+      setHiddenLoading(false)
+    }
+  }
+
+  const toggleActive = async (id, makeActive) => {
+    try {
+      const cleanId = encodeURIComponent(id)
+      const url = `http://localhost:8082/api/admin/${makeActive ? 'activateEvent' : 'deActivateEvent'}/${cleanId}`
+      const res = await authFetch(url, { method: 'GET' })
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      await refreshEvents()
+    } catch (e) {
+      setEventsError(typeof e?.message === 'string' ? e.message : 'Failed to update event status')
+    }
+  }
+
+  const toggleShow = async (id, makeShow) => {
+    try {
+      const cleanId = encodeURIComponent(id)
+      const url = `http://localhost:8082/api/admin/${makeShow ? 'showEvent' : 'hideEvent'}/${cleanId}`
+      const res = await authFetch(url, { method: 'GET' })
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      await refreshEvents()
+    } catch (e) {
+      setEventsError(typeof e?.message === 'string' ? e.message : 'Failed to update event visibility')
+    }
+  }
+
+  const unHideEvent = async (id) => {
+    try {
+      const numericId = Number(id)
+      const cleanId = encodeURIComponent(Number.isNaN(numericId) ? id : numericId)
+      // Use standard single slash path
+      const url = `http://localhost:8082/api/admin/unHideEvent/${cleanId}`
+      const res = await authFetch(url, { method: 'GET' })
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      await refreshEvents()
+    } catch (e) {
+      setEventsError(typeof e?.message === 'string' ? e.message : 'Failed to unhide event')
+    }
+  }
+
   useEffect(() => {
     let cancelled = false
-    const loadLists = async () => {
-      setEventsError('')
-      setUpLoading(true)
-      setPastLoading(true)
-      try {
-        const [upRes, pastRes] = await Promise.all([
-          authFetch('http://localhost:8082/user/upcommingEvents', { headers: { Accept: 'application/json' } }),
-          authFetch('http://localhost:8082/user/pastEvents', { headers: { Accept: 'application/json' } })
-        ])
-        const upList = upRes.ok ? await upRes.json().catch(() => []) : []
-        const pastList = pastRes.ok ? await pastRes.json().catch(() => []) : []
-        if (!cancelled) {
-          setUpcoming(Array.isArray(upList) ? upList : [])
-          setPast(Array.isArray(pastList) ? pastList : [])
-        }
-        if (!upRes.ok && !pastRes.ok) {
-          throw new Error(`Failed to fetch events: UPC ${upRes.status}, PAST ${pastRes.status}`)
-        }
-      } catch (e) {
-        if (!cancelled) setEventsError(e?.message || 'Failed to load events')
-      } finally {
-        if (!cancelled) {
-          setUpLoading(false)
-          setPastLoading(false)
-        }
-      }
-    }
-    loadLists()
+    refreshEvents()
     return () => { cancelled = true }
   }, [])
   const onSubmit = async (e) => {
@@ -797,12 +838,13 @@ function EventsPanel() {
                   <th className="px-4 py-2 text-left font-semibold text-gray-700">Active</th>
                   <th className="px-4 py-2 text-left font-semibold text-gray-700">Show</th>
                   <th className="px-4 py-2 text-left font-semibold text-gray-700">Images</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {(!upcoming || upcoming.length === 0) && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-gray-500">No upcoming events.</td>
+                    <td colSpan={7} className="px-4 py-6 text-center text-gray-500">No upcoming events.</td>
                   </tr>
                 )}
                 {upcoming?.map((ev, i) => {
@@ -819,6 +861,22 @@ function EventsPanel() {
                       <td className="px-4 py-2 text-gray-700">{isActive ? 'Yes' : 'No'}</td>
                       <td className="px-4 py-2 text-gray-700">{show ? 'Yes' : 'No'}</td>
                       <td className="px-4 py-2 text-gray-700">{imgCount}</td>
+                      <td className="px-4 py-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => toggleActive(ev.id ?? ev.eventId ?? i, !isActive)}
+                            className={`rounded-md px-3 py-1.5 text-white ${isActive ? 'bg-red-600' : 'bg-[color:var(--color-india-green)]'}`}
+                          >
+                            {isActive ? 'Deactivate' : 'Activate'}
+                          </button>
+                          <button
+                            onClick={() => toggleShow(ev.id ?? ev.eventId ?? i, !show)}
+                            className={`rounded-md px-3 py-1.5 text-white ${show ? 'bg-gray-600' : 'bg-[color:var(--color-ashoka-blue)]'}`}
+                          >
+                            {show ? 'Hide' : 'Show'}
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   )
                 })}
@@ -844,12 +902,13 @@ function EventsPanel() {
                   <th className="px-4 py-2 text-left font-semibold text-gray-700">Active</th>
                   <th className="px-4 py-2 text-left font-semibold text-gray-700">Show</th>
                   <th className="px-4 py-2 text-left font-semibold text-gray-700">Images</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {(!past || past.length === 0) && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-gray-500">No past events.</td>
+                    <td colSpan={7} className="px-4 py-6 text-center text-gray-500">No past events.</td>
                   </tr>
                 )}
                 {past?.map((ev, i) => {
@@ -866,6 +925,78 @@ function EventsPanel() {
                       <td className="px-4 py-2 text-gray-700">{isActive ? 'Yes' : 'No'}</td>
                       <td className="px-4 py-2 text-gray-700">{show ? 'Yes' : 'No'}</td>
                       <td className="px-4 py-2 text-gray-700">{imgCount}</td>
+                      <td className="px-4 py-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => toggleActive(ev.id ?? ev.eventId ?? i, !isActive)}
+                            className={`rounded-md px-3 py-1.5 text-white ${isActive ? 'bg-red-600' : 'bg-[color:var(--color-india-green)]'}`}
+                          >
+                            {isActive ? 'Deactivate' : 'Activate'}
+                          </button>
+                          <button
+                            onClick={() => toggleShow(ev.id ?? ev.eventId ?? i, !show)}
+                            className={`rounded-md px-3 py-1.5 text-white ${show ? 'bg-gray-600' : 'bg-[color:var(--color-ashoka-blue)]'}`}
+                          >
+                            {show ? 'Hide' : 'Show'}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      {/* Hidden Events Table */}
+      <div className="mt-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">Hidden Events</h3>
+        {eventsError && <div className="mb-3 text-sm text-red-600">{eventsError}</div>}
+        {hiddenLoading ? (
+          <div className="text-gray-600">Loading hidden…</div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">#</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Name</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Date</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Active</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Show</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Images</th>
+                  <th className="px-4 py-2 text-left font-semibold text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {(!hidden || hidden.length === 0) && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-6 text-center text-gray-500">No hidden events.</td>
+                  </tr>
+                )}
+                {hidden?.map((ev, i) => {
+                  const name = ev.eventName || ev.name || 'Event'
+                  const dt = parseDate(ev)
+                  const isActive = ev.isActive === true || ev.isActive === 1 || ev.is_active === 1
+                  const show = ev.showEvent === true || ev.showEvent === 1 || ev.show_event === 1
+                  const imgCount = Array.isArray(ev.imageIdList || ev.imageIDs || ev.imageIds) ? (ev.imageIdList || ev.imageIDs || ev.imageIds).length : 0
+                  return (
+                    <tr key={ev.id ?? ev.eventId ?? i} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 text-gray-700">{ev.id ?? ev.eventId ?? i + 1}</td>
+                      <td className="px-4 py-2 text-gray-900 font-medium">{name}</td>
+                      <td className="px-4 py-2 text-gray-700">{dt ? dt.toLocaleDateString() : ''}</td>
+                      <td className="px-4 py-2 text-gray-700">{isActive ? 'Yes' : 'No'}</td>
+                      <td className="px-4 py-2 text-gray-700">{show ? 'Yes' : 'No'}</td>
+                      <td className="px-4 py-2 text-gray-700">{imgCount}</td>
+                      <td className="px-4 py-2">
+                        <button
+                          onClick={() => unHideEvent(ev.id ?? ev.eventId ?? i)}
+                          className="rounded-md bg-[color:var(--color-ashoka-blue)] px-3 py-1.5 text-white"
+                        >
+                          Unhide
+                        </button>
+                      </td>
                     </tr>
                   )
                 })}
@@ -1218,6 +1349,37 @@ function InternshipsPanel() {
   const [placeSubmitting, setPlaceSubmitting] = useState(false)
   const [placeError, setPlaceError] = useState('')
   const [placeSuccess, setPlaceSuccess] = useState('')
+  // Upcoming internships (admin) form
+  const [upForm, setUpForm] = useState({
+    role: '',
+    description: '',
+    institute: '',
+    eligibility: '',
+    startDate: '', // yyyy-MM-dd
+    duration: '', // days (number)
+    isActive: false,
+  })
+  const [upSubmitting, setUpSubmitting] = useState(false)
+  const [upError, setUpError] = useState('')
+  const [upSuccess, setUpSuccess] = useState('')
+  const [upList, setUpList] = useState([])
+  const [upListLoading, setUpListLoading] = useState(false)
+  const [upListError, setUpListError] = useState('')
+
+  const loadUpcoming = async () => {
+    setUpListLoading(true)
+    setUpListError('')
+    try {
+      const res = await authFetch('http://localhost:5173/user/getUpcommingInternships', { headers: { Accept: 'application/json' } })
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      const data = await res.json().catch(() => [])
+      setUpList(Array.isArray(data) ? data : [])
+    } catch (e) {
+      setUpListError(typeof e?.message === 'string' ? e.message : 'Failed to load upcoming internships')
+    } finally {
+      setUpListLoading(false)
+    }
+  }
 
   const load = async () => {
     setLoading(true)
@@ -1280,8 +1442,131 @@ function InternshipsPanel() {
     }
   }
 
+  const onSubmitUpcoming = async (e) => {
+    e.preventDefault()
+    setUpSubmitting(true)
+    setUpError('')
+    setUpSuccess('')
+    try {
+      const fd = new FormData()
+      // Match backend keys exactly (including typos/spaces)
+      fd.append('Role', upForm.role || '')
+      fd.append('Desciption', upForm.description || '')
+      fd.append('Institute', upForm.institute || '')
+      fd.append('eligiblity', upForm.eligibility || '')
+      if (upForm.startDate) fd.append('Start Date', upForm.startDate)
+      if (upForm.duration !== '') fd.append('duration', String(parseInt(upForm.duration || 0, 10)))
+      fd.append('IsActive', upForm.isActive ? '1' : '0')
+
+      const res = await authFetch('http://localhost:8082/api/admin/addUpcommingInternship', {
+        method: 'POST',
+        body: fd,
+      })
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      await res.text().catch(() => '')
+      setUpSuccess('Upcoming internship added successfully!')
+      setUpForm({ role: '', description: '', institute: '', eligibility: '', startDate: '', duration: '', isActive: false })
+      try { await loadUpcoming() } catch {}
+    } catch (e2) {
+      setUpError(typeof e2?.message === 'string' ? e2.message : 'Failed to add upcoming internship')
+    } finally {
+      setUpSubmitting(false)
+    }
+  }
+
   return (
-    <PanelShell title="Manage Internships" description="Add current opportunities and list previous internships.">
+    <PanelShell title="Manage Internships" description="Add current opportunities, upcoming internships, and list previous internships.">
+      {/* Add Upcoming Internship */}
+      <div className="mb-10">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Upcoming Internship</h3>
+        <form onSubmit={onSubmitUpcoming} className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Role</label>
+            <input
+              value={upForm.role}
+              onChange={(e) => setUpForm({ ...upForm, role: e.target.value })}
+              required
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+              placeholder="e.g., SDE Intern"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Institute</label>
+            <input
+              value={upForm.institute}
+              onChange={(e) => setUpForm({ ...upForm, institute: e.target.value })}
+              required
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+              placeholder="e.g., SVNIT / Company"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Description</label>
+            <textarea
+              value={upForm.description}
+              onChange={(e) => setUpForm({ ...upForm, description: e.target.value })}
+              rows={3}
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+              placeholder="Brief description"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Eligibility</label>
+            <textarea
+              value={upForm.eligibility}
+              onChange={(e) => setUpForm({ ...upForm, eligibility: e.target.value })}
+              rows={2}
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+              placeholder="Eligibility criteria"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Start Date</label>
+            <input
+              type="date"
+              value={upForm.startDate}
+              onChange={(e) => setUpForm({ ...upForm, startDate: e.target.value })}
+              required
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Duration (days)</label>
+            <input
+              type="number"
+              min="0"
+              value={upForm.duration}
+              onChange={(e) => setUpForm({ ...upForm, duration: e.target.value })}
+              required
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+              placeholder="e.g., 60"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="inline-flex items-center gap-2 text-[color:var(--color-ashoka-blue)] font-semibold">
+              <input
+                type="checkbox"
+                checked={upForm.isActive}
+                onChange={(e) => setUpForm({ ...upForm, isActive: e.target.checked })}
+                className="h-4 w-4"
+              />
+              Is Active
+            </label>
+          </div>
+          <div className="sm:col-span-2 flex items-center justify-between">
+            <div>
+              {upError && <div className="text-sm text-red-600">{upError}</div>}
+              {upSuccess && <div className="text-sm text-green-600">{upSuccess}</div>}
+            </div>
+            <button
+              disabled={upSubmitting}
+              className="rounded-lg bg-[color:var(--color-ashoka-blue)] px-5 py-3 text-white font-semibold shadow hover:opacity-90 disabled:opacity-60"
+            >
+              {upSubmitting ? 'Submitting…' : 'Add Upcoming Internship'}
+            </button>
+          </div>
+        </form>
+      </div>
       {/* Add Successful Internship Stories */}
       <div className="mb-10">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Successful Internship Story</h3>
@@ -1384,5 +1669,4 @@ function InternshipsPanel() {
     </PanelShell>
   )
 }
-
 

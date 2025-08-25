@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import SectionDivider from '../components/SectionDivider.jsx'
+import { HoverCard } from '../components/ui/card-hover-effect.jsx'
 import useAuth from '../hooks/useAuth.jsx'
 import Button from '../components/Button.jsx'
 import { authFetch } from '../utils/auth'
@@ -220,33 +221,49 @@ export default function UserEvents() {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {upcoming.map((ev, idx) => (
-                <article key={idx} className="relative overflow-hidden rounded-2xl bg-[var(--bg-saffron-50)] shadow-sm">
-                  <div className="aspect-[16/9] w-full overflow-hidden">
-                    {ev._imgSrc ? (
-                      <img src={ev._imgSrc} alt={ev._alt} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="h-full w-full bg-gray-100" />
-                    )}
-                  </div>
-                  <div className="p-5">
-                    <h3 className="text-xl font-bold text-[color:var(--color-ashoka-blue)]">{ev._name}</h3>
-                    {ev._date && (
-                      <p className="mt-1 text-sm text-[color:var(--color-ashoka-blue)]/70">{ev._date.toLocaleString()}</p>
-                    )}
-                    {ev._desc && (
-                      <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-3">{ev._desc}</p>
-                    )}
-                    <div className="mt-4">
-                      {ev._register ? (
-                        <a href={ev._register} target="_blank" rel="noopener noreferrer">
-                          <Button className="bg-[color:var(--color-india-saffron)] text-white">Register</Button>
-                        </a>
+                <HoverCard key={idx} className="rounded-xl">
+                  <motion.article
+                    whileHover={{ y: -8, scale: 1.02, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer"
+                    onClick={() => {
+                      const eventId = ev.id || ev.eventId || ev.eventID || ev.uuid || idx
+                      navigate(`/events/${encodeURIComponent(eventId)}`, { state: { item: ev } })
+                    }}
+                  >
+                    <motion.div className="aspect-[16/9] w-full overflow-hidden" whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
+                      {ev._imgSrc ? (
+                        <img src={ev._imgSrc} alt={ev._alt} className="h-full w-full object-cover transition-transform duration-300" />
                       ) : (
-                        <Button variant="secondary" disabled>Registration opening soon</Button>
+                        <div className="h-full w-full bg-gray-100" />
                       )}
+                    </motion.div>
+                    <div className="p-5">
+                      <motion.h3
+                        whileHover={{ x: 5 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                        className="text-xl font-bold text-[color:var(--color-ashoka-blue)] group-hover:text-[color:var(--color-india-saffron)] transition-colors"
+                      >
+                        {ev._name}
+                      </motion.h3>
+                      {ev._date && (
+                        <p className="mt-1 text-sm text-[color:var(--color-ashoka-blue)]/70">{ev._date.toLocaleString()}</p>
+                      )}
+                      {ev._desc && (
+                        <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-3">{ev._desc}</p>
+                      )}
+                      <div className="mt-4">
+                        {ev._register ? (
+                          <a href={ev._register} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                            <Button className="bg-[color:var(--color-india-saffron)] text-white" onClick={(e) => e.stopPropagation()}>Register</Button>
+                          </a>
+                        ) : (
+                          <Button variant="secondary" disabled>Registration opening soon</Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </article>
+                  </motion.article>
+                </HoverCard>
               ))}
             </div>
           )}
@@ -269,24 +286,40 @@ export default function UserEvents() {
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {past.map((ev, idx) => (
-                <article key={idx} className="relative overflow-hidden rounded-2xl bg-[var(--bg-saffron-50)] shadow-sm">
-                  <div className="aspect-[16/9] w-full overflow-hidden">
-                    {ev._imgSrc ? (
-                      <img src={ev._imgSrc} alt={ev._alt} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="h-full w-full bg-gray-100" />
-                    )}
-                  </div>
-                  <div className="p-5">
-                    <h3 className="text-xl font-bold text-[color:var(--color-ashoka-blue)]">{ev._name}</h3>
-                    {ev._date && (
-                      <p className="mt-1 text-sm text-[color:var(--color-ashoka-blue)]/70">{ev._date.toLocaleDateString()}</p>
-                    )}
-                    {ev._desc && (
-                      <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-3">{ev._desc}</p>
-                    )}
-                  </div>
-                </article>
+                <HoverCard key={idx} className="rounded-xl">
+                  <motion.article
+                    whileHover={{ y: -8, scale: 1.02, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer"
+                    onClick={() => {
+                      const eventId = ev.id || ev.eventId || ev.eventID || ev.uuid || idx
+                      navigate(`/events/${encodeURIComponent(eventId)}`, { state: { item: ev } })
+                    }}
+                  >
+                    <motion.div className="aspect-[16/9] w-full overflow-hidden" whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }}>
+                      {ev._imgSrc ? (
+                        <img src={ev._imgSrc} alt={ev._alt} className="h-full w-full object-cover transition-transform duration-300" />
+                      ) : (
+                        <div className="h-full w-full bg-gray-100" />
+                      )}
+                    </motion.div>
+                    <div className="p-5">
+                      <motion.h3
+                        whileHover={{ x: 5 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                        className="text-xl font-bold text-[color:var(--color-ashoka-blue)] group-hover:text-[color:var(--color-india-saffron)] transition-colors"
+                      >
+                        {ev._name}
+                      </motion.h3>
+                      {ev._date && (
+                        <p className="mt-1 text-sm text-[color:var(--color-ashoka-blue)]/70">{ev._date.toLocaleDateString()}</p>
+                      )}
+                      {ev._desc && (
+                        <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-3">{ev._desc}</p>
+                      )}
+                    </div>
+                  </motion.article>
+                </HoverCard>
               ))}
             </div>
           )}

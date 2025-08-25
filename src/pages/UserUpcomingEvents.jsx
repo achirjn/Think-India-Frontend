@@ -179,7 +179,11 @@ export default function UserUpcomingEvents() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: idx * 0.03 }}
-              className="relative overflow-hidden rounded-2xl bg-[var(--bg-saffron-50)] shadow-sm"
+              className="relative overflow-hidden rounded-2xl bg-[var(--bg-saffron-50)] shadow-sm cursor-pointer hover:shadow-md transition"
+              onClick={() => {
+                const eventId = ev.id || ev.eventId || ev.eventID || ev.uuid || idx
+                navigate(`/events/${encodeURIComponent(eventId)}`, { state: { item: ev } })
+              }}
             >
               <div className="aspect-[16/9] w-full overflow-hidden">
                 {ev._imgSrc ? (

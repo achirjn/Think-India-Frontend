@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import SectionDivider from '../components/SectionDivider.jsx'
 import PortraitTripleSlider from '../components/PortraitTripleSlider.jsx'
@@ -7,6 +8,7 @@ import { authFetch } from '../utils/auth.js'
 
 export default function Internships() {
   // posters for successful placements
+  const navigate = useNavigate()
   const [posters, setPosters] = useState([])
   const [postersLoading, setPostersLoading] = useState(true)
   const [postersError, setPostersError] = useState('')
@@ -198,12 +200,27 @@ export default function Internships() {
             upcoming.length ? (
               <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {upcoming.map((it, idx) => (
-                  <div key={it.id || it.title || idx} className="rounded-xl border p-5 shadow-sm bg-white">
+                  <div
+                    key={it.id || it.title || idx}
+                    className="rounded-xl border p-5 shadow-sm bg-white cursor-pointer hover:shadow-md transition"
+                    onClick={() => {
+                      const iid = it.id || it.uuid || it.slug || idx
+                      navigate(`/internships/${encodeURIComponent(iid)}`, { state: { item: it } })
+                    }}
+                  >
                     <div className="h-1 w-14 bg-[color:var(--color-india-green)] rounded" />
                     <div className="mt-3 font-semibold text-[color:var(--color-ashoka-blue)]">{it.title || it.company || 'Internship'}</div>
                     {it.description && <p className="mt-1 text-sm text-gray-600">{it.description}</p>}
                     {it.applyUrl && (
-                      <a className="mt-3 inline-block text-[color:var(--color-india-green)] font-medium" href={it.applyUrl} target="_blank" rel="noreferrer">Apply →</a>
+                      <a
+                        className="mt-3 inline-block text-[color:var(--color-india-green)] font-medium"
+                        href={it.applyUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Apply →
+                      </a>
                     )}
                   </div>
                 ))}

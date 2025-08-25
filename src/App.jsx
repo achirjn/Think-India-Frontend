@@ -2,7 +2,7 @@ import './App.css'
 import { motion } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import AshokaChakra from './components/AshokaChakra.jsx'
-import { BrowserRouter, Routes, Route, Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Link, useLocation, useSearchParams, useNavigate, Navigate } from 'react-router-dom'
 import Internships from './pages/Internships.jsx'
 import Teams from './pages/Teams.jsx'
 import Blogs from './pages/Blogs.jsx'
@@ -18,9 +18,12 @@ import Admin from './pages/Admin.jsx'
 import UserDashboard from './pages/UserDashboard.jsx'
 import LoadingPage from './components/LoadingPage.jsx'
 import ProfileDropdown from './components/ProfileDropdown.jsx'
+import EventDetail from './pages/EventDetail.jsx'
+import InternshipDetail from './pages/InternshipDetail.jsx'
 import { getToken, removeToken, setToken, isAuthenticated } from './utils/auth'
 import useWindowSize from './hooks/useWindowSize.jsx'
 import useAuth from './hooks/useAuth.jsx'
+import UserEvents from './pages/UserEvents.jsx'
 
 function NavBar() {
   const location = useLocation()
@@ -233,14 +236,20 @@ function NavBar() {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="hidden md:flex items-center gap-4 text-sm md:text-base font-semibold"
             >
-              {[
-                { to: "/#about", text: "About" },
-                { to: "/#events", text: "Events" },
-                { to: "/internships", text: "Internships" },
-                { to: "/blogs", text: "Blogs" },
-                { to: "/teams", text: "Team" },
-                { to: "/#contact", text: "Contact" }
-              ].map((item, index) => (
+              {(() => {
+                const base = [
+                  { to: "/#about", text: "About" },
+                  // When logged in, show Events page link instead of Glimpses anchor
+                  authState.isLoggedIn
+                    ? { to: "/user/events", text: "Events" }
+                    : { to: "/#glimpses", text: "Glimpses" },
+                  { to: "/internships", text: "Internships" },
+                  { to: "/blogs", text: "Blogs" },
+                  { to: "/teams", text: "Team" },
+                  { to: "/#contact", text: "Contact" }
+                ]
+                return base
+              })().map((item, index) => (
                 <motion.div
                   key={item.text}
                   initial={{ y: -10, opacity: 0 }}
@@ -343,14 +352,19 @@ function NavBar() {
       >
         <div className="container-responsive py-4 max-h-full overflow-y-auto">
           <nav className="flex flex-col space-y-4">
-            {[
-              { to: "/#about", text: "About" },
-              { to: "/#events", text: "Events" },
-              { to: "/internships", text: "Internships" },
-              { to: "/blogs", text: "Blogs" },
-              { to: "/teams", text: "Team" },
-              { to: "/#contact", text: "Contact" }
-            ].map((item, index) => (
+            {(() => {
+              const items = [
+                { to: "/#about", text: "About" },
+                authState.isLoggedIn
+                  ? { to: "/user/events", text: "Events" }
+                  : { to: "/#glimpses", text: "Glimpses" },
+                { to: "/internships", text: "Internships" },
+                { to: "/blogs", text: "Blogs" },
+                { to: "/teams", text: "Team" },
+                { to: "/#contact", text: "Contact" }
+              ]
+              return items
+            })().map((item, index) => (
               <motion.div
                 key={item.text}
                 initial={{ x: -20, opacity: 0 }}
@@ -533,15 +547,9 @@ function Hero() {
             transition={{ delay: 1.0, duration: 0.6 }}
             className="mt-6 text-xl sm:text-2xl"
           >
-            A forum for students from premier institutions across India.
-          </motion.p>
-          <motion.p 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 1.2, duration: 0.6 }}
-            className="mt-2 text-lg sm:text-xl"
-          >
-            Bringing together the best talents with a "Nation First" attitude for national reconstruction.
+            A pan-India initiative empowering students with a 'Nation First' mindset.
+            <br />
+            Join the country's brightest young minds in nation-building and intellectual engagement.
           </motion.p>
           <motion.div 
             initial={{ y: 30, opacity: 0 }}
@@ -639,7 +647,7 @@ function Footer() {
             <ul className="mt-2 space-y-2 text-white/80">
               <li><Link className="hover:text-white" to="/">Home</Link></li>
               <li><a className="hover:text-white" href="#about">About</a></li>
-              <li><a className="hover:text-white" href="#events">Events</a></li>
+              <li><a className="hover:text-white" href="#glimpses">Glimpses</a></li>
               <li><Link className="hover:text-white" to="/teams">Team</Link></li>
               <li><a className="hover:text-white" href="#contact">Contact</a></li>
             </ul>
@@ -854,23 +862,25 @@ function ContactSection() {
 
 function HomePage() {
   const [eventImages, setEventImages] = useState([])
+  const { isLoggedIn } = useAuth()
 
   useEffect(() => {
+    if (isLoggedIn) return // Do not fetch glimpses for logged-in users
     let cancelled = false
     const load = async () => {
       try {
-        // Fetch events list
-        let res = await fetch('http://localhost:8082/events', {
+        // Fetch glimpses list
+        let res = await fetch('http://localhost:8082/glimpses', {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
         })
         if (!res.ok) {
-          res = await fetch('http://localhost:8082/events', { method: 'GET', mode: 'cors' })
+          res = await fetch('http://localhost:8082/glimpses', { method: 'GET', mode: 'cors' })
         }
-        if (!res.ok) throw new Error(`Failed to fetch events: HTTP ${res.status}`)
+        if (!res.ok) throw new Error(`Failed to fetch glimpses: HTTP ${res.status}`)
 
-        const events = await res.json()
-        const list = Array.isArray(events) ? events : []
+        const glimpses = await res.json()
+        const list = Array.isArray(glimpses) ? glimpses : []
 
         const imageUtils = {
           detectMime: (b64) => {
@@ -930,7 +940,7 @@ function HomePage() {
         const slides = await Promise.all(
           list.map(async (ev, i) => {
             const imageId = ev.imageId ?? ev.imageID ?? ev.image_id ?? ev.imageid
-            const alt = ev.eventName || `Event ${i + 1}`
+            const alt = ev.name || ev.eventName || `Glimpse ${i + 1}`
             if (imageId === undefined || imageId === null) return { src: '', alt }
             try {
               let imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(imageId)}`, {
@@ -987,7 +997,7 @@ function HomePage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [isLoggedIn])
 
   return (
     <>
@@ -1057,9 +1067,18 @@ function HomePage() {
           ))}
         </div>
       </Section>
-      <Section id="events" title="Events" className="pb-0">
-        <ImageSlider className="mb-0" intervalMs={8000} images={eventImages} overlay={false} />
-      </Section>
+      {!isLoggedIn && (
+        <Section id="glimpses" title="Glimpses" className="pb-0">
+          <ImageSlider
+            className="mb-0"
+            intervalMs={8000}
+            images={eventImages}
+            overlay={false}
+            innerClassName="w-full h-[55vh] sm:h-[65vh] md:h-[80vh] lg:h-[100vh]"
+            imageClassName="h-full w-full object-contain md:object-cover"
+          />
+        </Section>
+      )}
       <ContactSection />
     </>
   )
@@ -1078,10 +1097,10 @@ function OAuthCallbackHandler() {
 
       if (isAdmin === 'true') {
         localStorage.setItem('is_admin', 'true')
-        window.location.href = '/admin'
+        window.location.href = '/'
       } else {
         localStorage.removeItem('is_admin')
-        window.location.href = '/user/dashboard'
+        window.location.href = '/'
       }
     }
   }, [searchParams, navigate])
@@ -1110,7 +1129,11 @@ export default function App() {
       const handleHashChange = () => {
         const hash = window.location.hash.slice(1);
         if (hash) {
-          const element = document.getElementById(hash);
+          let element = document.getElementById(hash);
+          // Fallback mapping: legacy "events" -> "glimpses"
+          if (!element && hash === 'events') {
+            element = document.getElementById('glimpses');
+          }
           if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
@@ -1124,8 +1147,13 @@ export default function App() {
         // Check if the link is a simple hash link for the current page
         if (target && target.hash && target.getAttribute('href').startsWith('#')) {
           e.preventDefault();
-          const hash = target.hash.slice(1);
-          const element = document.getElementById(hash);
+          let hash = target.hash.slice(1);
+          let element = document.getElementById(hash);
+          // Fallback mapping for legacy links
+          if (!element && hash === 'events') {
+            hash = 'glimpses';
+            element = document.getElementById(hash);
+          }
 
           if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1149,16 +1177,24 @@ export default function App() {
     return null;
   }
 
-  const [isLoading, setIsLoading] = useState(true)
+  // Show loading screen only once per tab session
+  const [isLoading, setIsLoading] = useState(() => {
+    try {
+      return sessionStorage.getItem('hasSeenLoading') !== 'true'
+    } catch {
+      return true
+    }
+  })
 
   useEffect(() => {
-    // Show loading page for 3 seconds on first load
+    if (!isLoading) return
+    // Show loading page for ~2 seconds only on first load per session
     const timer = setTimeout(() => {
       setIsLoading(false)
+      try { sessionStorage.setItem('hasSeenLoading', 'true') } catch {}
     }, 2000)
-
     return () => clearTimeout(timer)
-  }, [])
+  }, [isLoading])
 
   if (isLoading) {
     return <LoadingPage />
@@ -1174,13 +1210,18 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/internships" element={<Internships />} />
+            <Route path="/internships/:id" element={<InternshipDetail />} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/blogs" element={<Blogs />} />
             <Route path="/blogs/:slug" element={<BlogDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/user/events" element={<UserEvents />} />
+            <Route path="/user/past-events" element={<Navigate to="/user/events" replace />} />
+            <Route path="/user/upcoming-events" element={<Navigate to="/user/events" replace />} />
             <Route path="/user/dashboard" element={<UserDashboard />} />
+            <Route path="/events/:id" element={<EventDetail />} />
           </Routes>
         </main>
         <Footer />

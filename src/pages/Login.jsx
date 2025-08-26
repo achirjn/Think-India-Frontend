@@ -124,8 +124,42 @@ export default function Login() {
           setErrors({ submit: 'No token received from server. Please check backend configuration.' })
         }
       } else {
-        const errorData = await response.text()
-        setErrors({ submit: `Login failed (${response.status}): ${errorData || 'Invalid credentials'}` })
+        // Try to parse JSON error first
+        let serverMsg = ''
+        try {
+          const ct = response.headers.get('content-type') || ''
+          if (ct.includes('application/json')) {
+            const j = await response.json()
+            serverMsg = j.message || j.error || ''
+          } else {
+            serverMsg = await response.text()
+          }
+        } catch {}
+
+        // Friendly message map
+        let friendly = ''
+        switch (response.status) {
+          case 400:
+            friendly = 'Invalid request. Please check your inputs.'
+            break
+          case 401:
+            friendly = 'Incorrect email or password.'
+            break
+          case 403:
+            friendly = 'Access denied.'
+            break
+          case 429:
+            friendly = 'Too many attempts. Please wait a moment and try again.'
+            break
+          case 500:
+            friendly = 'Server error. Please try again later.'
+            break
+          default:
+            friendly = 'Login failed. Please try again.'
+        }
+        // Prefer server message if concise
+        const finalMsg = serverMsg && serverMsg.length < 200 ? serverMsg : friendly
+        setErrors({ submit: finalMsg })
       }
     } catch (error) {
       // Provide specific error messages based on the error type

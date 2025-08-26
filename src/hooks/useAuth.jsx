@@ -28,8 +28,8 @@ export function AuthProvider({ children }) {
           const payload = JSON.parse(atob(token.split('.')[1]));
           setUser({
             id: payload.id,
-            name: payload.name || payload.username || 'User',
-            email: payload.email,
+            name: payload.name || payload.username || payload.sub || 'User',
+            email: payload.email || payload.username || payload.sub || '',
             // Add other user properties as needed
           });
         } catch (error) {
@@ -67,8 +67,8 @@ export function AuthProvider({ children }) {
       const payload = JSON.parse(atob(token.split('.')[1]));
       setUser({
         id: payload.id,
-        name: payload.name || payload.username || 'User',
-        email: payload.email,
+        name: payload.name || payload.username || payload.sub || 'User',
+        email: payload.email || payload.username || payload.sub || '',
         // Add other user properties as needed
       });
     } catch (error) {

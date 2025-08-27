@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import SectionDivider from '../components/SectionDivider.jsx'
-import PortraitTripleSlider from '../components/PortraitTripleSlider.jsx'
+import AnimatedTestimonials from '../components/ui/AnimatedTestimonials.jsx'
 import useAuth from '../hooks/useAuth.jsx'
 import { authFetch } from '../utils/auth.js'
 
@@ -19,6 +19,11 @@ export default function Internships() {
   const [upcomingLoading, setUpcomingLoading] = useState(false)
   const [upcomingError, setUpcomingError] = useState('')
 
+  // Internship Diaries testimonials (API)
+  const [diaryTestimonials, setDiaryTestimonials] = useState([])
+  const [diaryLoading, setDiaryLoading] = useState(true)
+  const [diaryError, setDiaryError] = useState('')
+
   // static placeholders for slider (memoized to avoid re-creation each render)
   const placeholderImages = useMemo(() => ([
     { src: 'https://picsum.photos/seed/ti-1/600/800', alt: 'Temp poster 1' },
@@ -28,6 +33,54 @@ export default function Internships() {
     { src: 'https://picsum.photos/seed/ti-5/600/800', alt: 'Temp poster 5' },
     { src: 'https://picsum.photos/seed/ti-6/600/800', alt: 'Temp poster 6' },
   ]), [])
+
+  // Load Internship Diaries from backend
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      setDiaryLoading(true)
+      setDiaryError('')
+      try {
+        const res = await fetch('http://localhost:8082/internPlacements')
+        if (!res.ok) throw new Error('Failed to fetch internship diaries')
+        const data = await res.json()
+        const rows = Array.isArray(data) ? data : (data?.items || [])
+
+        const mapped = await Promise.all(rows.map(async (it) => {
+          if (!it) return null
+          const id = it.imageId ?? it.imageID ?? it.imageid
+          let src = ''
+          if (id !== undefined && id !== null) {
+            try {
+              const imgRes = await fetch(`http://localhost:8082/image/${id}`)
+              if (imgRes.ok) {
+                const imgJson = await imgRes.json().catch(() => ({}))
+                const b64 = imgJson.base64Image || imgJson.image || imgJson.data || ''
+                const mime = (imgJson.contentType || imgJson.mime || 'image/jpeg')
+                if (b64) src = `data:${mime};base64,${b64}`
+              }
+            } catch {}
+          }
+          return {
+            name: it.studentName || it.name || 'Student',
+            designation: it.designation || '',
+            role: it.role || '',
+            instituteName: it.instituteName || it.institute || it.company || '',
+            message: it.message || it.quote || '',
+            src,
+          }
+        }))
+
+        if (!cancelled) setDiaryTestimonials(mapped.filter(Boolean))
+      } catch (e) {
+        if (!cancelled) setDiaryError(e.message)
+      } finally {
+        if (!cancelled) setDiaryLoading(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [])
 
   // Removed legacy public internships fetch (/api/internships)
 
@@ -125,20 +178,14 @@ export default function Internships() {
           <h3 className="text-2xl sm:text-3xl font-extrabold text-[color:var(--color-ashoka-blue)]">Internship Diaries</h3>
         </div>
         <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80">Snapshots from our students’ successful internship journeys.</p>
-        <div className="mt-5 rounded-2xl overflow-hidden ring-1 ring-black/5 shadow-[0_10px_30px_rgba(15,28,63,0.08)]">
-          {(() => {
-            const useImages = (!postersLoading && !postersError && posters.length) ? posters : placeholderImages
-            return (
-              <PortraitTripleSlider
-                images={useImages}
-                intervalMs={5200}
-                showDots={true}
-                heightClass="h-[60vh] sm:h-[64vh] md:h-[68vh] lg:h-[72vh]"
-              />
-            )
-          })()}
-          {(!postersLoading && postersError) && (
-            <div className="p-3 text-center text-red-600">{postersError}</div>
+        <div className="mt-5">
+          <AnimatedTestimonials
+            testimonials={diaryTestimonials}
+            autoplay={false}
+            heightClass="h-[200px] sm:h-[240px] md:h-[280px] lg:h-[320px]"
+          />
+          {(!diaryLoading && diaryError) && (
+            <div className="p-3 text-center text-red-600">{diaryError}</div>
           )}
         </div>
       </motion.div>

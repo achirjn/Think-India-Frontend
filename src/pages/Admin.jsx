@@ -420,6 +420,7 @@ function TeamsPanel() {
 
   useEffect(() => {
     load()
+    loadPlacements()
   }, [])
 
   const onSubmit = async (e) => {
@@ -531,74 +532,68 @@ function TeamsPanel() {
         </div>
       </form>
       
-      <div className="mt-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">All Team Members</h3>
-        {loading && <div className="text-gray-600">Loading members…</div>}
-        {error && <div className="text-red-600">{error}</div>}
-        {!loading && !error && (
-          <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">ID</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Image</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Name</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Position</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Committee</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {members.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                      No team members found. Add your first member above.
-                    </td>
-                  </tr>
-                )}
-                {members.map((member) => (
-                  <tr key={member.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-700 font-medium">{member.id}</td>
-                    <td className="px-4 py-3">
-                      {member.imageId ? (
-                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
-                          <img 
-                            src={`http://localhost:8082/image/${member.imageId}`}
-                            alt={member.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none'
-                              e.target.nextSibling.style.display = 'flex'
-                            }}
-                          />
-                          <div className="w-full h-full bg-[color:var(--color-ashoka-blue)] text-white text-xs font-bold flex items-center justify-center" style={{display: 'none'}}>
-                            {member.name?.charAt(0)?.toUpperCase() || '?'}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-[color:var(--color-ashoka-blue)] text-white text-xs font-bold flex items-center justify-center">
-                          {member.name?.charAt(0)?.toUpperCase() || '?'}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-gray-900 font-medium">{member.name}</td>
-                    <td className="px-4 py-3 text-gray-700">{member.position}</td>
-                    <td className="px-4 py-3 text-gray-700">{member.committee}</td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => deleteMember(member.id)}
-                        disabled={deleting === member.id}
-                        className="rounded-md bg-red-600 hover:bg-red-700 px-3 py-1.5 text-white text-sm font-medium disabled:opacity-60 transition-colors"
-                      >
-                        {deleting === member.id ? 'Deleting…' : 'Delete'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      {/* Team Members List */}
+      <div className="mt-8 overflow-x-auto rounded-xl border bg-white shadow-sm">
+        <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left font-semibold text-gray-700">ID</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-700">Image</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-700">Name</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-700">Position</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-700">Committee</th>
+              <th className="px-4 py-3 text-left font-semibold text-gray-700">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {members.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                  No team members found. Add your first member above.
+                </td>
+              </tr>
+            )}
+            {members.map((member) => (
+              <tr key={member.id} className="hover:bg-gray-50">
+                <td className="px-4 py-3 text-gray-700 font-medium">{member.id}</td>
+                <td className="px-4 py-3">
+                  {member.imageId ? (
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                      <img
+                        src={`http://localhost:8082/image/${member.imageId}`}
+                        alt={member.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none'
+                          e.target.nextSibling.style.display = 'flex'
+                        }}
+                      />
+                      <div className="w-full h-full bg-[color:var(--color-ashoka-blue)] text-white text-xs font-bold flex items-center justify-center" style={{ display: 'none' }}>
+                        {member.name?.charAt(0)?.toUpperCase() || '?'}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-[color:var(--color-ashoka-blue)] text-white text-xs font-bold flex items-center justify-center">
+                      {member.name?.charAt(0)?.toUpperCase() || '?'}
+                    </div>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-gray-900 font-medium">{member.name}</td>
+                <td className="px-4 py-3 text-gray-700">{member.position}</td>
+                <td className="px-4 py-3 text-gray-700">{member.committee}</td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => deleteMember(member.id)}
+                    disabled={deleting === member.id}
+                    className="rounded-md bg-red-600 hover:bg-red-700 px-3 py-1.5 text-white text-sm font-medium disabled:opacity-60 transition-colors"
+                  >
+                    {deleting === member.id ? 'Deleting…' : 'Delete'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </PanelShell>
   )
@@ -1045,6 +1040,7 @@ function GlimpsesPanel() {
 
   useEffect(() => {
     load()
+    loadPlacements()
   }, [])
 
   const onSubmit = async (e) => {
@@ -1202,6 +1198,7 @@ function RecommendationsPanel() {
 
   useEffect(() => {
     load()
+    loadPlacements()
   }, [])
 
   const removeRecommendation = async (id) => {
@@ -1345,10 +1342,14 @@ function InternshipsPanel() {
   const [form, setForm] = useState({ title: '', description: '', applyUrl: '', category: 'current' })
   const [submitting, setSubmitting] = useState(false)
   // Additional state for successful internship stories (placements)
-  const [placeForm, setPlaceForm] = useState({ name: '', institute: '', image: null })
+  const [placeForm, setPlaceForm] = useState({ name: '', designation: '', role: '', institute: '', message: '', image: null })
   const [placeSubmitting, setPlaceSubmitting] = useState(false)
   const [placeError, setPlaceError] = useState('')
   const [placeSuccess, setPlaceSuccess] = useState('')
+  // Placements list state
+  const [placeList, setPlaceList] = useState([])
+  const [placeListLoading, setPlaceListLoading] = useState(false)
+  const [placeListError, setPlaceListError] = useState('')
   // Upcoming internships (admin) form
   const [upForm, setUpForm] = useState({
     role: '',
@@ -1394,6 +1395,28 @@ function InternshipsPanel() {
     }
   }
 
+  // Load placements list
+  const loadPlacements = async () => {
+    setPlaceListLoading(true)
+    setPlaceListError('')
+    try {
+      // Try public endpoint first
+      let res = await fetch('http://localhost:8082/internPlacements', { headers: { Accept: 'application/json' } })
+      if (!res.ok) {
+        // fall back to authenticated fetch (some servers gate by auth even for reads)
+        res = await authFetch('http://localhost:8082/internPlacements', { headers: { Accept: 'application/json' } })
+      }
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      const raw = await res.json().catch(() => [])
+      const arr = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : (Array.isArray(raw?.items) ? raw.items : (Array.isArray(raw?.list) ? raw.list : [])))
+      setPlaceList(arr)
+    } catch (e) {
+      setPlaceListError(typeof e?.message === 'string' ? e.message : 'Failed to load placements')
+    } finally {
+      setPlaceListLoading(false)
+    }
+  }
+
   useEffect(() => {
     load()
   }, [])
@@ -1423,7 +1446,10 @@ function InternshipsPanel() {
       const fd = new FormData()
       // Match backend @RequestParam names exactly
       fd.append('Name', placeForm.name || '')
+      fd.append('Designation', placeForm.designation || '')
+      fd.append('Role', placeForm.role || '')
       fd.append('Institute', placeForm.institute || '')
+      fd.append('Message', placeForm.message || '')
       if (placeForm.image) fd.append('Image', placeForm.image)
 
       const res = await authFetch('http://localhost:8082/api/admin/addInternPlacements', {
@@ -1434,11 +1460,28 @@ function InternshipsPanel() {
       // Backend likely returns empty body or OK
       await res.text().catch(() => '')
       setPlaceSuccess('Internship story added successfully!')
-      setPlaceForm({ name: '', institute: '', image: null })
+      setPlaceForm({ name: '', designation: '', role: '', institute: '', message: '', image: null })
+      try { await loadPlacements() } catch {}
     } catch (e2) {
       setPlaceError(typeof e2?.message === 'string' ? e2.message : 'Failed to add story')
     } finally {
       setPlaceSubmitting(false)
+    }
+  }
+
+  const onDeletePlacement = async (id) => {
+    if (!id) return
+    const confirm = window.confirm('Remove this internship placement?')
+    if (!confirm) return
+    try {
+      const res = await authFetch(`http://localhost:8082/api/admin/removeInternPlacedData/${encodeURIComponent(id)}` , {
+        method: 'DELETE',
+      })
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+      await res.text().catch(() => '')
+      await loadPlacements()
+    } catch (e) {
+      alert(typeof e?.message === 'string' ? e.message : 'Failed to delete')
     }
   }
 
@@ -1582,6 +1625,26 @@ function InternshipsPanel() {
             />
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700">Designation</label>
+            <input
+              value={placeForm.designation}
+              onChange={(e) => setPlaceForm({ ...placeForm, designation: e.target.value })}
+              required
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+              placeholder="e.g., CSE 3rd year"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Role</label>
+            <input
+              value={placeForm.role}
+              onChange={(e) => setPlaceForm({ ...placeForm, role: e.target.value })}
+              required
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+              placeholder="e.g., SDE"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700">Institute Name</label>
             <input
               value={placeForm.institute}
@@ -1589,6 +1652,17 @@ function InternshipsPanel() {
               required
               className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
               placeholder="e.g., SVNIT Surat"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Message</label>
+            <textarea
+              value={placeForm.message}
+              onChange={(e) => setPlaceForm({ ...placeForm, message: e.target.value })}
+              rows={3}
+              required
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
+              placeholder="Share a short experience"
             />
           </div>
           <div className="sm:col-span-2">
@@ -1619,53 +1693,76 @@ function InternshipsPanel() {
         </form>
       </div>
 
-      {/* Existing Internships form */}
-      <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Title</label>
-          <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Category</label>
-          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]">
-            <option value="current">Current Opportunity</option>
-            <option value="previous">Previous Internship</option>
-          </select>
-        </div>
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-700">Description</label>
-          <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={4} className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
-        </div>
-        <div className="sm:col-span-2">
-          <label className="block text-sm font-medium text-gray-700">Apply URL (for current)</label>
-          <input value={form.applyUrl} onChange={(e) => setForm({ ...form, applyUrl: e.target.value })} placeholder="https://…" className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
-        </div>
-        <div className="sm:col-span-2 flex justify-end">
-          <button disabled={submitting} className="rounded-lg bg-[color:var(--color-ashoka-blue)] px-5 py-3 text-white font-semibold shadow hover:opacity-90 disabled:opacity-60">
-            {submitting ? 'Saving…' : 'Add Entry'}
-          </button>
-        </div>
-      </form>
-      <div className="mt-8">
-        {loading && <div className="text-gray-600">Loading…</div>}
-        {error && <div className="text-red-600">{error}</div>}
-        {!loading && !error && (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((it) => (
-              <div key={it.id || it.title} className="rounded-xl border bg-white p-4 shadow-sm">
-                <div className="flex items-baseline justify-between">
-                  <div className="font-semibold text-[color:var(--color-ashoka-blue)]">{it.title}</div>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-[rgba(0,0,128,0.08)] text-[color:var(--color-ashoka-blue)]">{it.category || 'current'}</span>
-                </div>
-                {it.description && <p className="mt-1 text-sm text-gray-700 line-clamp-3">{it.description}</p>}
-                {it.applyUrl && (
-                  <a className="mt-2 inline-block text-[color:var(--color-india-green)] text-sm font-medium" href={it.applyUrl} target="_blank" rel="noreferrer">Apply →</a>
+      {/* Placements List */}
+      <div className="mb-10">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Successful Internship Placements</h3>
+        {placeListLoading ? (
+          <div className="text-gray-600">Loading…</div>
+        ) : placeListError ? (
+          <div className="text-red-600">{placeListError}</div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200 text-sm">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">ID</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Image</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Name</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Designation</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Role</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Institute</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {placeList.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-gray-500">No placements found.</td>
+                  </tr>
                 )}
-              </div>
-            ))}
+                {placeList.map((p) => {
+                  const id = p.id ?? p._id ?? p.placementId ?? p.internId ?? ''
+                  return (
+                    <tr key={id || p.imageId || Math.random()} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-gray-700 font-medium">{id}</td>
+                      <td className="px-4 py-3">
+                        {p.imageId ? (
+                          <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                            <img
+                              src={`http://localhost:8082/image/${p.imageId}`}
+                              alt={p.studentName || 'student'}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.currentTarget.style.display = 'none' }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-[color:var(--color-ashoka-blue)] text-white text-xs font-bold flex items-center justify-center">
+                            {(p.studentName || p.Name || '?').charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-900 font-medium">{p.studentName || p.name || p.Name || ''}</td>
+                      <td className="px-4 py-3 text-gray-700">{p.designation || ''}</td>
+                      <td className="px-4 py-3 text-gray-700">{p.role || ''}</td>
+                      <td className="px-4 py-3 text-gray-700">{p.instituteName || ''}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => onDeletePlacement(id)}
+                          className="rounded-md bg-red-600 hover:bg-red-700 px-3 py-1.5 text-white text-sm font-medium"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
+
+      {/* Removed old internships entry form and listing */}
     </PanelShell>
   )
 }

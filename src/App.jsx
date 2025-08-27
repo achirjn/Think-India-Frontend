@@ -672,14 +672,18 @@ function Footer() {
         <div className="mt-10 border-t border-white/10 pt-6 text-white/70">
           {/* Desktop Layout */}
           <div className="hidden md:flex items-center justify-between">
-            <div className="text-sm"> 2023 Think India, SVNIT</div>
-            <div className="text-md">Developed and maintained by  <span className="text-white font-bold">Achir Jain</span></div>
+            <div className="text-lg"> 2024 Think India, SVNIT</div>
+            <div className="text-right">
+              <div className="text-lg">Developed by <span className="text-white font-bold">Achir Jain</span></div>
+              <div className="text-md">Managed by <span className="text-white font-bold">Vivek Yadav</span></div>
+            </div>
           </div>
           
           {/* Mobile Layout - Same content, different pattern */}
           <div className="md:hidden text-center space-y-2">
-            <div className="text-sm"> 2023 Think India, SVNIT</div>
-            <div className="text-md">Developed and maintained by  <span className="text-white font-bold">Achir Jain</span></div>
+            <div className="text-md"> 2024 Think India, SVNIT</div>
+            <div className="text-lg">Developed by  <span className="text-white font-bold">Achir Jain</span></div>
+            <div className="text-md">Managed by  <span className="text-white font-bold">Vivek Yadav</span></div>
           </div>
         </div>
       </div>

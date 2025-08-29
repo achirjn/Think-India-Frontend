@@ -258,7 +258,7 @@ function NavBar() {
                   { to: "/internships", text: "Internships" },
                   { to: "/blogs", text: "Blogs" },
                   { to: "/teams", text: "Team" },
-                  { to: "/#contact", text: "Contact" }
+                  { to: "/#contact", text: "Contact Us" }
                 ]
                 return base
               })().map((item, index) => (
@@ -373,7 +373,7 @@ function NavBar() {
                 { to: "/internships", text: "Internships" },
                 { to: "/blogs", text: "Blogs" },
                 { to: "/teams", text: "Team" },
-                { to: "/#contact", text: "Contact" }
+                { to: "/#contact", text: "Contact Us" }
               ]
               return items
             })().map((item, index) => (
@@ -389,8 +389,9 @@ function NavBar() {
                 {item.to.startsWith('/#') ? (
                   <button 
                     onClick={() => {
-                      handleSectionNavigation(item.to.substring(2))
+                      // Close menu first, then scroll to section after animation/remount
                       refreshNav()
+                      setTimeout(() => handleSectionNavigation(item.to.substring(2)), 200)
                     }}
                     className="block py-2 px-4 text-inverse-lg font-semibold text-[color:var(--color-ashoka-blue)] hover:bg-gray-50 rounded-lg transition-colors w-full text-left"
                   >
@@ -661,7 +662,7 @@ function Footer() {
               <li><a className="hover:text-white" href="#about">About</a></li>
               <li><a className="hover:text-white" href="#glimpses">Glimpses</a></li>
               <li><Link className="hover:text-white" to="/teams">Team</Link></li>
-              <li><a className="hover:text-white" href="#contact">Contact</a></li>
+              <li><a className="hover:text-white" href="#contact">Contact Us</a></li>
             </ul>
           </div>
           <div className="text-center md:text-left">

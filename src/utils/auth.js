@@ -1,4 +1,5 @@
 // JWT Token Management
+import { apiUrl } from '../config/api'
 const TOKEN_KEY = 'auth_token';
 
 /**
@@ -83,7 +84,8 @@ export const authFetch = async (url, options = {}) => {
     headers,
   }
 
-  const response = await fetch(url, finalOptions)
+  // Normalize URL through apiUrl so callers can pass relative paths
+  const response = await fetch(apiUrl(url), finalOptions)
 
   // Handles expired tokens by redirecting to the login page
   if (response.status === 401) {
@@ -102,5 +104,5 @@ export const authFetch = async (url, options = {}) => {
  * @returns {Promise<Response>}
  */
 export const publicFetch = async (url, options = {}) => {
-  return fetch(url, options)
+  return fetch(apiUrl(url), options)
 }

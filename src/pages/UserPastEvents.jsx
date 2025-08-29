@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import useAuth from '../hooks/useAuth.jsx'
-import { authFetch } from '../utils/auth'
+import { authFetch, publicFetch } from '../utils/auth'
 
 export default function UserPastEvents() {
   const { isLoggedIn, loading: authLoading } = useAuth()
@@ -75,7 +75,7 @@ export default function UserPastEvents() {
       setError('')
       try {
         // Authenticated endpoint for past events
-        const url = 'http://localhost:8082/user/pastEvents'
+        const url = '/user/pastEvents'
         const res = await authFetch(url, { headers: { 'Accept': 'application/json' } })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         const data = await res.json()
@@ -89,8 +89,8 @@ export default function UserPastEvents() {
           if (Array.isArray(imageIdList)) {
             for (const id of imageIdList) {
               try {
-                let imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(id)}`, { headers: { 'Accept': 'application/json, text/plain, */*' } })
-                if (!imgRes.ok) imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(id)}`, { mode: 'cors' })
+                let imgRes = await publicFetch(`/image/${encodeURIComponent(id)}`, { headers: { 'Accept': 'application/json, text/plain, */*' } })
+                if (!imgRes.ok) imgRes = await publicFetch(`/image/${encodeURIComponent(id)}`, { mode: 'cors' })
                 if (!imgRes.ok) throw new Error('image fetch error')
                 const contentType = imgRes.headers.get('content-type') || ''
                 let base64 = '', mime = '', dataUri = ''

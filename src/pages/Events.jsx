@@ -3,12 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import SectionDivider from '../components/SectionDivider.jsx'
 import { HoverCard } from '../components/ui/card-hover-effect.jsx'
-import useAuth from '../hooks/useAuth.jsx'
 import Button from '../components/Button.jsx'
-import { authFetch, publicFetch } from '../utils/auth'
+import { publicFetch } from '../utils/auth'
 
-export default function UserEvents() {
-  const { isLoggedIn, loading: authLoading } = useAuth()
+export default function Events() {
   const navigate = useNavigate()
 
   const [loading, setLoading] = useState(true)
@@ -16,14 +14,7 @@ export default function UserEvents() {
   const [upcoming, setUpcoming] = useState([])
   const [past, setPast] = useState([])
 
-  useEffect(() => {
-    if (authLoading) return
-    if (!isLoggedIn) {
-      navigate('/login')
-    }
-  }, [authLoading, isLoggedIn, navigate])
-
-  // Helpers copied from Events logic in App.jsx
+  // Image helpers reused from user events
   const imageUtils = useMemo(() => ({
     detectMime: (b64) => {
       if (!b64 || typeof b64 !== 'string') return ''
@@ -84,14 +75,13 @@ export default function UserEvents() {
   useEffect(() => {
     let cancelled = false
     const load = async () => {
-      if (authLoading || !isLoggedIn) return
       setLoading(true)
       setError(null)
       try {
-        // Fetch upcoming and past lists from authenticated endpoints
+        // Public endpoints
         const [upRes, pastRes] = await Promise.all([
-          authFetch('/user/upcommingEvents', { headers: { Accept: 'application/json' } }),
-          authFetch('/user/pastEvents', { headers: { Accept: 'application/json' } })
+          publicFetch('/upcommingEvents', { headers: { Accept: 'application/json' } }),
+          publicFetch('/pastEvents', { headers: { Accept: 'application/json' } })
         ])
         if (!upRes.ok && !pastRes.ok) throw new Error(`Failed to fetch events: UPC ${upRes.status}, PAST ${pastRes.status}`)
 
@@ -100,7 +90,6 @@ export default function UserEvents() {
         const upList = Array.isArray(upListRaw) ? upListRaw : []
         const pastList = Array.isArray(pastListRaw) ? pastListRaw : []
 
-        // Helper to load first image for an event (imageIdList)
         const loadFirstImage = async (ev, i) => {
           const ids = ev.imageIdList || ev.imageIDs || ev.imageIds || []
           const firstId = Array.isArray(ids) && ids.length ? ids[0] : null
@@ -128,7 +117,6 @@ export default function UserEvents() {
                     const ext = imageUtils.extractBase64(parsed)
                     base64 = imageUtils.sanitizeBase64(ext.base64)
                     mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
-                    dataUri = ext.dataUri
                   } catch {
                     base64 = imageUtils.sanitizeBase64(maybeJson)
                     mime = imageUtils.detectMime(base64) || 'image/jpeg'
@@ -169,15 +157,7 @@ export default function UserEvents() {
     }
     load()
     return () => { cancelled = true }
-  }, [authLoading, isLoggedIn, imageUtils])
-
-  if (authLoading || !isLoggedIn) {
-    return (
-      <section className="container-responsive py-responsive">
-        <div className="text-center text-[color:var(--color-ashoka-blue)]">Loading...</div>
-      </section>
-    )
-  }
+  }, [imageUtils])
 
   return (
     <section className="relative overflow-hidden min-h-fit py-8 sm:py-10 md:py-12">

@@ -13,7 +13,7 @@ export default function ProtectedComponent() {
     
     try {
       // This will automatically include the JWT token in the Authorization header
-      const response = await authFetch('http://localhost:8082/api/protected-endpoint')
+      const response = await authFetch('/api/protected-endpoint')
       
       if (response.ok) {
         const result = await response.json()
@@ -31,7 +31,7 @@ export default function ProtectedComponent() {
   // Example of posting data with authentication
   const postProtectedData = async (postData) => {
     try {
-      const response = await authFetch('http://localhost:8082/api/protected-endpoint', {
+      const response = await authFetch('/api/protected-endpoint', {
         method: 'POST',
         body: JSON.stringify(postData)
       })

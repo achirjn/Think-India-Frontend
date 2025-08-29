@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getToken } from '../utils/auth'
+import { getToken, authFetch } from '../utils/auth'
+import { apiUrl } from '../config/api.js'
 import useAuth from '../hooks/useAuth'
 
 export default function UserDashboard() {
@@ -112,7 +113,7 @@ export default function UserDashboard() {
           setLoadingUser(false)
           return
         }
-        const url = `http://localhost:8082/user/getUserData/${encodeURIComponent(email)}`
+        const url = apiUrl(`/user/getUserData/${encodeURIComponent(email)}`)
         const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
         if (response.ok) {
           const data = await response.json()
@@ -140,8 +141,8 @@ export default function UserDashboard() {
               break
             }
             if (val.startsWith('/')) {
-              // Treat as relative path from backend
-              resolvedImage = `http://localhost:8082${val}`
+              // Treat as relative path from backend using apiUrl
+              resolvedImage = apiUrl(val)
               break
             }
             if (/^[A-Za-z0-9+/=]{100,}$/.test(val)) {
@@ -162,7 +163,7 @@ export default function UserDashboard() {
             if (possibleIds.length > 0) {
               const imgId = possibleIds[0]
               try {
-                const imgRes = await fetch(`http://localhost:8082/image/${imgId}`, { headers: { 'Authorization': `Bearer ${token}` } })
+                const imgRes = await authFetch(`/image/${imgId}`)
                 if (imgRes.ok) {
                   const imgJson = await imgRes.json()
                   if (imgJson?.base64Image) {
@@ -434,9 +435,8 @@ export default function UserDashboard() {
                 setSavingEdit(true)
                 setFeedback('')
                 try {
-                  const res = await fetch(`http://localhost:8082/user/editProfile/${encodeURIComponent(userData.email)}` ,{
+                  const res = await authFetch(`/user/editProfile/${encodeURIComponent(userData.email)}` ,{
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                   })
                   if (!res.ok) throw new Error('Failed to update profile')
@@ -497,9 +497,8 @@ export default function UserDashboard() {
                   const fd = new FormData()
                   fd.set('Old_password', oldPassword)
                   fd.set('New_password', newPassword)
-                  let res = await fetch(`http://localhost:8082/user/changePassword/${encodeURIComponent(userData.email)}` ,{
+                  let res = await authFetch(`/user/changePassword/${encodeURIComponent(userData.email)}` ,{
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
                     body: fd
                   })
                   if (!res.ok) {
@@ -601,9 +600,8 @@ export default function UserDashboard() {
                 setUploadingResume(true)
                 setResumeFeedback('')
                 try {
-                  const res = await fetch(`http://localhost:8082/user/uploadResume/${encodeURIComponent(userData.email)}` ,{
+                  const res = await authFetch(`/user/uploadResume/${encodeURIComponent(userData.email)}` ,{
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
                     body: fd
                   })
                   if (!res.ok) {

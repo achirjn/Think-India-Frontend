@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import SectionDivider from '../components/SectionDivider.jsx'
 import { HoverCard } from '../components/ui/card-hover-effect.jsx'
+import { publicFetch } from '../utils/auth'
 
 export default function Blogs() {
   const [posts, setPosts] = useState([])
@@ -12,7 +13,7 @@ export default function Blogs() {
   useEffect(() => {
     const load = async () => {
       try {
-        let res = await fetch('http://localhost:8082/blogPageGetAllBlogs', {
+        let res = await publicFetch('/blogPageGetAllBlogs', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -20,7 +21,7 @@ export default function Blogs() {
         })
         
         if (!res.ok) {
-          res = await fetch('http://localhost:8082/blogPageGetAllBlogs', {
+          res = await publicFetch('/blogPageGetAllBlogs', {
             method: 'GET',
             mode: 'cors',
             headers: {
@@ -143,12 +144,12 @@ export default function Blogs() {
           normalizedPosts.map(async (post) => {
             if (post.imageId === undefined || post.imageId === null) return post
             try {
-              let imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(post.imageId)}`, {
+              let imgRes = await publicFetch(`/image/${encodeURIComponent(post.imageId)}`, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json, text/plain, */*' },
               })
               if (!imgRes.ok) {
-                imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(post.imageId)}`, {
+                imgRes = await publicFetch(`/image/${encodeURIComponent(post.imageId)}`, {
                   method: 'GET',
                   mode: 'cors',
                 })

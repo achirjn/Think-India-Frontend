@@ -5,6 +5,7 @@ import SectionDivider from '../components/SectionDivider.jsx'
 import AnimatedTestimonials from '../components/ui/AnimatedTestimonials.jsx'
 import useAuth from '../hooks/useAuth.jsx'
 import { authFetch } from '../utils/auth.js'
+import { apiUrl } from '../config/api.js'
 
 export default function Internships() {
   // posters for successful placements
@@ -41,7 +42,7 @@ export default function Internships() {
       setDiaryLoading(true)
       setDiaryError('')
       try {
-        const res = await fetch('http://localhost:8082/internPlacements')
+        const res = await fetch(apiUrl('/internPlacements'))
         if (!res.ok) throw new Error('Failed to fetch internship diaries')
         const data = await res.json()
         const rows = Array.isArray(data) ? data : (data?.items || [])
@@ -52,7 +53,7 @@ export default function Internships() {
           let src = ''
           if (id !== undefined && id !== null) {
             try {
-              const imgRes = await fetch(`http://localhost:8082/image/${id}`)
+              const imgRes = await fetch(apiUrl(`/image/${id}`))
               if (imgRes.ok) {
                 const imgJson = await imgRes.json().catch(() => ({}))
                 const b64 = imgJson.base64Image || imgJson.image || imgJson.data || ''
@@ -92,8 +93,8 @@ export default function Internships() {
       setUpcomingLoading(true)
       setUpcomingError('')
       try {
-        // Directly call backend. If the response isn't JSON, treat as empty list (no error shown).
-        const res = await authFetch('http://localhost:8082/user/getUpcommingInternships')
+        // Call via authFetch with relative path; apiUrl will prefix the base.
+        const res = await authFetch('/user/getUpcommingInternships')
         if (!res.ok) throw new Error('Failed to fetch upcoming internships')
         let data
         try {
@@ -119,7 +120,7 @@ export default function Internships() {
     const fetchPosters = async () => {
       try {
         // 1) Get internship placements list (contains imageId per record)
-        const res = await fetch('http://localhost:8082/internPlacements')
+        const res = await fetch(apiUrl('/internPlacements'))
         if (!res.ok) throw new Error('Failed to fetch internship placements')
         const data = await res.json()
 
@@ -133,7 +134,7 @@ export default function Internships() {
           const id = it.imageId ?? it.imageID ?? it.imageid
           if (id === undefined || id === null) return null
           try {
-            const imgRes = await fetch(`http://localhost:8082/image/${id}`)
+            const imgRes = await fetch(apiUrl(`/image/${id}`))
             if (!imgRes.ok) throw new Error('image fetch failed')
             const imgJson = await imgRes.json().catch(() => ({}))
             const b64 = imgJson.base64Image || imgJson.image || imgJson.data || ''

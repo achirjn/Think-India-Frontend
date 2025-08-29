@@ -302,7 +302,13 @@ export default function Signup() {
             </div>
 
             <p className="mt-6 text-sm text-[color:var(--color-ashoka-blue)]/70">
-              Already have an account? <Link to="/login" className="text-[color:var(--color-ashoka-blue)] underline">Login</Link>
+              Already have an account?{' '}
+              <Link
+                to="/login"
+                className="text-[color:var(--color-ashoka-blue)] underline underline-offset-2 decoration-1 transition-colors duration-200 hover:text-[color:var(--color-india-saffron)] hover:underline-offset-4 hover:decoration-2"
+              >
+                Login
+              </Link>
             </p>
           </form>
         </div>

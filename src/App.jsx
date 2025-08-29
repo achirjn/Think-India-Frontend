@@ -26,6 +26,8 @@ import { apiUrl } from './config/api.js'
 import useWindowSize from './hooks/useWindowSize.jsx'
 import useAuth from './hooks/useAuth.jsx'
 import UserEvents from './pages/UserEvents.jsx'
+import ThinkIndiaLogo from './assets/Think_India_Logo.svg'
+import NITSuratLogo from './assets/NIT_Surat_Logo.svg'
 
 function NavBar() {
   const location = useLocation()
@@ -184,7 +186,7 @@ function NavBar() {
                     className="h-12 w-12 rounded-full overflow-hidden ring-2 ring-white shadow-lg cursor-pointer"
                   >
                     <img 
-                      src="/src/assets/Think_India_Logo.svg" 
+                      src={ThinkIndiaLogo} 
                       alt="Think India Logo" 
                       className="h-full w-full object-cover"
                     />
@@ -199,7 +201,7 @@ function NavBar() {
                     className="h-12 w-12 flex items-center justify-center"
                   >
                     <img 
-                      src="/src/assets/NIT_Surat_Logo.svg" 
+                      src={NITSuratLogo} 
                       alt="NIT Surat Logo" 
                       className="h-full w-full object-contain"
                     />
@@ -631,7 +633,7 @@ function Footer() {
             <div className="flex items-center justify-center md:justify-start gap-3">
               <div className="h-12 w-12 rounded-full overflow-hidden ring-2 ring-white shadow-lg flex items-center justify-center bg-white shrink-0">
                 <img 
-                  src="/src/assets/Think_India_Logo.svg" 
+                  src={ThinkIndiaLogo} 
                   alt="Think India Logo" 
                   className="h-full w-full object-cover"
                 />

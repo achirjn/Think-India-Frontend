@@ -160,36 +160,37 @@ export default function Internships() {
     fetchPosters()
   }, [])
 
+  // Show diaries section only when successfully loaded with non-empty data
+  const showDiaries = (!diaryLoading && !diaryError && Array.isArray(diaryTestimonials) && diaryTestimonials.length > 0)
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
       <motion.h1 initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 120, damping: 18 }} className="text-center text-4xl sm:text-5xl font-extrabold tracking-tight text-[color:var(--color-ashoka-blue)]">Internships</motion.h1>
       <SectionDivider variant="bars" className="mt-6" />
 
       
-
-      {/* Internship Diaries slider (3-up portrait) */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, delay: 0.2 }}
-        className="mt-10"
-      >
-        <div className="flex items-center gap-3">
-          <div className="h-1.5 w-14 rounded bg-[color:var(--color-india-green)]" />
-          <h3 className="text-2xl sm:text-3xl font-extrabold text-[color:var(--color-ashoka-blue)]">Internship Diaries</h3>
-        </div>
-        <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80">Snapshots from our students’ successful internship journeys.</p>
-        <div className="mt-5">
-          <AnimatedTestimonials
-            testimonials={diaryTestimonials}
-            autoplay={false}
-            heightClass="h-[200px] sm:h-[240px] md:h-[280px] lg:h-[320px]"
-          />
-          {(!diaryLoading && diaryError) && (
-            <div className="p-3 text-center text-red-600">{diaryError}</div>
-          )}
-        </div>
-      </motion.div>
+      {/* Internship Diaries slider (3-up portrait) - render only if data present */}
+      {showDiaries && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.2 }}
+          className="mt-10"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-1.5 w-14 rounded bg-[color:var(--color-india-green)]" />
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-[color:var(--color-ashoka-blue)]">Internship Diaries</h3>
+          </div>
+          <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80">Snapshots from our students’ successful internship journeys.</p>
+          <div className="mt-5">
+            <AnimatedTestimonials
+              testimonials={diaryTestimonials}
+              autoplay={false}
+              heightClass="h-[200px] sm:h-[240px] md:h-[280px] lg:h-[320px]"
+            />
+          </div>
+        </motion.div>
+      )}
 
       {/* Internship Drive Intro (moved below slider) */}
       <motion.div

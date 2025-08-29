@@ -203,9 +203,9 @@ export default function Blogs() {
         setPosts(postsWithImages)
       } catch (e) {
         if (e.message.includes('CORS') || e.message.includes('cross-origin')) {
-          setError('CORS error: Backend needs to allow cross-origin requests from your frontend')
-        } else if (e.message.includes('fetch')) {
-          setError('Network error: Check if your Spring Boot server is running on port 8082')
+          setError('CORS error: Unable to access the API. Please try again later.')
+        } else if (e.message.toLowerCase().includes('fetch') || e.message.toLowerCase().includes('network')) {
+          setError('Network error: Unable to reach the backend. Please try again later.')
         } else {
           setError(`Failed to fetch blogs: ${e.message}`)
         }

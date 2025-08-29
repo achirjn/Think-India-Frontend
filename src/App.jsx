@@ -38,6 +38,14 @@ function NavBar() {
   })
   const [navHidden, setNavHidden] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  // bump key to remount navbar when user clicks any navbar item
+  const [navVersion, setNavVersion] = useState(0)
+
+  const refreshNav = () => {
+    setNavHidden(false)
+    setMobileMenuOpen(false)
+    setNavVersion(v => v + 1)
+  }
 
   // Handle navigation to home page sections
   const handleSectionNavigation = (sectionId) => {
@@ -162,6 +170,7 @@ function NavBar() {
 
   return (
     <motion.header
+      key={navVersion}
       initial={{ y: -40, opacity: 0 }}
       animate={{ y: navHidden ? -96 : 0, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 160, damping: 20 }}
@@ -178,7 +187,7 @@ function NavBar() {
                 className="flex items-center gap-3"
               >
                 {/* Think India Logo (scroll to Hero) */}
-                <button onClick={() => handleSectionNavigation('hero')} className="contents" aria-label="Go to Hero">
+                <button onClick={() => { handleSectionNavigation('hero'); refreshNav() }} className="contents" aria-label="Go to Hero">
                   <motion.div 
                     whileHover={{ scale: 1.1, rotate: 5 }}
                     whileTap={{ scale: 0.95 }}
@@ -193,7 +202,7 @@ function NavBar() {
                   </motion.div>
                 </button>
                 {/* SVNIT Logo */}
-                <a href="https://www.svnit.ac.in/index.php" target="_blank" rel="noopener noreferrer">
+                <a href="https://www.svnit.ac.in/index.php" target="_blank" rel="noopener noreferrer" onClick={refreshNav}>
                   <motion.div 
                     whileHover={{ scale: 1.1, rotate: -5 }}
                     whileTap={{ scale: 0.95 }}
@@ -217,7 +226,7 @@ function NavBar() {
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  onClick={() => handleSectionNavigation('hero')}
+                  onClick={() => { handleSectionNavigation('hero'); refreshNav() }}
                   className="font-black text-lg sm:text-xl md:text-2xl lg:text-3xl tracking-wide text-[color:var(--color-ashoka-blue)] text-left"
                 >
                   Think India
@@ -228,6 +237,7 @@ function NavBar() {
                   href="https://www.svnit.ac.in/index.php"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={refreshNav}
                   className="text-sm sm:text-base md:text-lg tracking-wide text-[color:var(--color-ashoka-blue)] font-bold -mt-1"
                 >
                   SVNIT
@@ -260,7 +270,7 @@ function NavBar() {
                 >
                   {item.to.startsWith('/#') ? (
                     <button 
-                      onClick={() => handleSectionNavigation(item.to.substring(2))}
+                      onClick={() => { handleSectionNavigation(item.to.substring(2)); refreshNav() }}
                       className="relative hover:text-[color:var(--color-ashoka-blue)] transition-colors duration-200 group"
                     >
                       {item.text}
@@ -270,6 +280,7 @@ function NavBar() {
                     <Link 
                       className="relative hover:text-[color:var(--color-ashoka-blue)] transition-colors duration-200 group" 
                       to={item.to}
+                      onClick={refreshNav}
                     >
                       {item.text}
                       <motion.span
@@ -379,7 +390,7 @@ function NavBar() {
                   <button 
                     onClick={() => {
                       handleSectionNavigation(item.to.substring(2))
-                      setMobileMenuOpen(false)
+                      refreshNav()
                     }}
                     className="block py-2 px-4 text-inverse-lg font-semibold text-[color:var(--color-ashoka-blue)] hover:bg-gray-50 rounded-lg transition-colors w-full text-left"
                   >
@@ -388,7 +399,7 @@ function NavBar() {
                 ) : (
                   <Link 
                     to={item.to}
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={() => { refreshNav() }}
                     className="block py-2 px-4 text-inverse-lg font-semibold text-[color:var(--color-ashoka-blue)] hover:bg-gray-50 rounded-lg transition-colors"
                   >
                     {item.text}

@@ -74,7 +74,16 @@ export default function Internships() {
 
         if (!cancelled) setDiaryTestimonials(mapped.filter(Boolean))
       } catch (e) {
-        if (!cancelled) setDiaryError(e.message)
+        if (!cancelled) {
+          const msg = (e?.message || '').toLowerCase()
+          if (msg.includes('cors') || msg.includes('cross-origin')) {
+            setDiaryError('CORS error: Unable to access the API. Please try again later.')
+          } else if (msg.includes('network') || msg.includes('fetch')) {
+            setDiaryError('Network error: Unable to reach the backend. Please try again later.')
+          } else {
+            setDiaryError(e.message)
+          }
+        }
       } finally {
         if (!cancelled) setDiaryLoading(false)
       }
@@ -105,8 +114,17 @@ export default function Internships() {
         }
         if (!cancelled) setUpcoming(Array.isArray(data) ? data : (data?.items || []))
       } catch (e) {
-        // Network/auth errors => show a concise message; parsing issues are handled above
-        if (!cancelled) setUpcomingError(e.message)
+        // Network/auth errors => show a concise, production-friendly message
+        if (!cancelled) {
+          const msg = (e?.message || '').toLowerCase()
+          if (msg.includes('cors') || msg.includes('cross-origin')) {
+            setUpcomingError('CORS error: Unable to access the API. Please try again later.')
+          } else if (msg.includes('network') || msg.includes('fetch')) {
+            setUpcomingError('Network error: Unable to reach the backend. Please try again later.')
+          } else {
+            setUpcomingError(e.message)
+          }
+        }
       } finally {
         if (!cancelled) setUpcomingLoading(false)
       }
@@ -152,7 +170,14 @@ export default function Internships() {
 
         setPosters(images.filter(Boolean))
       } catch (e) {
-        setPostersError(e.message)
+        const msg = (e?.message || '').toLowerCase()
+        if (msg.includes('cors') || msg.includes('cross-origin')) {
+          setPostersError('CORS error: Unable to access the API. Please try again later.')
+        } else if (msg.includes('network') || msg.includes('fetch')) {
+          setPostersError('Network error: Unable to reach the backend. Please try again later.')
+        } else {
+          setPostersError(e.message)
+        }
       } finally {
         setPostersLoading(false)
       }

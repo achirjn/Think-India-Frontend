@@ -150,7 +150,16 @@ export default function Events() {
           setPast(pastWith)
         }
       } catch (e) {
-        if (!cancelled) setError(e.message || 'Failed to load events')
+        if (!cancelled) {
+          const msg = (e?.message || '').toLowerCase()
+          if (msg.includes('cors') || msg.includes('cross-origin')) {
+            setError('CORS error: Unable to access the API. Please try again later.')
+          } else if (msg.includes('network') || msg.includes('fetch')) {
+            setError('Network error: Unable to reach the backend. Please try again later.')
+          } else {
+            setError(`Failed to load events: ${e.message || ''}`.trim())
+          }
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }

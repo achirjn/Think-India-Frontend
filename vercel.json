@@ -1,5 +1,12 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "http://api-thinkindiasvnit.ap-south-1.elasticbeanstalk.com/:path*" }
+    {
+      "source": "/api/(.*)",
+      "destination": "http://api-thinkindiasvnit.ap-south-1.elasticbeanstalk.com/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

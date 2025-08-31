@@ -25,7 +25,6 @@ import { getToken, removeToken, setToken, isAuthenticated } from './utils/auth'
 import { apiUrl } from './config/api.js'
 import useWindowSize from './hooks/useWindowSize.jsx'
 import useAuth from './hooks/useAuth.jsx'
-import UserEvents from './pages/UserEvents.jsx'
 import ThinkIndiaLogo from './assets/Think_India_Logo.svg'
 import NITSuratLogo from './assets/NIT_Surat_Logo.svg'
 
@@ -1236,9 +1235,9 @@ export default function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/events" element={<Events />} />
-            <Route path="/user/events" element={<UserEvents />} />
-            <Route path="/user/past-events" element={<Navigate to="/user/events" replace />} />
-            <Route path="/user/upcoming-events" element={<Navigate to="/user/events" replace />} />
+            <Route path="/user/events" element={<Navigate to="/events" replace />} />
+            <Route path="/user/past-events" element={<Navigate to="/events" replace />} />
+            <Route path="/user/upcoming-events" element={<Navigate to="/events" replace />} />
             <Route path="/user/dashboard" element={<UserDashboard />} />
             <Route path="/events/:slug" element={<EventDetail />} />
             <Route path="/events/:id" element={<EventDetail />} />

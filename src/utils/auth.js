@@ -34,8 +34,11 @@ export const isAuthenticated = () => {
   if (!token) return false;
   
   try {
-    // Parse JWT token to check expiration
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    // Parse JWT token to check expiration (base64url-safe)
+    const payload = parseJwtPayload(token)
+    if (!payload) {
+      throw new Error('Invalid JWT payload')
+    }
     const currentTime = Math.floor(Date.now() / 1000);
     
     // Check if token is expired
@@ -54,6 +57,36 @@ export const isAuthenticated = () => {
     return false;
   }
 };
+
+// Decode a base64url string safely (adds padding and replaces URL-safe chars)
+const decodeBase64Url = (str) => {
+  try {
+    const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+    const pad = base64.length % 4;
+    const padded = pad ? base64 + '='.repeat(4 - pad) : base64;
+    return atob(padded);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Safely parse a JWT payload, handling base64url encoding.
+ * @param {string} token
+ * @returns {object|null}
+ */
+export const parseJwtPayload = (token) => {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length < 2) return null;
+  const json = decodeBase64Url(parts[1]);
+  if (!json) return null;
+  try {
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * A wrapper around `fetch` that automatically handles authentication headers

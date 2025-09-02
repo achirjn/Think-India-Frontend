@@ -1114,10 +1114,10 @@ function OAuthCallbackHandler() {
 
       if (isAdmin === 'true') {
         localStorage.setItem('is_admin', 'true')
-        window.location.href = '/'
+        navigate('/', { replace: true })
       } else {
         localStorage.removeItem('is_admin')
-        window.location.href = '/'
+        navigate('/', { replace: true })
       }
     }
   }, [searchParams, navigate])

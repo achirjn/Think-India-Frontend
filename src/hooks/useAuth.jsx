@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import { getToken, removeToken, isAuthenticated } from '../utils/auth';
+import { getToken, removeToken, isAuthenticated, parseJwtPayload } from '../utils/auth';
 
 // Create a context for authentication
 const AuthContext = createContext(null);
@@ -25,13 +25,17 @@ export function AuthProvider({ children }) {
       if (authenticated) {
         try {
           const token = getToken();
-          const payload = JSON.parse(atob(token.split('.')[1]));
-          setUser({
-            id: payload.id,
-            name: payload.name || payload.username || payload.sub || 'User',
-            email: payload.email || payload.username || payload.sub || '',
-            // Add other user properties as needed
-          });
+          const payload = parseJwtPayload(token)
+          if (payload) {
+            setUser({
+              id: payload.id,
+              name: payload.name || payload.username || payload.sub || 'User',
+              email: payload.email || payload.username || payload.sub || '',
+              // Add other user properties as needed
+            });
+          } else {
+            setUser(null);
+          }
         } catch (error) {
           console.error('Error parsing user data from token:', error);
         }
@@ -64,13 +68,17 @@ export function AuthProvider({ children }) {
 
     // Parse user data from token
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUser({
-        id: payload.id,
-        name: payload.name || payload.username || payload.sub || 'User',
-        email: payload.email || payload.username || payload.sub || '',
-        // Add other user properties as needed
-      });
+      const payload = parseJwtPayload(token)
+      if (payload) {
+        setUser({
+          id: payload.id,
+          name: payload.name || payload.username || payload.sub || 'User',
+          email: payload.email || payload.username || payload.sub || '',
+          // Add other user properties as needed
+        });
+      } else {
+        setUser(null)
+      }
     } catch (error) {
       console.error('Error parsing user data from token:', error);
     }

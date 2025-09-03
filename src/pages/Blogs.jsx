@@ -12,7 +12,7 @@ export default function Blogs() {
   useEffect(() => {
     const load = async () => {
       try {
-        let res = await fetch('http://localhost:8082/blogPageGetAllBlogs', {
+        let res = await fetch('https://api.thinkindiasvnit.in/blogPageGetAllBlogs', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -20,7 +20,7 @@ export default function Blogs() {
         })
         
         if (!res.ok) {
-          res = await fetch('http://localhost:8082/blogPageGetAllBlogs', {
+          res = await fetch('https://api.thinkindiasvnit.in/blogPageGetAllBlogs', {
             method: 'GET',
             mode: 'cors',
             headers: {
@@ -143,12 +143,12 @@ export default function Blogs() {
           normalizedPosts.map(async (post) => {
             if (post.imageId === undefined || post.imageId === null) return post
             try {
-              let imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(post.imageId)}`, {
+              let imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(post.imageId)}`, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json, text/plain, */*' },
               })
               if (!imgRes.ok) {
-                imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(post.imageId)}`, {
+                imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(post.imageId)}`, {
                   method: 'GET',
                   mode: 'cors',
                 })

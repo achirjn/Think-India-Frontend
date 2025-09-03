@@ -46,7 +46,7 @@ export default function AdminAddEvent() {
 
     try {
       // Adjust if your base path differs
-      const url = 'http://localhost:8082/api/admin/addEvent'
+      const url = 'https://api.thinkindiasvnit.in/api/admin/addEvent'
       let res = await fetch(url, { method: 'POST', body: fd, mode: 'cors' })
       if (!res.ok) {
         // retry without explicit cors if server handles it

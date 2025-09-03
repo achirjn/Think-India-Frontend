@@ -40,8 +40,8 @@ export default function EventDetail() {
         setError('')
         // try upcoming and past, pick first match by id
         const [upRes, pastRes] = await Promise.all([
-          authFetch('http://localhost:8082/user/upcommingEvents').catch(() => null),
-          authFetch('http://localhost:8082/user/pastEvents').catch(() => null)
+          authFetch('https://api.thinkindiasvnit.in/upcommingEvents').catch(() => null),
+          authFetch('https://api.thinkindiasvnit.in/pastEvents').catch(() => null)
         ])
         const upList = upRes?.ok ? await upRes.json() : []
         const pastList = pastRes?.ok ? await pastRes.json() : []
@@ -54,7 +54,7 @@ export default function EventDetail() {
         const images = Array.isArray(ids)
           ? (await Promise.all(ids.map(async (imgId) => {
               try {
-                const r = await authFetch(`http://localhost:8082/image/${encodeURIComponent(imgId)}`)
+                const r = await authFetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imgId)}`)
                 if (!r.ok) return null
                 const j = await r.json().catch(() => ({}))
                 const ext = imageUtils.extractBase64(j)
@@ -85,7 +85,7 @@ export default function EventDetail() {
         if (!Array.isArray(ids) || !ids.length) return
         const images = (await Promise.all(ids.map(async (imgId) => {
           try {
-            const r = await authFetch(`http://localhost:8082/image/${encodeURIComponent(imgId)}`)
+            const r = await authFetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imgId)}`)
             if (!r.ok) return null
             const j = await r.json().catch(() => ({}))
             const ext = imageUtils.extractBase64(j)

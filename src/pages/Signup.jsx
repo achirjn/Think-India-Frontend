@@ -135,7 +135,7 @@ export default function Signup() {
       formDataToSend.append('email', formData.email)
       formDataToSend.append('password', formData.password)
 
-      const response = await fetch('http://localhost:8082/auth/register', {
+      const response = await fetch('https://api.thinkindiasvnit.in/auth/register', {
         method: 'POST',
         body: formDataToSend
       })
@@ -163,7 +163,7 @@ export default function Signup() {
     } catch (error) {
       // Provide more specific error messages based on the error type
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        setErrors({ submit: 'Cannot connect to server. Please ensure the backend is running on http://localhost:8082' })
+        setErrors({ submit: 'Cannot connect to server. Please ensure the backend is running on https://api.thinkindiasvnit.in' })
       } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
         setErrors({ submit: 'Connection refused. Please check if the backend server is running and accessible.' })
       } else {
@@ -176,7 +176,7 @@ export default function Signup() {
 
   const handleGoogleLogin = () => {
     // This URL should point to your backend endpoint that initiates the Google OAuth flow
-    window.location.href = 'http://localhost:8082/oauth2/authorization/google'; 
+    window.location.href = 'https://api.thinkindiasvnit.in/oauth2/authorization/google'; 
   };
 
   return (

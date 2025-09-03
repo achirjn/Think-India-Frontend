@@ -130,7 +130,7 @@ export default function Teams() {
   useEffect(() => {
     const fetchTeamMembers = async (position) => {
       try {
-        const response = await fetch(`http://localhost:8082/getMemberByPosition/${position}`)
+        const response = await fetch(`https://api.thinkindiasvnit.in/getMemberByPosition/${position}`)
         if (!response.ok) {
           throw new Error(`Failed to fetch ${position} members`)
         }
@@ -145,7 +145,7 @@ export default function Teams() {
 
     const fetchMemberImage = async (imageId) => {
       try {
-        const response = await fetch(`http://localhost:8082/image/${imageId}`)
+        const response = await fetch(`https://api.thinkindiasvnit.in/image/${imageId}`)
         if (!response.ok) {
           throw new Error(`Failed to fetch image ${imageId}`)
         }

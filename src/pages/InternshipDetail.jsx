@@ -22,7 +22,7 @@ export default function InternshipDetail() {
         setLoading(true)
         setError('')
         // Fetch upcoming internships (auth required) and find by id
-        const res = await authFetch('http://localhost:8082/user/getUpcommingInternships')
+        const res = await authFetch('https://api.thinkindiasvnit.in/user/getUpcommingInternships')
         if (!res.ok) throw new Error('Failed to fetch internships')
         let list = []
         try { list = await res.json() } catch { list = [] }

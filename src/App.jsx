@@ -460,7 +460,7 @@ function Hero() {
   // If user is logged in, render the LoggedInHero component instead
   if (isLoggedIn) {
     // Replace this with the actual API endpoint when provided
-    const heroImagesApiEndpoint = 'http://localhost:8082/heroImages'; // This will be replaced with the actual endpoint
+    const heroImagesApiEndpoint = 'https://api.thinkindiasvnit.in/heroImages'; // This will be replaced with the actual endpoint
     return <LoggedInHero userName={user?.name || ''} apiEndpoint={heroImagesApiEndpoint} />;
   }
 
@@ -727,14 +727,14 @@ function ContactSection() {
       formData.append('Email', form.email.value || '')
       formData.append('Message', form.message.value || '')
 
-      let res = await fetch('http://localhost:8082/recommend', {
+      let res = await fetch('https://api.thinkindiasvnit.in/recommend', {
         method: 'POST',
         body: formData,
         mode: 'cors',
       })
       if (!res.ok) {
         // retry without explicit cors if needed
-        res = await fetch('http://localhost:8082/recommend', { method: 'POST', body: formData })
+        res = await fetch('https://api.thinkindiasvnit.in/recommend', { method: 'POST', body: formData })
       }
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       // backend returns plain text id (e.g., 1)
@@ -888,12 +888,12 @@ function HomePage() {
     const load = async () => {
       try {
         // Fetch glimpses list
-        let res = await fetch('http://localhost:8082/glimpses', {
+        let res = await fetch('https://api.thinkindiasvnit.in/glimpses', {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
         })
         if (!res.ok) {
-          res = await fetch('http://localhost:8082/glimpses', { method: 'GET', mode: 'cors' })
+          res = await fetch('https://api.thinkindiasvnit.in/glimpses', { method: 'GET', mode: 'cors' })
         }
         if (!res.ok) throw new Error(`Failed to fetch glimpses: HTTP ${res.status}`)
 
@@ -961,12 +961,12 @@ function HomePage() {
             const alt = ev.name || ev.eventName || `Glimpse ${i + 1}`
             if (imageId === undefined || imageId === null) return { src: '', alt }
             try {
-              let imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(imageId)}`, {
+              let imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json, text/plain, */*' },
               })
               if (!imgRes.ok) {
-                imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(imageId)}`, { method: 'GET', mode: 'cors' })
+                imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, { method: 'GET', mode: 'cors' })
               }
               if (!imgRes.ok) throw new Error('image fetch error')
               const contentType = imgRes.headers.get('content-type') || ''

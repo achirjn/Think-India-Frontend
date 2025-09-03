@@ -17,7 +17,7 @@ export default function BlogDetail() {
         
         // Prefer id from slug if numeric, else try fetching by heading
         const isNumeric = /^\d+$/.test(String(slug || ''))
-        const endpoint = isNumeric ? `http://localhost:8082/blog/${encodeURIComponent(slug)}` : `http://localhost:8082/blog/${encodeURIComponent(slug)}`
+        const endpoint = isNumeric ? `https://api.thinkindiasvnit.in/blog/${encodeURIComponent(slug)}` : `https://api.thinkindiasvnit.in/blog/${encodeURIComponent(slug)}`
         const res = await fetch(endpoint, {
           method: 'GET',
           headers: {
@@ -97,12 +97,12 @@ export default function BlogDetail() {
         let imageSrc = ''
         if (imageId) {
           try {
-            let imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(imageId)}`, {
+            let imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, {
               method: 'GET',
               headers: { 'Accept': 'application/json, text/plain, */*' },
             })
             if (!imgRes.ok) {
-              imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(imageId)}`, {
+              imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, {
                 method: 'GET',
                 mode: 'cors',
               })

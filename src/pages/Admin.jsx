@@ -226,13 +226,13 @@ function BlogsPanel() {
     setLoading(true)
     try {
       // Fetch all public blogs for management list
-      let res = await fetch('http://localhost:8082/blogPageGetAllBlogs', {
+      let res = await fetch('https://api.thinkindiasvnit.in/blogPageGetAllBlogs', {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
       })
       if (!res.ok) {
         // retry with CORS fallback if needed
-        res = await fetch('http://localhost:8082/blogPageGetAllBlogs', { method: 'GET', mode: 'cors' })
+        res = await fetch('https://api.thinkindiasvnit.in/blogPageGetAllBlogs', { method: 'GET', mode: 'cors' })
       }
       if (!res.ok) throw new Error(res.statusText)
       const data = await res.json().catch(() => [])
@@ -262,7 +262,7 @@ function BlogsPanel() {
         formData.append('Cover_image', form.coverImage)
       }
       // Use authenticated fetch for admin endpoint
-      let res = await authFetch('http://localhost:8082/api/admin/createBlog', {
+      let res = await authFetch('https://api.thinkindiasvnit.in/api/admin/createBlog', {
         method: 'POST',
         body: formData
       })
@@ -290,10 +290,10 @@ function BlogsPanel() {
       setError('')
       const enc = encodeURIComponent(clean)
       const tries = [
-        { url: `http://localhost:8082/deleteBlog/${enc}`, method: 'DELETE' },
-        { url: `http://localhost:8082/api/admin/deleteBlog/${enc}`, method: 'DELETE' },
-        { url: `http://localhost:8082/deleteBlog/${enc}`, method: 'GET' },
-        { url: `http://localhost:8082/api/admin/deleteBlog/${enc}`, method: 'GET' },
+        { url: `https://api.thinkindiasvnit.in/deleteBlog/${enc}`, method: 'DELETE' },
+        { url: `https://api.thinkindiasvnit.in/api/admin/deleteBlog/${enc}`, method: 'DELETE' },
+        { url: `https://api.thinkindiasvnit.in/deleteBlog/${enc}`, method: 'GET' },
+        { url: `https://api.thinkindiasvnit.in/api/admin/deleteBlog/${enc}`, method: 'GET' },
       ]
       let ok = false
       let lastStatus = ''
@@ -407,7 +407,7 @@ function TeamsPanel() {
     setLoading(true)
     setError('')
     try {
-      const res = await fetch('http://localhost:8082/getTeamMember')
+      const res = await fetch('https://api.thinkindiasvnit.in/getTeamMember')
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       const data = await res.json()
       setMembers(Array.isArray(data) ? data : [])
@@ -437,7 +437,7 @@ function TeamsPanel() {
         formData.append('Member_image', form.image)
       }
       
-      const res = await authFetch('http://localhost:8082/api/admin/addTeamMember', {
+      const res = await authFetch('https://api.thinkindiasvnit.in/api/admin/addTeamMember', {
         method: 'POST',
         body: formData
       })
@@ -459,7 +459,7 @@ function TeamsPanel() {
     setDeleting(id)
     setError('')
     try {
-      const res = await authFetch(`http://localhost:8082/api/admin/deleteTeamMember/${id}`, {
+      const res = await authFetch(`https://api.thinkindiasvnit.in/api/admin/deleteTeamMember/${id}`, {
         method: 'DELETE'
       })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
@@ -560,7 +560,7 @@ function TeamsPanel() {
                   {member.imageId ? (
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
                       <img
-                        src={`http://localhost:8082/image/${member.imageId}`}
+                        src={`https://api.thinkindiasvnit.in/image/${member.imageId}`}
                         alt={member.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -638,9 +638,9 @@ function EventsPanel() {
     setHiddenLoading(true)
     try {
       const [upRes, pastRes, hiddenRes] = await Promise.all([
-        authFetch('http://localhost:8082/user/upcommingEvents', { headers: { Accept: 'application/json' } }),
-        authFetch('http://localhost:8082/user/pastEvents', { headers: { Accept: 'application/json' } }),
-        authFetch('http://localhost:8082/api/admin/getHiddenEvents', { headers: { Accept: 'application/json' } })
+        authFetch('https://api.thinkindiasvnit.in/user/upcommingEvents', { headers: { Accept: 'application/json' } }),
+        authFetch('https://api.thinkindiasvnit.in/user/pastEvents', { headers: { Accept: 'application/json' } }),
+        authFetch('https://api.thinkindiasvnit.in/api/admin/getHiddenEvents', { headers: { Accept: 'application/json' } })
       ])
       const upList = upRes.ok ? await upRes.json().catch(() => []) : []
       const pastList = pastRes.ok ? await pastRes.json().catch(() => []) : []
@@ -661,7 +661,7 @@ function EventsPanel() {
   const toggleActive = async (id, makeActive) => {
     try {
       const cleanId = encodeURIComponent(id)
-      const url = `http://localhost:8082/api/admin/${makeActive ? 'activateEvent' : 'deActivateEvent'}/${cleanId}`
+      const url = `https://api.thinkindiasvnit.in/api/admin/${makeActive ? 'activateEvent' : 'deActivateEvent'}/${cleanId}`
       const res = await authFetch(url, { method: 'GET' })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       await refreshEvents()
@@ -673,7 +673,7 @@ function EventsPanel() {
   const toggleShow = async (id, makeShow) => {
     try {
       const cleanId = encodeURIComponent(id)
-      const url = `http://localhost:8082/api/admin/${makeShow ? 'showEvent' : 'hideEvent'}/${cleanId}`
+      const url = `https://api.thinkindiasvnit.in/api/admin/${makeShow ? 'showEvent' : 'hideEvent'}/${cleanId}`
       const res = await authFetch(url, { method: 'GET' })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       await refreshEvents()
@@ -687,7 +687,7 @@ function EventsPanel() {
       const numericId = Number(id)
       const cleanId = encodeURIComponent(Number.isNaN(numericId) ? id : numericId)
       // Use standard single slash path
-      const url = `http://localhost:8082/api/admin/unHideEvent/${cleanId}`
+      const url = `https://api.thinkindiasvnit.in/api/admin/unHideEvent/${cleanId}`
       const res = await authFetch(url, { method: 'GET' })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       await refreshEvents()
@@ -716,7 +716,7 @@ function EventsPanel() {
       fd.append('ShowEvent', form.showEvent ? '1' : '0')
       for (const f of form.images) fd.append('Images', f)
 
-      let res = await authFetch('http://localhost:8082/api/admin/addEvent', { method: 'POST', body: fd })
+      let res = await authFetch('https://api.thinkindiasvnit.in/api/admin/addEvent', { method: 'POST', body: fd })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       const text = await res.text().catch(() => '')
       setSuccess(text ? `Created event (id: ${text})` : 'Event created successfully')
@@ -1017,9 +1017,9 @@ function GlimpsesPanel() {
   const load = async () => {
     setLoading(true)
     try {
-      let res = await fetch('http://localhost:8082/glimpses', { method: 'GET', headers: { 'Accept': 'application/json' } })
+      let res = await fetch('https://api.thinkindiasvnit.in/glimpses', { method: 'GET', headers: { 'Accept': 'application/json' } })
       if (!res.ok) {
-        res = await fetch('http://localhost:8082/glimpses', { method: 'GET', mode: 'cors' })
+        res = await fetch('https://api.thinkindiasvnit.in/glimpses', { method: 'GET', mode: 'cors' })
       }
       if (!res.ok) throw new Error(res.statusText)
       const data = await res.json().catch(() => [])
@@ -1054,7 +1054,7 @@ function GlimpsesPanel() {
       form.append('Name', name)
       form.append('Glimpse_image', file)
 
-      let res = await authFetch('http://localhost:8082/api/admin/addGlimpse', {
+      let res = await authFetch('https://api.thinkindiasvnit.in/api/admin/addGlimpse', {
         method: 'POST',
         body: form
       })
@@ -1077,7 +1077,7 @@ function GlimpsesPanel() {
     try {
       setDeleting(clean)
       setError('')
-      const url = `http://localhost:8082/api/admin/deleteGlimpse/${encodeURIComponent(clean)}`
+      const url = `https://api.thinkindiasvnit.in/api/admin/deleteGlimpse/${encodeURIComponent(clean)}`
       const res = await authFetch(url, { method: 'DELETE' })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       await load()
@@ -1172,8 +1172,8 @@ function RecommendationsPanel() {
     setError('')
     try {
       const [uRes, rRes] = await Promise.all([
-        authFetch('http://localhost:8082/api/admin/showUnresolvedRecommendations'),
-        authFetch('http://localhost:8082/api/admin/showResolvedRecommendations'),
+        authFetch('https://api.thinkindiasvnit.in/api/admin/showUnresolvedRecommendations'),
+        authFetch('https://api.thinkindiasvnit.in/api/admin/showResolvedRecommendations'),
       ])
 
       if (!uRes.ok || !rRes.ok) throw new Error('Failed to load recommendations')
@@ -1204,7 +1204,7 @@ function RecommendationsPanel() {
   const removeRecommendation = async (id) => {
     try {
       const idNum = Number(String(id).trim())
-      const res = await authFetch(`http://localhost:8082/api/admin/removeRecommendation/${encodeURIComponent(idNum)}`, {
+      const res = await authFetch(`https://api.thinkindiasvnit.in/api/admin/removeRecommendation/${encodeURIComponent(idNum)}`, {
         method: 'DELETE',
       })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
@@ -1217,7 +1217,7 @@ function RecommendationsPanel() {
   const resolveRecommendation = async (id) => {
     try {
       const idNum = Number(String(id).trim())
-      const res = await authFetch(`http://localhost:8082/api/admin/resolveRecommendation/${encodeURIComponent(idNum)}`, {
+      const res = await authFetch(`https://api.thinkindiasvnit.in/api/admin/resolveRecommendation/${encodeURIComponent(idNum)}`, {
         method: 'PUT',
       })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
@@ -1386,7 +1386,7 @@ function InternshipsPanel() {
     setLoading(true)
     setError('')
     try {
-      const data = await get('http://localhost:8082/api/admin/internships')
+      const data = await get('https://api.thinkindiasvnit.in/api/admin/internships')
       setItems(Array.isArray(data) ? data : data.items || [])
     } catch (e) {
       setError(e.message)
@@ -1401,10 +1401,10 @@ function InternshipsPanel() {
     setPlaceListError('')
     try {
       // Try public endpoint first
-      let res = await fetch('http://localhost:8082/internPlacements', { headers: { Accept: 'application/json' } })
+      let res = await fetch('https://api.thinkindiasvnit.in/internPlacements', { headers: { Accept: 'application/json' } })
       if (!res.ok) {
         // fall back to authenticated fetch (some servers gate by auth even for reads)
-        res = await authFetch('http://localhost:8082/internPlacements', { headers: { Accept: 'application/json' } })
+        res = await authFetch('https://api.thinkindiasvnit.in/internPlacements', { headers: { Accept: 'application/json' } })
       }
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       const raw = await res.json().catch(() => [])
@@ -1426,7 +1426,7 @@ function InternshipsPanel() {
     setSubmitting(true)
     setError('')
     try {
-      await post('http://localhost:8082/api/admin/internships', form)
+      await post('https://api.thinkindiasvnit.in/api/admin/internships', form)
       setForm({ title: '', description: '', applyUrl: '', category: 'current' })
       await load()
     } catch (e) {
@@ -1452,7 +1452,7 @@ function InternshipsPanel() {
       fd.append('Message', placeForm.message || '')
       if (placeForm.image) fd.append('Image', placeForm.image)
 
-      const res = await authFetch('http://localhost:8082/api/admin/addInternPlacements', {
+      const res = await authFetch('https://api.thinkindiasvnit.in/api/admin/addInternPlacements', {
         method: 'POST',
         body: fd,
       })
@@ -1474,7 +1474,7 @@ function InternshipsPanel() {
     const confirm = window.confirm('Remove this internship placement?')
     if (!confirm) return
     try {
-      const res = await authFetch(`http://localhost:8082/api/admin/removeInternPlacedData/${encodeURIComponent(id)}` , {
+      const res = await authFetch(`https://api.thinkindiasvnit.in/api/admin/removeInternPlacedData/${encodeURIComponent(id)}` , {
         method: 'DELETE',
       })
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
@@ -1501,7 +1501,7 @@ function InternshipsPanel() {
       if (upForm.duration !== '') fd.append('duration', String(parseInt(upForm.duration || 0, 10)))
       fd.append('IsActive', upForm.isActive ? '1' : '0')
 
-      const res = await authFetch('http://localhost:8082/api/admin/addUpcommingInternship', {
+      const res = await authFetch('https://api.thinkindiasvnit.in/api/admin/addUpcommingInternship', {
         method: 'POST',
         body: fd,
       })
@@ -1729,7 +1729,7 @@ function InternshipsPanel() {
                         {p.imageId ? (
                           <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
                             <img
-                              src={`http://localhost:8082/image/${p.imageId}`}
+                              src={`https://api.thinkindiasvnit.in/image/${p.imageId}`}
                               alt={p.studentName || 'student'}
                               className="w-full h-full object-cover"
                               onError={(e) => { e.currentTarget.style.display = 'none' }}

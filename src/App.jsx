@@ -20,6 +20,7 @@ import LoadingPage from './components/LoadingPage.jsx'
 import ProfileDropdown from './components/ProfileDropdown.jsx'
 import EventDetail from './pages/EventDetail.jsx'
 import InternshipDetail from './pages/InternshipDetail.jsx'
+import Events from './pages/Events.jsx'
 import { getToken, removeToken, setToken, isAuthenticated } from './utils/auth'
 import useWindowSize from './hooks/useWindowSize.jsx'
 import useAuth from './hooks/useAuth.jsx'
@@ -1234,7 +1235,7 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/user/events" element={<UserEvents />} />
+            <Route path="/user/events" element={<Events />} />
             <Route path="/user/past-events" element={<Navigate to="/user/events" replace />} />
             <Route path="/user/upcoming-events" element={<Navigate to="/user/events" replace />} />
             <Route path="/user/dashboard" element={<UserDashboard />} />

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { publicFetch } from '../utils/auth'
 
 // Team Member Card Component with Tricolor Border
 const TeamMemberCard = ({ member, index }) => {
@@ -131,7 +130,7 @@ export default function Teams() {
   useEffect(() => {
     const fetchTeamMembers = async (position) => {
       try {
-        const response = await publicFetch(`/getMemberByPosition/${position}`)
+        const response = await fetch(`http://localhost:8082/getMemberByPosition/${position}`)
         if (!response.ok) {
           throw new Error(`Failed to fetch ${position} members`)
         }
@@ -146,7 +145,7 @@ export default function Teams() {
 
     const fetchMemberImage = async (imageId) => {
       try {
-        const response = await publicFetch(`/image/${imageId}`)
+        const response = await fetch(`http://localhost:8082/image/${imageId}`)
         if (!response.ok) {
           throw new Error(`Failed to fetch image ${imageId}`)
         }

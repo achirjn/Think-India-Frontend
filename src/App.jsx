@@ -20,9 +20,7 @@ import LoadingPage from './components/LoadingPage.jsx'
 import ProfileDropdown from './components/ProfileDropdown.jsx'
 import EventDetail from './pages/EventDetail.jsx'
 import InternshipDetail from './pages/InternshipDetail.jsx'
-import Events from './pages/Events.jsx'
 import { getToken, removeToken, setToken, isAuthenticated } from './utils/auth'
-import { apiUrl } from './config/api.js'
 import useWindowSize from './hooks/useWindowSize.jsx'
 import useAuth from './hooks/useAuth.jsx'
 import ThinkIndiaLogo from './assets/Think_India_Logo.svg'
@@ -252,8 +250,10 @@ function NavBar() {
               {(() => {
                 const base = [
                   { to: "/#about", text: "About" },
-                  { to: "/#glimpses", text: "Glimpses" },
-                  { to: "/events", text: "Events" },
+                  // When logged in, show Events page link instead of Glimpses anchor
+                  authState.isLoggedIn
+                    ? { to: "/user/events", text: "Events" }
+                    : { to: "/#glimpses", text: "Glimpses" },
                   { to: "/internships", text: "Internships" },
                   { to: "/blogs", text: "Blogs" },
                   { to: "/teams", text: "Team" },
@@ -367,8 +367,9 @@ function NavBar() {
             {(() => {
               const items = [
                 { to: "/#about", text: "About" },
-                { to: "/#glimpses", text: "Glimpses" },
-                { to: "/events", text: "Events" },
+                authState.isLoggedIn
+                  ? { to: "/user/events", text: "Events" }
+                  : { to: "/#glimpses", text: "Glimpses" },
                 { to: "/internships", text: "Internships" },
                 { to: "/blogs", text: "Blogs" },
                 { to: "/teams", text: "Team" },
@@ -457,9 +458,9 @@ function Hero() {
   
   // If user is logged in, render the LoggedInHero component instead
   if (isLoggedIn) {
-    // Use centralized base URL for hero images endpoint
-    const heroImagesApiEndpoint = apiUrl('/heroImages')
-    return <LoggedInHero userName={user?.name || ''} apiEndpoint={heroImagesApiEndpoint} />
+    // Replace this with the actual API endpoint when provided
+    const heroImagesApiEndpoint = 'http://localhost:8082/heroImages'; // This will be replaced with the actual endpoint
+    return <LoggedInHero userName={user?.name || ''} apiEndpoint={heroImagesApiEndpoint} />;
   }
 
   const renderChakras = () => {
@@ -668,7 +669,6 @@ function Footer() {
             <div className="text-lg font-semibold">Resources</div>
             <div className="my-2 h-0.5 w-16 mx-auto md:mx-0 bg-white/30" />
             <ul className="mt-2 space-y-2 text-white/80">
-              <li><Link className="hover:text-white" to="/events">Events</Link></li>
               <li><Link className="hover:text-white" to="/blogs">Blog</Link></li>
               <li><Link className="hover:text-white" to="/internships">Internships</Link></li>
               <li><Link className="hover:text-white" to="/admin">Admin Dashboard</Link></li>
@@ -726,14 +726,14 @@ function ContactSection() {
       formData.append('Email', form.email.value || '')
       formData.append('Message', form.message.value || '')
 
-      let res = await fetch(apiUrl('/recommend'), {
+      let res = await fetch('http://localhost:8082/recommend', {
         method: 'POST',
         body: formData,
         mode: 'cors',
       })
       if (!res.ok) {
         // retry without explicit cors if needed
-        res = await fetch(apiUrl('/recommend'), { method: 'POST', body: formData })
+        res = await fetch('http://localhost:8082/recommend', { method: 'POST', body: formData })
       }
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       // backend returns plain text id (e.g., 1)
@@ -887,12 +887,12 @@ function HomePage() {
     const load = async () => {
       try {
         // Fetch glimpses list
-        let res = await fetch(apiUrl('/glimpses'), {
+        let res = await fetch('http://localhost:8082/glimpses', {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
         })
         if (!res.ok) {
-          res = await fetch(apiUrl('/glimpses'), { method: 'GET', mode: 'cors' })
+          res = await fetch('http://localhost:8082/glimpses', { method: 'GET', mode: 'cors' })
         }
         if (!res.ok) throw new Error(`Failed to fetch glimpses: HTTP ${res.status}`)
 
@@ -960,12 +960,12 @@ function HomePage() {
             const alt = ev.name || ev.eventName || `Glimpse ${i + 1}`
             if (imageId === undefined || imageId === null) return { src: '', alt }
             try {
-              let imgRes = await fetch(apiUrl(`/image/${encodeURIComponent(imageId)}`), {
+              let imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(imageId)}`, {
                 method: 'GET',
                 headers: { 'Accept': 'application/json, text/plain, */*' },
               })
               if (!imgRes.ok) {
-                imgRes = await fetch(apiUrl(`/image/${encodeURIComponent(imageId)}`), { method: 'GET', mode: 'cors' })
+                imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(imageId)}`, { method: 'GET', mode: 'cors' })
               }
               if (!imgRes.ok) throw new Error('image fetch error')
               const contentType = imgRes.headers.get('content-type') || ''
@@ -1234,12 +1234,10 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/user/events" element={<Navigate to="/events" replace />} />
-            <Route path="/user/past-events" element={<Navigate to="/events" replace />} />
-            <Route path="/user/upcoming-events" element={<Navigate to="/events" replace />} />
+            <Route path="/user/events" element={<UserEvents />} />
+            <Route path="/user/past-events" element={<Navigate to="/user/events" replace />} />
+            <Route path="/user/upcoming-events" element={<Navigate to="/user/events" replace />} />
             <Route path="/user/dashboard" element={<UserDashboard />} />
-            <Route path="/events/:slug" element={<EventDetail />} />
             <Route path="/events/:id" element={<EventDetail />} />
           </Routes>
         </main>

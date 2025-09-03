@@ -1,8 +1,6 @@
 import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useRef, useState } from 'react'
-import { publicFetch } from '../utils/auth'
-import { apiUrl } from '../config/api'
 
 // UI helpers inspired by the provided design
 const BottomGradient = () => (
@@ -137,7 +135,7 @@ export default function Signup() {
       formDataToSend.append('email', formData.email)
       formDataToSend.append('password', formData.password)
 
-      const response = await publicFetch('/auth/register', {
+      const response = await fetch('http://localhost:8082/auth/register', {
         method: 'POST',
         body: formDataToSend
       })
@@ -165,7 +163,7 @@ export default function Signup() {
     } catch (error) {
       // Provide more specific error messages based on the error type
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        setErrors({ submit: 'Cannot connect to server. Please ensure the backend is reachable.' })
+        setErrors({ submit: 'Cannot connect to server. Please ensure the backend is running on http://localhost:8082' })
       } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
         setErrors({ submit: 'Connection refused. Please check if the backend server is running and accessible.' })
       } else {
@@ -177,8 +175,8 @@ export default function Signup() {
   }
 
   const handleGoogleLogin = () => {
-    // Initiate Google OAuth via backend
-    window.location.href = apiUrl('/oauth2/authorization/google'); 
+    // This URL should point to your backend endpoint that initiates the Google OAuth flow
+    window.location.href = 'http://localhost:8082/oauth2/authorization/google'; 
   };
 
   return (

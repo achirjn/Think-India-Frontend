@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Button from '../components/Button.jsx'
 import useAuth from '../hooks/useAuth.jsx'
-import { authFetch } from '../utils/auth'
 
 export default function AdminAddEvent() {
   const navigate = useNavigate()
@@ -46,11 +45,12 @@ export default function AdminAddEvent() {
     }
 
     try {
-      // Authenticated admin endpoint
-      let res = await authFetch('/api/admin/addEvent', { method: 'POST', body: fd, mode: 'cors' })
+      // Adjust if your base path differs
+      const url = 'http://localhost:8082/api/admin/addEvent'
+      let res = await fetch(url, { method: 'POST', body: fd, mode: 'cors' })
       if (!res.ok) {
         // retry without explicit cors if server handles it
-        res = await authFetch('/api/admin/addEvent', { method: 'POST', body: fd })
+        res = await fetch(url, { method: 'POST', body: fd })
       }
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
 

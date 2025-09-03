@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { publicFetch } from '../utils/auth'
 
 export default function BlogDetail() {
   const { slug } = useParams()
@@ -18,8 +17,8 @@ export default function BlogDetail() {
         
         // Prefer id from slug if numeric, else try fetching by heading
         const isNumeric = /^\d+$/.test(String(slug || ''))
-        const endpoint = `/blog/${encodeURIComponent(slug)}`
-        const res = await publicFetch(endpoint, {
+        const endpoint = isNumeric ? `http://localhost:8082/blog/${encodeURIComponent(slug)}` : `http://localhost:8082/blog/${encodeURIComponent(slug)}`
+        const res = await fetch(endpoint, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -98,12 +97,12 @@ export default function BlogDetail() {
         let imageSrc = ''
         if (imageId) {
           try {
-            let imgRes = await publicFetch(`/image/${encodeURIComponent(imageId)}`, {
+            let imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(imageId)}`, {
               method: 'GET',
               headers: { 'Accept': 'application/json, text/plain, */*' },
             })
             if (!imgRes.ok) {
-              imgRes = await publicFetch(`/image/${encodeURIComponent(imageId)}`, {
+              imgRes = await fetch(`http://localhost:8082/image/${encodeURIComponent(imageId)}`, {
                 method: 'GET',
                 mode: 'cors',
               })

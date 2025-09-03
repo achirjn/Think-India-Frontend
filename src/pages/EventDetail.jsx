@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { publicFetch } from '../utils/auth'
+import useAuth from '../hooks/useAuth.jsx'
+import { authFetch } from '../utils/auth'
 
 export default function EventDetail() {
-  const { id, slug } = useParams()
+  const { id } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
+  const auth = useAuth()
   const eventFromState = location.state?.item || location.state?.event || null
   const [event, setEvent] = useState(eventFromState)
   const [loading, setLoading] = useState(!eventFromState)
@@ -38,37 +40,13 @@ export default function EventDetail() {
         setError('')
         // try upcoming and past, pick first match by id
         const [upRes, pastRes] = await Promise.all([
-          publicFetch('/upcommingEvents').catch(() => null),
-          publicFetch('/pastEvents').catch(() => null)
+          authFetch('http://localhost:8082/user/upcommingEvents').catch(() => null),
+          authFetch('http://localhost:8082/user/pastEvents').catch(() => null)
         ])
         const upList = upRes?.ok ? await upRes.json() : []
         const pastList = pastRes?.ok ? await pastRes.json() : []
         const all = [...(Array.isArray(upList) ? upList : []), ...(Array.isArray(pastList) ? pastList : [])]
-        // Determine lookup strategy: by explicit id, id extracted from slug, or by normalized name slug
-        const normalize = (name) => (name || '')
-          .toString()
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, '')
-          .trim()
-          .replace(/\s+/g, '-')
-
-        let targetId = id ? String(id) : ''
-        let targetSlug = slug ? String(slug) : ''
-        if (!targetId && targetSlug) {
-          const m = targetSlug.match(/-(\d+)$/)
-          if (m) targetId = m[1]
-        }
-
-        let match = null
-        if (targetId) {
-          match = all.find((ev) => String(ev.id ?? ev.eventId ?? ev.eventID ?? ev.uuid) === targetId)
-        }
-        if (!match && (targetSlug || id)) {
-          // If we have a slug (or use id as a fallback slug) try matching by normalized name
-          const wanted = targetSlug || String(id)
-          const wantedNorm = normalize(wanted.replace(/-(\d+)$/, ''))
-          match = all.find((ev) => normalize(ev.eventName || ev.name || '') === wantedNorm)
-        }
+        const match = all.find((ev) => String(ev.id ?? ev.eventId ?? ev.eventID ?? ev.uuid) === id)
         if (!match) throw new Error('Event not found')
 
         // load images for gallery
@@ -76,7 +54,7 @@ export default function EventDetail() {
         const images = Array.isArray(ids)
           ? (await Promise.all(ids.map(async (imgId) => {
               try {
-                const r = await publicFetch(`/image/${encodeURIComponent(imgId)}`)
+                const r = await authFetch(`http://localhost:8082/image/${encodeURIComponent(imgId)}`)
                 if (!r.ok) return null
                 const j = await r.json().catch(() => ({}))
                 const ext = imageUtils.extractBase64(j)
@@ -95,7 +73,7 @@ export default function EventDetail() {
     }
     loadIfNeeded()
     return () => { cancelled = true }
-  }, [eventFromState, id, slug, imageUtils])
+  }, [auth?.isLoggedIn, eventFromState, id, imageUtils])
 
   // If arrived with state, still try to populate gallery images if missing
   useEffect(() => {
@@ -107,7 +85,7 @@ export default function EventDetail() {
         if (!Array.isArray(ids) || !ids.length) return
         const images = (await Promise.all(ids.map(async (imgId) => {
           try {
-            const r = await publicFetch(`/image/${encodeURIComponent(imgId)}`)
+            const r = await authFetch(`http://localhost:8082/image/${encodeURIComponent(imgId)}`)
             if (!r.ok) return null
             const j = await r.json().catch(() => ({}))
             const ext = imageUtils.extractBase64(j)
@@ -120,9 +98,9 @@ export default function EventDetail() {
     }
     maybeLoadGallery()
     return () => { cancelled = true }
-  }, [event, eventFromState, imageUtils])
+  }, [auth?.isLoggedIn, event, eventFromState, imageUtils])
 
-  const displayName = event?.name || event?.eventName || (slug ? slug.replace(/-(\d+)$/, '').replace(/-/g, ' ') : (id ? `Event #${id}` : 'Event'))
+  const displayName = event?.name || event?.eventName || `Event #${id}`
   const dateValue = event?.dateTime || event?.date || event?.eventDate || event?.when
   const dateText = dateValue ? new Date(dateValue).toLocaleString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : ''
   const details = event?.details || event?.description || event?.eventDescription || ''

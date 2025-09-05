@@ -711,6 +711,7 @@ function ContactSection() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [submitSuccess, setSubmitSuccess] = useState('')
+  const { isLoggedIn, user } = useAuth()
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -720,8 +721,10 @@ function ContactSection() {
     const form = event.currentTarget
     try {
       const formData = new FormData()
-      formData.append('Name', form.name.value || '')
-      formData.append('Email', form.email.value || '')
+      const nameVal = isLoggedIn ? (user?.name || '') : (form.name?.value || '')
+      const emailVal = isLoggedIn ? (user?.email || '') : (form.email?.value || '')
+      formData.append('Name', nameVal)
+      formData.append('Email', emailVal)
       formData.append('Message', form.message.value || '')
 
       let res = await fetch('https://api.thinkindiasvnit.in/recommend', {
@@ -786,39 +789,56 @@ function ContactSection() {
                 className="rounded-2xl bg-white p-6 sm:p-8 shadow-xl ring-1 ring-[color:var(--color-india-green)]/40"
               >
                 <form onSubmit={handleSubmit} className="space-y-5">
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.6, duration: 0.4 }}
-                  >
-                    <label htmlFor="name" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Name</label>
-                    <motion.input 
-                      whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(15, 28, 63, 0.1)" }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                      id="name" 
-                      name="name" 
-                      type="text" 
-                      className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
-                    />
-                  </motion.div>
-                  <motion.div
-                    initial={{ y: 20, opacity: 0 }}
-                    whileInView={{ y: 0, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.7, duration: 0.4 }}
-                  >
-                    <label htmlFor="email" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Email <span className="text-red-500">*</span></label>
-                    <motion.input 
-                      whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(15, 28, 63, 0.1)" }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                      id="email" 
-                      name="email" 
-                      type="email" 
-                      required 
-                      className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
-                    />
-                  </motion.div>
+                  {!isLoggedIn ? (
+                    <>
+                      <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        whileInView={{ y: 0, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.6, duration: 0.4 }}
+                      >
+                        <label htmlFor="name" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Name</label>
+                        <motion.input 
+                          whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(15, 28, 63, 0.1)" }}
+                          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                          id="name" 
+                          name="name" 
+                          type="text" 
+                          autoComplete="name"
+                          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
+                        />
+                      </motion.div>
+                      <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        whileInView={{ y: 0, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.7, duration: 0.4 }}
+                      >
+                        <label htmlFor="email" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Email <span className="text-red-500">*</span></label>
+                        <motion.input 
+                          whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(15, 28, 63, 0.1)" }}
+                          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                          id="email" 
+                          name="email" 
+                          type="email" 
+                          required 
+                          autoComplete="email"
+                          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
+                        />
+                      </motion.div>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      {/* Hidden inputs so form fields exist for non-JS fallbacks and consistency */}
+                      <input type="hidden" name="name" value={user?.name || ''} />
+                      <input type="hidden" name="email" value={user?.email || ''} />
+                      <div className="text-[color:var(--color-ashoka-blue)] text-sm">
+                        You are contacting as
+                        <span className="font-semibold"> {user?.name || 'User'}</span>
+                        <span className="text-gray-500"> ({user?.email || 'no-email'})</span>
+                      </div>
+                    </div>
+                  )}
                   <motion.div
                     initial={{ y: 20, opacity: 0 }}
                     whileInView={{ y: 0, opacity: 1 }}

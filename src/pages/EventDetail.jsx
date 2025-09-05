@@ -202,7 +202,7 @@ export default function EventDetail() {
           {/* Details (render raw HTML) */}
           {details && (
             <div
-              className="mt-8"
+              className="mt-8 text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed"
               dangerouslySetInnerHTML={{ __html: details }}
             />
           )}
@@ -210,7 +210,7 @@ export default function EventDetail() {
           {/* Message (render raw HTML) */}
           {message && (
             <div
-              className="mt-6"
+              className="mt-6 text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed"
               dangerouslySetInnerHTML={{ __html: message }}
             />
           )}

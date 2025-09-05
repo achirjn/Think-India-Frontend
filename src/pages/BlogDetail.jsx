@@ -276,18 +276,16 @@ export default function BlogDetail() {
         </motion.div>
       )}
 
-      {/* Blog Content */}
+      {/* Blog Content (render raw HTML, themed blue, no border/background) */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4 }}
-        className="prose prose-lg max-w-none"
       >
-        <div className="bg-white rounded-xl p-8 shadow-lg border">
-          <p className="text-gray-700 leading-relaxed text-lg whitespace-pre-wrap">
-            {post.content || 'No content available'}
-          </p>
-        </div>
+        <div
+          className="mt-2 text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: post.content || '' }}
+        />
       </motion.div>
 
       {/* Blog Footer */}

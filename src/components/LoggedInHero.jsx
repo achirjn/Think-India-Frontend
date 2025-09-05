@@ -203,7 +203,7 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
                 variant="primary" 
                 className="whitespace-nowrap flex-1"
                 as={Link}
-                to="/user/events"
+                to="/events"
               >
                 Register for Upcoming Events
               </Button>

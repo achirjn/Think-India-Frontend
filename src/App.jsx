@@ -251,10 +251,8 @@ function NavBar() {
               {(() => {
                 const base = [
                   { to: "/#about", text: "About" },
-                  // When logged in, show Events page link instead of Glimpses anchor
-                  authState.isLoggedIn
-                    ? { to: "/user/events", text: "Events" }
-                    : { to: "/#glimpses", text: "Glimpses" },
+                  { to: "/events", text: "Events" },
+                  ...(authState.isLoggedIn ? [] : [{ to: "/#glimpses", text: "Glimpses" }]),
                   { to: "/internships", text: "Internships" },
                   { to: "/blogs", text: "Blogs" },
                   { to: "/teams", text: "Team" },
@@ -368,9 +366,8 @@ function NavBar() {
             {(() => {
               const items = [
                 { to: "/#about", text: "About" },
-                authState.isLoggedIn
-                  ? { to: "/user/events", text: "Events" }
-                  : { to: "/#glimpses", text: "Glimpses" },
+                { to: "/events", text: "Events" },
+                ...(authState.isLoggedIn ? [] : [{ to: "/#glimpses", text: "Glimpses" }]),
                 { to: "/internships", text: "Internships" },
                 { to: "/blogs", text: "Blogs" },
                 { to: "/teams", text: "Team" },
@@ -1235,9 +1232,10 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/admin" element={<Admin />} />
-            <Route path="/user/events" element={<Events />} />
-            <Route path="/user/past-events" element={<Navigate to="/user/events" replace />} />
-            <Route path="/user/upcoming-events" element={<Navigate to="/user/events" replace />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/user/events" element={<Navigate to="/events" replace />} />
+            <Route path="/user/past-events" element={<Navigate to="/events" replace />} />
+            <Route path="/user/upcoming-events" element={<Navigate to="/events" replace />} />
             <Route path="/user/dashboard" element={<UserDashboard />} />
             <Route path="/events/:id" element={<EventDetail />} />
           </Routes>

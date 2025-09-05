@@ -637,8 +637,8 @@ function EventsPanel() {
     setHiddenLoading(true)
     try {
       const [upRes, pastRes, hiddenRes] = await Promise.all([
-        authFetch('https://api.thinkindiasvnit.in/user/upcommingEvents', { headers: { Accept: 'application/json' } }),
-        authFetch('https://api.thinkindiasvnit.in/user/pastEvents', { headers: { Accept: 'application/json' } }),
+        authFetch('https://api.thinkindiasvnit.in/upcommingEvents', { headers: { Accept: 'application/json' } }),
+        authFetch('https://api.thinkindiasvnit.in/pastEvents', { headers: { Accept: 'application/json' } }),
         authFetch('https://api.thinkindiasvnit.in/api/admin/getHiddenEvents', { headers: { Accept: 'application/json' } })
       ])
       const upList = upRes.ok ? await upRes.json().catch(() => []) : []

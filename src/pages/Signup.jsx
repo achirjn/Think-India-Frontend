@@ -71,6 +71,8 @@ export default function Signup() {
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+  // Track if verification email flow is active to adjust UI/CTAs
+  const [verificationSent, setVerificationSent] = useState(false)
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -141,24 +143,31 @@ export default function Signup() {
       })
 
       if (response.ok) {
-        const result = await response.text()
-        setSuccessMessage('Registration successful! Redirecting to login...')
-        
-        // Clear form
+        const text = (await response.text()) || ''
+        // Success path: backend says a verification mail was sent
+        if (text.toLowerCase().includes('verification')) {
+          setSuccessMessage('Verification email sent. Please check your inbox and verify your email to complete signup.')
+          setVerificationSent(true)
+        } else {
+          // Fallback success message
+          setSuccessMessage(text || 'Registration successful.')
+        }
+
+        // Clear form fields to avoid accidental resubmits
         setFormData({
           name: '',
           email: '',
           password: '',
           confirmPassword: ''
         })
-        
-        // Redirect to login after 2 seconds
-        setTimeout(() => {
-          navigate('/login')
-        }, 2000)
       } else {
-        const errorData = await response.text()
-        setErrors({ submit: `Registration failed (${response.status}): ${errorData || 'Please try again.'}` })
+        const errorText = (await response.text()) || ''
+        // Specific handling for already existing user case (HTTP 400)
+        if (response.status === 400 && errorText.toLowerCase().includes('already exists')) {
+          setErrors({ submit: 'User already exists with this account. Try login.' })
+        } else {
+          setErrors({ submit: `Registration failed (${response.status}): ${errorText || 'Please try again.'}` })
+        }
       }
     } catch (error) {
       // Provide more specific error messages based on the error type
@@ -198,11 +207,31 @@ export default function Signup() {
           {successMessage && (
             <div className="mt-4 mb-2 rounded-lg bg-green-50 border border-green-200 p-3">
               <p className="text-sm text-green-800">{successMessage}</p>
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => navigate('/login')}
+                  className="inline-flex items-center rounded-md bg-[color:var(--color-india-green)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+                >
+                  Go to Login
+                </button>
+              </div>
             </div>
           )}
           {errors.submit && (
             <div className="mt-4 mb-2 rounded-lg bg-red-50 border border-red-200 p-3">
               <p className="text-sm text-red-800">{errors.submit}</p>
+              {String(errors.submit).toLowerCase().includes('already exists') && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/login')}
+                    className="inline-flex items-center rounded-md bg-[color:var(--color-ashoka-blue)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+                  >
+                    Login
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -273,10 +302,10 @@ export default function Signup() {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || verificationSent}
               className={`group/btn relative block h-11 w-full rounded-md bg-gradient-to-br from-[color:var(--color-ashoka-blue)] to-[color:var(--color-ashoka-blue)]/80 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] transition-all duration-200 hover:from-[color:var(--color-ashoka-blue)]/90 hover:to-[color:var(--color-ashoka-blue)]/70 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              {isLoading ? 'Creating account…' : 'Sign up →'}
+              {isLoading ? 'Creating account…' : verificationSent ? 'Check your email' : 'Sign up →'}
               <BottomGradient />
             </button>
 

@@ -1201,6 +1201,25 @@ export default function App() {
     }
   })
 
+  // Backend health check state
+  const [backendStatus, setBackendStatus] = useState({ checked: false, down: false })
+
+  // On app mount, check if backend is up; if not, show maintenance popup
+  useEffect(() => {
+    let cancelled = false
+    const checkBackend = async () => {
+      try {
+        const res = await fetch('https://api.thinkindiasvnit.in/', { method: 'GET' })
+        const ok = !!res?.ok
+        if (!cancelled) setBackendStatus({ checked: true, down: !ok })
+      } catch {
+        if (!cancelled) setBackendStatus({ checked: true, down: true })
+      }
+    }
+    checkBackend()
+    return () => { cancelled = true }
+  }, [])
+
   useEffect(() => {
     if (!isLoading) return
     // Show loading page for ~2 seconds only on first load per session
@@ -1221,6 +1240,25 @@ export default function App() {
       <OAuthCallbackHandler />
       <div className="min-h-screen flex flex-col">
         <NavBar />
+        {backendStatus.checked && backendStatus.down && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40" />
+            <div className="relative bg-white rounded-xl shadow-xl p-6 max-w-md mx-4">
+              <h3 className="text-lg font-semibold text-[color:var(--color-ashoka-blue)]">Website Under Maintenance</h3>
+              <p className="mt-2 text-sm text-gray-700">
+                Our backend appears to be unavailable right now. Some features might not work as expected. Please try again later.
+              </p>
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => setBackendStatus((s) => ({ ...s, down: false }))}
+                  className="px-4 py-2 rounded-md bg-[color:var(--color-india-saffron)] text-white hover:opacity-95"
+                >
+                  Okay
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <main className="flex-1">
           <Routes>
             <Route path="/" element={<HomePage />} />

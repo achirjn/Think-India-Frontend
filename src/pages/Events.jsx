@@ -97,8 +97,9 @@ export default function Events() {
           let src = ''
           if (firstId !== null && firstId !== undefined) {
             try {
-              let imgRes = await publicFetch(`/image/${encodeURIComponent(firstId)}`, { headers: { 'Accept': 'application/json, text/plain, */*' } })
-              if (!imgRes.ok) imgRes = await publicFetch(`/image/${encodeURIComponent(firstId)}`, { mode: 'cors' })
+              // Use absolute backend URL to fetch image by ID (public endpoint)
+              let imgRes = await publicFetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(firstId)}`, { headers: { 'Accept': 'application/json, text/plain, */*' } })
+              if (!imgRes.ok) imgRes = await publicFetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(firstId)}`, { mode: 'cors' })
               if (!imgRes.ok) throw new Error('image fetch error')
               const contentType = imgRes.headers.get('content-type') || ''
               let base64 = '', mime = '', dataUri = ''

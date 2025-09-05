@@ -80,8 +80,8 @@ export default function Events() {
       try {
         // Public endpoints
         const [upRes, pastRes] = await Promise.all([
-          publicFetch('/upcommingEvents', { headers: { Accept: 'application/json' } }),
-          publicFetch('/pastEvents', { headers: { Accept: 'application/json' } })
+          publicFetch('https://api.thinkindiasvnit.in/upcommingEvents', { headers: { Accept: 'application/json' } }),
+          publicFetch('https://api.thinkindiasvnit.in/pastEvents', { headers: { Accept: 'application/json' } })
         ])
         if (!upRes.ok && !pastRes.ok) throw new Error(`Failed to fetch events: UPC ${upRes.status}, PAST ${pastRes.status}`)
 

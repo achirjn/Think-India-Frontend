@@ -199,20 +199,20 @@ export default function EventDetail() {
             </div>
           </div>
 
-          {/* Details */}
+          {/* Details (render raw HTML) */}
           {details && (
-            <div className="mt-8 rounded-xl border p-5 bg-white/70">
-              <h3 className="text-lg font-semibold text-[color:var(--color-ashoka-blue)]">Details</h3>
-              <p className="mt-2 text-gray-700 whitespace-pre-line">{details}</p>
-            </div>
+            <div
+              className="mt-8"
+              dangerouslySetInnerHTML={{ __html: details }}
+            />
           )}
 
-          {/* Message */}
+          {/* Message (render raw HTML) */}
           {message && (
-            <div className="mt-6 rounded-xl border p-5 bg-white/70">
-              <h3 className="text-lg font-semibold text-[color:var(--color-ashoka-blue)]">Message</h3>
-              <p className="mt-2 text-gray-700 whitespace-pre-line">{message}</p>
-            </div>
+            <div
+              className="mt-6"
+              dangerouslySetInnerHTML={{ __html: message }}
+            />
           )}
         </>
       )}

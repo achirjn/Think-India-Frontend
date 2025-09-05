@@ -420,7 +420,6 @@ function TeamsPanel() {
 
   useEffect(() => {
     load()
-    loadPlacements()
   }, [])
 
   const onSubmit = async (e) => {
@@ -1040,7 +1039,6 @@ function GlimpsesPanel() {
 
   useEffect(() => {
     load()
-    loadPlacements()
   }, [])
 
   const onSubmit = async (e) => {
@@ -1198,7 +1196,6 @@ function RecommendationsPanel() {
 
   useEffect(() => {
     load()
-    loadPlacements()
   }, [])
 
   const removeRecommendation = async (id) => {

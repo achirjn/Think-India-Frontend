@@ -5,6 +5,7 @@ import SectionDivider from '../components/SectionDivider.jsx'
 import { HoverCard } from '../components/ui/card-hover-effect.jsx'
 import Button from '../components/Button.jsx'
 import { publicFetch } from '../utils/auth'
+import { cacheGet, cacheSet, cacheKeyForUrl } from '../utils/swrCache.js'
 
 export default function Events() {
   const navigate = useNavigate()
@@ -74,8 +75,19 @@ export default function Events() {
 
   useEffect(() => {
     let cancelled = false
+    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/upcommingEvents+pastEvents', 'events-v1')
+    const TTL = 5 * 60 * 1000
+
+    // Serve cached immediately if present
+    const cached = cacheGet(cacheKey)
+    if (cached && typeof cached === 'object' && !cancelled) {
+      if (Array.isArray(cached.upcoming)) setUpcoming(cached.upcoming)
+      if (Array.isArray(cached.past)) setPast(cached.past)
+      setLoading(false)
+    }
+
     const load = async () => {
-      setLoading(true)
+      if (!cached) setLoading(true)
       setError(null)
       try {
         // Public endpoints
@@ -149,9 +161,10 @@ export default function Events() {
         if (!cancelled) {
           setUpcoming(upWith)
           setPast(pastWith)
+          try { cacheSet(cacheKey, { upcoming: upWith, past: pastWith }, TTL) } catch {}
         }
       } catch (e) {
-        if (!cancelled) {
+        if (!cancelled && !cached) {
           const msg = (e?.message || '').toLowerCase()
           if (msg.includes('cors') || msg.includes('cross-origin')) {
             setError('CORS error: Unable to access the API. Please try again later.')
@@ -162,7 +175,7 @@ export default function Events() {
           }
         }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled && !cached) setLoading(false)
       }
     }
     load()

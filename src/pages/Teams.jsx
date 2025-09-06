@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import { cacheGet, cacheSet, cacheKeyForUrl } from '../utils/swrCache.js'
 
 // Team Member Card Component with Tricolor Border
 const TeamMemberCard = ({ member, index }) => {
@@ -128,6 +129,16 @@ export default function Teams() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/getMemberByPosition/*', 'teams-v1')
+    const TTL = 5 * 60 * 1000
+
+    // Serve cached team data immediately if present
+    const cached = cacheGet(cacheKey)
+    if (cached && typeof cached === 'object') {
+      setTeamData(cached)
+      setLoading(false)
+    }
+
     const fetchTeamMembers = async (position) => {
       try {
         const response = await fetch(`https://api.thinkindiasvnit.in/getMemberByPosition/${position}`)
@@ -188,19 +199,23 @@ export default function Teams() {
           Promise.all(seniorExecutivesData.map(mapMemberWithImage))
         ])
 
-        setTeamData({
+        const aggregated = {
           faculty: facultyWithImages,
           coreTeam: coreTeamWithImages,
           cellHeads: cellHeadsWithImages,
           seniorExecutives: seniorExecutivesWithImages
-        })
+        }
+        setTeamData(aggregated)
+        try { cacheSet(cacheKey, aggregated, TTL) } catch {}
         setLoading(false)
       } catch (e) {
-        setError(e.message)
-        setLoading(false)
+        if (!cached) {
+          setError(e.message)
+          setLoading(false)
+        }
       }
     }
-    load()
+    if (!cached) load()
   }, [])
 
   if (loading) {

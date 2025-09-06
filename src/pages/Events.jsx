@@ -6,6 +6,7 @@ import { HoverCard } from '../components/ui/card-hover-effect.jsx'
 import Button from '../components/Button.jsx'
 import { publicFetch } from '../utils/auth'
 import { cacheGet, cacheSet, cacheKeyForUrl } from '../utils/swrCache.js'
+import { stripHtmlToText } from '../utils/text.js'
 
 export default function Events() {
   const navigate = useNavigate()
@@ -14,6 +15,8 @@ export default function Events() {
   const [error, setError] = useState(null)
   const [upcoming, setUpcoming] = useState([])
   const [past, setPast] = useState([])
+
+  
 
   // Image helpers reused from user events
   const imageUtils = useMemo(() => ({
@@ -258,7 +261,7 @@ export default function Events() {
                         <p className="mt-1 text-sm text-[color:var(--color-ashoka-blue)]/70">{ev._date.toLocaleString()}</p>
                       )}
                       {ev._desc && (
-                        <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-3">{ev._desc}</p>
+                        <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-3">{stripHtmlToText(ev._desc)}</p>
                       )}
                       <div className="mt-4">
                         {ev._register ? (
@@ -328,7 +331,7 @@ export default function Events() {
                         <p className="mt-1 text-sm text-[color:var(--color-ashoka-blue)]/70">{ev._date.toLocaleDateString()}</p>
                       )}
                       {ev._desc && (
-                        <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-3">{ev._desc}</p>
+                        <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-3">{stripHtmlToText(ev._desc)}</p>
                       )}
                     </div>
                   </motion.article>

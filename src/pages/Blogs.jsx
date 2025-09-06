@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import SectionDivider from '../components/SectionDivider.jsx'
 import { HoverCard } from '../components/ui/card-hover-effect.jsx'
+import { stripHtmlToText } from '../utils/text.js'
 
 export default function Blogs() {
   const [posts, setPosts] = useState([])
@@ -351,7 +352,7 @@ export default function Blogs() {
                         }) : 'Date not available'}
                       </p>
                       <p className="text-gray-700 line-clamp-2 mb-3 text-sm">
-                        {post.content || 'No content available'}
+                        {stripHtmlToText(post.content) || 'No content available'}
                       </p>
                       <Link
                         to={`/blogs/${encodeURIComponent(post.id ?? post.heading ?? '')}`}

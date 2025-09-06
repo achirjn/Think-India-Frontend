@@ -999,15 +999,15 @@ function HomePage() {
       if (imageId === undefined || imageId === null) return { src: '', alt }
       const ac = new AbortController()
       imgControllers.set(imageId, ac)
+      // Per-image timeout to avoid hanging on slow networks
+      const t = setTimeout(() => { try { ac.abort() } catch {} }, 8000)
       try {
         let imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, {
           method: 'GET',
           headers: { 'Accept': 'application/json, text/plain, */*' },
           signal: ac.signal
         })
-        if (!imgRes.ok) {
-          imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, { method: 'GET', mode: 'cors', signal: ac.signal })
-        }
+        // Single attempt only; avoid doubling worst-case latency
         if (!imgRes.ok) throw new Error('image fetch error')
         const contentType = imgRes.headers.get('content-type') || ''
         let base64 = '', mime = '', dataUri = ''
@@ -1041,21 +1041,22 @@ function HomePage() {
       } catch {
         return { src: '', alt }
       } finally {
+        clearTimeout(t)
         imgControllers.delete(imageId)
       }
     }
 
     const load = async () => {
       try {
-        // 1) Fetch glimpses list
+        // 1) Fetch glimpses list with timeout
+        const listController = new AbortController()
+        const listTimeout = setTimeout(() => { try { listController.abort() } catch {} }, 8000)
         let res = await fetch('https://api.thinkindiasvnit.in/glimpses', {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
-          signal: controller.signal
+          signal: listController.signal
         })
-        if (!res.ok) {
-          res = await fetch('https://api.thinkindiasvnit.in/glimpses', { method: 'GET', mode: 'cors', signal: controller.signal })
-        }
+        clearTimeout(listTimeout)
         if (!res.ok) throw new Error(`Failed to fetch glimpses: HTTP ${res.status}`)
 
         const glimpses = await res.json()
@@ -1081,14 +1082,23 @@ function HomePage() {
           setEventImages(normalizedHead)
         }
 
-        // 4) Background fetch remaining and append progressively
-        const tailSlides = await Promise.all(tail.map(({ imageId, alt }, i) => fetchImageSlide(imageId, alt || `Glimpse ${i + 3}`)))
-        const normalizedTail = tailSlides.filter((s) => s.src)
-        if (!cancelled && (normalizedHead.length || normalizedTail.length)) {
-          const next = [...normalizedHead, ...normalizedTail]
-          setEventImages(next)
-          try { localCacheSet(cacheKey, next, TTL) } catch {}
+        // 4) Background fetch remaining with small concurrency (2 at a time)
+        const concurrency = 2
+        let current = [...normalizedHead]
+        let idx = 0
+        const runNext = async () => {
+          if (cancelled || idx >= tail.length) return
+          const myIndex = idx++
+          const { imageId, alt } = tail[myIndex]
+          const slide = await fetchImageSlide(imageId, alt || `Glimpse ${myIndex + 3}`)
+          if (!cancelled && slide && slide.src) {
+            current = [...current, slide]
+            setEventImages(current)
+            try { localCacheSet(cacheKey, current, TTL) } catch {}
+          }
+          await runNext()
         }
+        await Promise.all(Array.from({ length: Math.min(concurrency, tail.length) }, () => runNext()))
       } catch {
         // Ignore; ImageSlider will use its fallback slides
       }

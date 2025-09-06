@@ -54,6 +54,9 @@ export default function ImageSlider({ images, intervalMs = 2000, className = '',
             exit={{ opacity: 0.2, scale: 0.98 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
             className={imageClassName}
+            loading={index === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+            fetchpriority={index === 0 ? 'high' : 'auto'}
           />
         </AnimatePresence>
       </div>

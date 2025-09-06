@@ -5,6 +5,7 @@ import SectionDivider from '../components/SectionDivider.jsx'
 import AnimatedTestimonials from '../components/ui/AnimatedTestimonials.jsx'
 import useAuth from '../hooks/useAuth.jsx'
 import { authFetch } from '../utils/auth.js'
+import { cacheGet, cacheSet, cacheKeyForUrl } from '../utils/swrCache.js'
 
 export default function Internships() {
   // posters for successful placements
@@ -37,8 +38,17 @@ export default function Internships() {
   // Load Internship Diaries from backend
   useEffect(() => {
     let cancelled = false
+    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/internPlacements', 'diaries-v1')
+
+    // 1) Serve cached immediately if present
+    const cached = cacheGet(cacheKey)
+    if (cached && !cancelled) {
+      setDiaryTestimonials(cached)
+      setDiaryLoading(false)
+    }
+
     const load = async () => {
-      setDiaryLoading(true)
+      if (!cached) setDiaryLoading(true)
       setDiaryError('')
       try {
         const res = await fetch('https://api.thinkindiasvnit.in/internPlacements')
@@ -71,9 +81,13 @@ export default function Internships() {
           }
         }))
 
-        if (!cancelled) setDiaryTestimonials(mapped.filter(Boolean))
-      } catch (e) {
         if (!cancelled) {
+          const filtered = mapped.filter(Boolean)
+          setDiaryTestimonials(filtered)
+          cacheSet(cacheKey, filtered, 5 * 60 * 1000)
+        }
+      } catch (e) {
+        if (!cancelled && !cached) {
           const msg = (e?.message || '').toLowerCase()
           if (msg.includes('cors') || msg.includes('cross-origin')) {
             setDiaryError('CORS error: Unable to access the API. Please try again later.')
@@ -84,9 +98,10 @@ export default function Internships() {
           }
         }
       } finally {
-        if (!cancelled) setDiaryLoading(false)
+        if (!cancelled && !cached) setDiaryLoading(false)
       }
     }
+    // 2) Always revalidate in background
     load()
     return () => { cancelled = true }
   }, [])
@@ -98,8 +113,18 @@ export default function Internships() {
     let cancelled = false
     const loadUpcoming = async () => {
       if (!isLoggedIn) return
-      setUpcomingLoading(true)
+      const authDiscriminator = 'logged-in' // avoids cross-user leakage without storing PII
+      const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/user/getUpcommingInternships', authDiscriminator)
+
+      // Serve cached immediately if present
+      const cached = cacheGet(cacheKey)
+      if (cached && !cancelled) {
+        setUpcoming(cached)
+        setUpcomingLoading(false)
+      }
+
       setUpcomingError('')
+      if (!cached) setUpcomingLoading(true)
       try {
         // Directly call backend. If the response isn't JSON, treat as empty list (no error shown).
         const res = await authFetch('https://api.thinkindiasvnit.in/user/getUpcommingInternships')
@@ -111,10 +136,14 @@ export default function Internships() {
           // Non-JSON (e.g., HTML) -> treat as empty
           data = []
         }
-        if (!cancelled) setUpcoming(Array.isArray(data) ? data : (data?.items || []))
-      } catch (e) {
-        // Network/auth errors => show a concise, production-friendly message
+        const list = Array.isArray(data) ? data : (data?.items || [])
         if (!cancelled) {
+          setUpcoming(list)
+          cacheSet(cacheKey, list, 5 * 60 * 1000)
+        }
+      } catch (e) {
+        // Network/auth errors => show a concise, production-friendly message (only if no cache)
+        if (!cancelled && !cached) {
           const msg = (e?.message || '').toLowerCase()
           if (msg.includes('cors') || msg.includes('cross-origin')) {
             setUpcomingError('CORS error: Unable to access the API. Please try again later.')
@@ -125,7 +154,7 @@ export default function Internships() {
           }
         }
       } finally {
-        if (!cancelled) setUpcomingLoading(false)
+        if (!cancelled && !cached) setUpcomingLoading(false)
       }
     }
     loadUpcoming()
@@ -134,7 +163,18 @@ export default function Internships() {
 
   // Fetch successful placements posters
   useEffect(() => {
+    let cancelled = false
+    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/internPlacements', 'posters-v1')
+
+    // Serve cached posters immediately if present
+    const cached = cacheGet(cacheKey)
+    if (cached && !cancelled) {
+      setPosters(cached)
+      setPostersLoading(false)
+    }
+
     const fetchPosters = async () => {
+      if (!cached) setPostersLoading(true)
       try {
         // 1) Get internship placements list (contains imageId per record)
         const res = await fetch('https://api.thinkindiasvnit.in/internPlacements')
@@ -167,21 +207,28 @@ export default function Internships() {
           }
         }))
 
-        setPosters(images.filter(Boolean))
+        if (!cancelled) {
+          const filtered = images.filter(Boolean)
+          setPosters(filtered)
+          cacheSet(cacheKey, filtered, 5 * 60 * 1000)
+        }
       } catch (e) {
         const msg = (e?.message || '').toLowerCase()
-        if (msg.includes('cors') || msg.includes('cross-origin')) {
-          setPostersError('CORS error: Unable to access the API. Please try again later.')
-        } else if (msg.includes('network') || msg.includes('fetch')) {
-          setPostersError('Network error: Unable to reach the backend. Please try again later.')
-        } else {
-          setPostersError(e.message)
+        if (!cached) {
+          if (msg.includes('cors') || msg.includes('cross-origin')) {
+            setPostersError('CORS error: Unable to access the API. Please try again later.')
+          } else if (msg.includes('network') || msg.includes('fetch')) {
+            setPostersError('Network error: Unable to reach the backend. Please try again later.')
+          } else {
+            setPostersError(e.message)
+          }
         }
       } finally {
-        setPostersLoading(false)
+        if (!cached) setPostersLoading(false)
       }
     }
     fetchPosters()
+    return () => { cancelled = true }
   }, [])
 
   // Show diaries section only when successfully loaded with non-empty data

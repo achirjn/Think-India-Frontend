@@ -1046,6 +1046,20 @@ function HomePage() {
       }
     }
 
+    // Background retry helper: attempt up to retries+1 times with exponential backoff
+    const fetchImageSlideWithRetry = async (imageId, alt, { retries = 2, baseDelay = 1500 } = {}) => {
+      let attempt = 0
+      while (attempt <= retries) {
+        const slide = await fetchImageSlide(imageId, alt)
+        if (slide && slide.src) return slide
+        // Backoff before next try
+        const delay = baseDelay * Math.pow(2, attempt)
+        await new Promise((r) => setTimeout(r, delay))
+        attempt++
+      }
+      return { src: '', alt }
+    }
+
     const load = async () => {
       try {
         // 1) Fetch glimpses list with timeout
@@ -1076,7 +1090,7 @@ function HomePage() {
         const head = list.slice(0, 2)
         const tail = list.slice(2)
 
-        const headSlides = await Promise.all(head.map(({ imageId, alt }, i) => fetchImageSlide(imageId, alt || `Glimpse ${i + 1}`)))
+        const headSlides = await Promise.all(head.map(({ imageId, alt }, i) => fetchImageSlideWithRetry(imageId, alt || `Glimpse ${i + 1}`)))
         const normalizedHead = headSlides.filter((s) => s.src)
         if (!cancelled && normalizedHead.length) {
           setEventImages(normalizedHead)
@@ -1090,7 +1104,7 @@ function HomePage() {
           if (cancelled || idx >= tail.length) return
           const myIndex = idx++
           const { imageId, alt } = tail[myIndex]
-          const slide = await fetchImageSlide(imageId, alt || `Glimpse ${myIndex + 3}`)
+          const slide = await fetchImageSlideWithRetry(imageId, alt || `Glimpse ${myIndex + 3}`)
           if (!cancelled && slide && slide.src) {
             current = [...current, slide]
             setEventImages(current)

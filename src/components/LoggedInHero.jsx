@@ -101,15 +101,15 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
       const fetchImageSlide = async (imageId, alt) => {
         const ac = new AbortController()
         if (controllersMap) controllersMap.set(imageId, ac)
+        // Per-image timeout to avoid long hangs
+        const t = setTimeout(() => { try { ac.abort() } catch {} }, 8000)
         try {
           let imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, {
             method: 'GET',
             headers: { 'Accept': 'application/json, text/plain, */*' },
             signal: ac.signal
           })
-          if (!imgRes.ok) {
-            imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, { method: 'GET', mode: 'cors', signal: ac.signal })
-          }
+          // Single attempt (no duplicate fallback) to avoid doubling latency
           if (!imgRes.ok) throw new Error('image fetch error')
           const contentType = imgRes.headers.get('content-type') || ''
           let base64 = '', mime = '', dataUri = ''
@@ -143,15 +143,29 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
         } catch {
           return { src: '', alt }
         } finally {
+          clearTimeout(t)
           if (controllersMap) controllersMap.delete(imageId)
         }
+      }
+
+      // Retry helper with exponential backoff
+      const fetchImageSlideWithRetry = async (imageId, alt, { retries = 2, baseDelay = 1500 } = {}) => {
+        let attempt = 0
+        while (attempt <= retries) {
+          const slide = await fetchImageSlide(imageId, alt)
+          if (slide && slide.src) return slide
+          const delay = baseDelay * Math.pow(2, attempt)
+          await new Promise((r) => setTimeout(r, delay))
+          attempt++
+        }
+        return { src: '', alt }
       }
 
       // Progressive: head N=2 then tail
       const head = list.slice(0, 2)
       const tail = list.slice(2)
 
-      const headSlides = await Promise.all(head.map(({ imageId, alt }, i) => fetchImageSlide(imageId, alt || `Event ${i + 1}`)))
+      const headSlides = await Promise.all(head.map(({ imageId, alt }, i) => fetchImageSlideWithRetry(imageId, alt || `Event ${i + 1}`)))
       const normalizedHead = headSlides.filter((s) => s.src)
       if (normalizedHead.length) {
         setImages(normalizedHead)
@@ -161,7 +175,7 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
       let current = [...normalizedHead]
       for (let i = 0; i < tail.length; i++) {
         const { imageId, alt } = tail[i]
-        const slide = await fetchImageSlide(imageId, alt || `Event ${i + 3}`)
+        const slide = await fetchImageSlideWithRetry(imageId, alt || `Event ${i + 3}`)
         if (slide && slide.src) {
           current = [...current, slide]
           setImages(current)

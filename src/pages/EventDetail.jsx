@@ -147,7 +147,7 @@ export default function EventDetail() {
             )}
           </motion.header>
 
-          {/* Image Slider */}
+          {/* Image Slider (match LoggedInHero's 4:3 aspect) */}
           <div className="mt-6">
             <div
               className="relative rounded-xl overflow-hidden shadow-lg bg-white"
@@ -156,12 +156,14 @@ export default function EventDetail() {
             >
               {slides.length > 0 ? (
                 <>
-                  <img
-                    key={idx}
-                    src={slides[idx]}
-                    alt={event?._alt || 'Event image'}
-                    className="w-full h-[46vh] sm:h-[55vh] md:h-[60vh] lg:h-[75vh] object-cover"
-                  />
+                  <div className="aspect-[4/3] w-full">
+                    <img
+                      key={idx}
+                      src={slides[idx]}
+                      alt={event?._alt || 'Event image'}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                   {slides.length > 1 && (
                     <>
                       <button
@@ -192,7 +194,7 @@ export default function EventDetail() {
                   )}
                 </>
               ) : (
-                <div className="w-full h-[46vh] sm:h-[55vh] md:h-[60vh] lg:h-[75vh] bg-gray-100 flex items-center justify-center text-gray-500">
+                <div className="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center text-gray-500">
                   No images available
                 </div>
               )}

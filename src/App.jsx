@@ -1202,7 +1202,7 @@ function HomePage() {
             intervalMs={8000}
             images={eventImages}
             overlay={false}
-            innerClassName="w-full h-[55vh] sm:h-[65vh] md:h-[80vh] lg:h-[100vh]"
+            innerClassName="w-full h-[55vh] sm:h-[55vh] md:h-[80vh] lg:h-[100vh]"
             imageClassName="h-full w-full object-contain md:object-cover"
           />
         </Section>

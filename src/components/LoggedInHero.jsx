@@ -207,7 +207,7 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
   }, [])
   
   return (
-    <section className="relative overflow-hidden min-h-[100dvh] lg:min-h-screen flex items-center lg:items-stretch">
+    <section className="relative overflow-hidden min-h-fit lg:min-h-screen flex items-center lg:items-stretch">
       {/* Tricolor background for logged-in hero */}
       <motion.div 
         initial={{ opacity: 0 }}

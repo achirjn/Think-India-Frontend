@@ -257,17 +257,19 @@ export default function BlogDetail() {
           className="mb-8"
         >
           <div className="rounded-xl overflow-hidden shadow-lg">
-            <img 
-              src={post.imageSrc}
-              alt={post.heading || 'Blog post image'} 
-              className="w-full h-[46vh] sm:h-[55vh] md:h-[60vh] lg:h-[75vh] object-cover"
-              onError={(e) => {
-                e.target.style.display = 'none'
-                e.target.nextSibling.style.display = 'flex'
-              }}
-            />
+            <div className="aspect-[4/3] w-full">
+              <img 
+                src={post.imageSrc}
+                alt={post.heading || 'Blog post image'} 
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  e.target.style.display = 'none'
+                  e.target.parentElement.nextSibling.style.display = 'flex'
+                }}
+              />
+            </div>
             <div 
-              className="hidden h-[46vh] sm:h-[55vh] md:h-[60vh] lg:h-[75vh] bg-gray-200 items-center justify-center"
+              className="hidden aspect-[4/3] w-full bg-gray-200 items-center justify-center"
               style={{ display: 'none' }}
             >
               <span className="text-gray-500 text-lg">Image failed to load</span>

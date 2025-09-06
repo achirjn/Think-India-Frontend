@@ -1,5 +1,7 @@
-// Simple Stale-While-Revalidate cache using sessionStorage (persists across reloads, not across tabs)
-// and an in-memory map for fast access within the same tab session.
+// Simple Stale-While-Revalidate cache using Web Storage
+// - sessionStorage (default): persists across reloads, NOT across tabs
+// - localStorage: persists across reloads AND across tabs
+// Also uses an in-memory map for fast access within the same tab session.
 
 const MEM = new Map();
 const PREFIX = 'swr:'; // storage key prefix
@@ -13,18 +15,20 @@ function storageKey(key) {
 }
 
 // Serialize to storage
-function saveToStorage(key, entry) {
+function saveToStorage(key, entry, storage = 'session') {
   try {
-    sessionStorage.setItem(storageKey(key), JSON.stringify(entry));
+    const target = storage === 'local' ? localStorage : sessionStorage
+    target.setItem(storageKey(key), JSON.stringify(entry));
   } catch (_) {
     // Ignore quota or serialization errors; in-memory cache will still work in this tab
   }
 }
 
 // Load from storage
-function loadFromStorage(key) {
+function loadFromStorage(key, storage = 'session') {
   try {
-    const raw = sessionStorage.getItem(storageKey(key));
+    const target = storage === 'local' ? localStorage : sessionStorage
+    const raw = target.getItem(storageKey(key));
     if (!raw) return null;
     return JSON.parse(raw);
   } catch (_) {
@@ -45,7 +49,7 @@ export function cacheGet(key) {
   if (isFresh(mem)) return mem.value;
 
   // 2) Fallback to sessionStorage
-  const stored = loadFromStorage(key);
+  const stored = loadFromStorage(key, 'session');
   if (isFresh(stored)) {
     MEM.set(key, stored); // hydrate memory
     return stored.value;
@@ -57,12 +61,30 @@ export function cacheGet(key) {
 export function cacheSet(key, value, ttlMs = 300000) { // default 5 minutes
   const entry = { value, expiresAt: now() + Math.max(0, ttlMs) };
   MEM.set(key, entry);
-  saveToStorage(key, entry);
+  saveToStorage(key, entry, 'session');
 }
 
 export function cacheDelete(key) {
   MEM.delete(key);
   try { sessionStorage.removeItem(storageKey(key)); } catch (_) {}
+}
+
+// Local (cross-tab) variants
+export function localCacheGet(key) {
+  const mem = MEM.get(key);
+  if (isFresh(mem)) return mem.value;
+  const stored = loadFromStorage(key, 'local');
+  if (isFresh(stored)) {
+    MEM.set(key, stored);
+    return stored.value;
+  }
+  return undefined;
+}
+
+export function localCacheSet(key, value, ttlMs = 300000) {
+  const entry = { value, expiresAt: now() + Math.max(0, ttlMs) };
+  MEM.set(key, entry);
+  saveToStorage(key, entry, 'local');
 }
 
 export function cacheKeyForUrl(url, extra = '') {

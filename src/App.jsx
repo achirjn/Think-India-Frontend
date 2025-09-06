@@ -26,6 +26,7 @@ import useWindowSize from './hooks/useWindowSize.jsx'
 import useAuth from './hooks/useAuth.jsx'
 import ThinkIndiaLogo from './assets/Think_India_Logo.svg'
 import NITSuratLogo from './assets/NIT_Surat_Logo.svg'
+import { localCacheGet, localCacheSet, cacheKeyForUrl } from './utils/swrCache.js'
 
 function NavBar() {
   const location = useLocation()
@@ -902,135 +903,172 @@ function HomePage() {
   useEffect(() => {
     if (isLoggedIn) return // Do not fetch glimpses for logged-in users
     let cancelled = false
+    const controller = new AbortController()
+    const imgControllers = new Map()
+    const TTL = 15 * 60 * 1000 // 15 minutes
+    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/glimpses', 'glimpses-v1')
+
+    // 0) Serve cached immediately (cross-tab)
+    try {
+      const cached = localCacheGet(cacheKey)
+      if (cached && Array.isArray(cached) && cached.length && !cancelled) {
+        setEventImages(cached)
+      }
+    } catch {}
+
+    const imageUtils = {
+      detectMime: (b64) => {
+        if (!b64 || typeof b64 !== 'string') return ''
+        const head = b64.slice(0, 16)
+        if (head.startsWith('/9j/')) return 'image/jpeg'
+        if (head.startsWith('iVBORw0KGgo')) return 'image/png'
+        if (head.startsWith('R0lGOD')) return 'image/gif'
+        if (head.startsWith('UklGR')) return 'image/webp'
+        return ''
+      },
+      sanitizeBase64: (raw) => {
+        if (!raw || typeof raw !== 'string') return ''
+        let cleaned = raw.trim()
+        if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+          try { cleaned = JSON.parse(cleaned) } catch {}
+        }
+        cleaned = String(cleaned).replace(/^data:[^;]+;base64,/, '')
+        return cleaned.replace(/[^A-Za-z0-9+/=]/g, '')
+      },
+      extractBase64: (payload) => {
+        let mime = '', dataUri = '', base64 = ''
+        if (payload == null) return { base64, mime, dataUri }
+        if (typeof payload === 'string') {
+          const trimmed = payload.trim()
+          if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+            try {
+              const unwrapped = JSON.parse(trimmed)
+              if (typeof unwrapped === 'string') return imageUtils.extractBase64(unwrapped)
+            } catch {}
+          }
+          if (trimmed.startsWith('data:')) {
+            dataUri = trimmed
+            const match = trimmed.match(/^data:([^;]+);base64,(.*)$/)
+            if (match) { mime = match[1]; base64 = match[2] }
+            return { base64, mime, dataUri }
+          }
+          base64 = imageUtils.sanitizeBase64(trimmed)
+          return { base64, mime, dataUri }
+        }
+        const candidates = [payload.base64Image, payload.base64, payload.data, payload.image, payload.base64EncodedImage]
+        for (const c of candidates) { if (typeof c === 'string' && c.trim()) return imageUtils.extractBase64(c) }
+        mime = payload.imageType || payload.mimeType || payload.contentType || mime
+        const anyString = Object.values(payload).find((v) => typeof v === 'string')
+        if (anyString) return imageUtils.extractBase64(anyString)
+        return { base64, mime, dataUri }
+      }
+    }
+
+    const fetchImageSlide = async (imageId, alt) => {
+      if (imageId === undefined || imageId === null) return { src: '', alt }
+      const ac = new AbortController()
+      imgControllers.set(imageId, ac)
+      try {
+        let imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json, text/plain, */*' },
+          signal: ac.signal
+        })
+        if (!imgRes.ok) {
+          imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, { method: 'GET', mode: 'cors', signal: ac.signal })
+        }
+        if (!imgRes.ok) throw new Error('image fetch error')
+        const contentType = imgRes.headers.get('content-type') || ''
+        let base64 = '', mime = '', dataUri = ''
+        if (contentType.includes('application/json')) {
+          const json = await imgRes.json()
+          const ext = imageUtils.extractBase64(json)
+          base64 = imageUtils.sanitizeBase64(ext.base64)
+          mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
+          dataUri = ext.dataUri
+        } else {
+          const text = await imgRes.text()
+          const maybeJson = text.trim()
+          if (maybeJson.startsWith('{') || maybeJson.startsWith('[') || (maybeJson.startsWith('"') && maybeJson.endsWith('"'))) {
+            try {
+              const parsed = JSON.parse(maybeJson)
+              const ext = imageUtils.extractBase64(parsed)
+              base64 = imageUtils.sanitizeBase64(ext.base64)
+              mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
+              dataUri = ext.dataUri
+            } catch {
+              base64 = imageUtils.sanitizeBase64(maybeJson)
+              mime = imageUtils.detectMime(base64) || 'image/jpeg'
+            }
+          } else {
+            base64 = imageUtils.sanitizeBase64(maybeJson)
+            mime = imageUtils.detectMime(base64) || 'image/jpeg'
+          }
+        }
+        const src = dataUri || (base64 ? `data:${mime};base64,${base64}` : '')
+        return { src, alt }
+      } catch {
+        return { src: '', alt }
+      } finally {
+        imgControllers.delete(imageId)
+      }
+    }
+
     const load = async () => {
       try {
-        // Fetch glimpses list
+        // 1) Fetch glimpses list
         let res = await fetch('https://api.thinkindiasvnit.in/glimpses', {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
+          signal: controller.signal
         })
         if (!res.ok) {
-          res = await fetch('https://api.thinkindiasvnit.in/glimpses', { method: 'GET', mode: 'cors' })
+          res = await fetch('https://api.thinkindiasvnit.in/glimpses', { method: 'GET', mode: 'cors', signal: controller.signal })
         }
         if (!res.ok) throw new Error(`Failed to fetch glimpses: HTTP ${res.status}`)
 
         const glimpses = await res.json()
-        const list = Array.isArray(glimpses) ? glimpses : []
-
-        const imageUtils = {
-          detectMime: (b64) => {
-            if (!b64 || typeof b64 !== 'string') return ''
-            const head = b64.slice(0, 16)
-            if (head.startsWith('/9j/')) return 'image/jpeg'
-            if (head.startsWith('iVBORw0KGgo')) return 'image/png'
-            if (head.startsWith('R0lGOD')) return 'image/gif'
-            if (head.startsWith('UklGR')) return 'image/webp'
-            return ''
-          },
-          
-          sanitizeBase64: (raw) => {
-            if (!raw || typeof raw !== 'string') return ''
-            let cleaned = raw.trim()
-            if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
-              try { cleaned = JSON.parse(cleaned) } catch {}
-            }
-            cleaned = String(cleaned).replace(/^data:[^;]+;base64,/, '')
-            return cleaned.replace(/[^A-Za-z0-9+/=]/g, '')
-          },
-          
-          extractBase64: (payload) => {
-            let mime = '', dataUri = '', base64 = ''
-            if (payload == null) return { base64, mime, dataUri }
-            
-            if (typeof payload === 'string') {
-              const trimmed = payload.trim()
-              if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
-                try {
-                  const unwrapped = JSON.parse(trimmed)
-                  if (typeof unwrapped === 'string') return imageUtils.extractBase64(unwrapped)
-                } catch {}
-              }
-              if (trimmed.startsWith('data:')) {
-                dataUri = trimmed
-                const match = trimmed.match(/^data:([^;]+);base64,(.*)$/)
-                if (match) { mime = match[1]; base64 = match[2] }
-                return { base64, mime, dataUri }
-              }
-              base64 = imageUtils.sanitizeBase64(trimmed)
-              return { base64, mime, dataUri }
-            }
-            
-            const candidates = [payload.base64Image, payload.base64, payload.data, payload.image, payload.base64EncodedImage]
-            for (const c of candidates) {
-              if (typeof c === 'string' && c.trim()) return imageUtils.extractBase64(c)
-            }
-            mime = payload.imageType || payload.mimeType || payload.contentType || mime
-            const anyString = Object.values(payload).find((v) => typeof v === 'string')
-            if (anyString) return imageUtils.extractBase64(anyString)
-            return { base64, mime, dataUri }
-          }
+        const listRaw = Array.isArray(glimpses) ? glimpses : []
+        // 2) Dedupe imageIds while preserving order
+        const seen = new Set()
+        const list = []
+        for (const ev of listRaw) {
+          const imageId = ev?.imageId ?? ev?.imageID ?? ev?.image_id ?? ev?.imageid
+          if (imageId == null) continue
+          if (seen.has(imageId)) continue
+          seen.add(imageId)
+          list.push({ imageId, alt: ev.name || ev.eventName || 'Glimpse' })
         }
 
-        // Fetch each image by imageId
-        const slides = await Promise.all(
-          list.map(async (ev, i) => {
-            const imageId = ev.imageId ?? ev.imageID ?? ev.image_id ?? ev.imageid
-            const alt = ev.name || ev.eventName || `Glimpse ${i + 1}`
-            if (imageId === undefined || imageId === null) return { src: '', alt }
-            try {
-              let imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, {
-                method: 'GET',
-                headers: { 'Accept': 'application/json, text/plain, */*' },
-              })
-              if (!imgRes.ok) {
-                imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, { method: 'GET', mode: 'cors' })
-              }
-              if (!imgRes.ok) throw new Error('image fetch error')
-              const contentType = imgRes.headers.get('content-type') || ''
-              let base64 = '', mime = '', dataUri = ''
-              
-              if (contentType.includes('application/json')) {
-                const json = await imgRes.json()
-                const ext = imageUtils.extractBase64(json)
-                base64 = imageUtils.sanitizeBase64(ext.base64)
-                mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
-                dataUri = ext.dataUri
-              } else {
-                const text = await imgRes.text()
-                const maybeJson = text.trim()
-                if (maybeJson.startsWith('{') || maybeJson.startsWith('[') || (maybeJson.startsWith('"') && maybeJson.endsWith('"'))) {
-                  try {
-                    const parsed = JSON.parse(maybeJson)
-                    const ext = imageUtils.extractBase64(parsed)
-                    base64 = imageUtils.sanitizeBase64(ext.base64)
-                    mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
-                    dataUri = ext.dataUri
-                  } catch {
-                    base64 = imageUtils.sanitizeBase64(maybeJson)
-                    mime = imageUtils.detectMime(base64) || 'image/jpeg'
-                  }
-                } else {
-                  base64 = imageUtils.sanitizeBase64(maybeJson)
-                  mime = imageUtils.detectMime(base64) || 'image/jpeg'
-                }
-              }
-              const src = dataUri || (base64 ? `data:${mime};base64,${base64}` : '')
-              return { src, alt }
-            } catch {
-              return { src: '', alt }
-            }
-          })
-        )
+        // 3) Progressive loading: first N=2
+        const head = list.slice(0, 2)
+        const tail = list.slice(2)
 
-        const normalized = slides.filter((s) => s.src)
-        if (!cancelled && normalized.length) setEventImages(normalized)
+        const headSlides = await Promise.all(head.map(({ imageId, alt }, i) => fetchImageSlide(imageId, alt || `Glimpse ${i + 1}`)))
+        const normalizedHead = headSlides.filter((s) => s.src)
+        if (!cancelled && normalizedHead.length) {
+          setEventImages(normalizedHead)
+        }
+
+        // 4) Background fetch remaining and append progressively
+        const tailSlides = await Promise.all(tail.map(({ imageId, alt }, i) => fetchImageSlide(imageId, alt || `Glimpse ${i + 3}`)))
+        const normalizedTail = tailSlides.filter((s) => s.src)
+        if (!cancelled && (normalizedHead.length || normalizedTail.length)) {
+          const next = [...normalizedHead, ...normalizedTail]
+          setEventImages(next)
+          try { localCacheSet(cacheKey, next, TTL) } catch {}
+        }
       } catch {
         // Ignore; ImageSlider will use its fallback slides
       }
     }
+
     load()
     return () => {
       cancelled = true
+      try { controller.abort() } catch {}
+      imgControllers.forEach((ac) => { try { ac.abort() } catch {} })
+      imgControllers.clear()
     }
   }, [isLoggedIn])
 

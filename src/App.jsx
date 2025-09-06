@@ -511,7 +511,7 @@ function Hero() {
   };
 
   return (
-    <section id="hero" className="relative overflow-hidden min-h-[calc(100vh-4rem)] flex items-center">
+    <section id="hero" className="relative overflow-hidden min-h-[100dvh] flex items-center">
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -1047,13 +1047,13 @@ function HomePage() {
     }
 
     // Background retry helper: attempt up to retries+1 times with exponential backoff
-    const fetchImageSlideWithRetry = async (imageId, alt, { retries = 2, baseDelay = 1500 } = {}) => {
+    const fetchImageSlideWithRetry = async (imageId, alt, { baseDelay = 1500, maxDelay = 15000 } = {}) => {
       let attempt = 0
-      while (attempt <= retries) {
+      while (!cancelled) {
         const slide = await fetchImageSlide(imageId, alt)
         if (slide && slide.src) return slide
-        // Backoff before next try
-        const delay = baseDelay * Math.pow(2, attempt)
+        // Exponential backoff without hard cap on attempts
+        const delay = Math.min(maxDelay, baseDelay * Math.pow(2, attempt))
         await new Promise((r) => setTimeout(r, delay))
         attempt++
       }

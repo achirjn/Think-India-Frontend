@@ -160,7 +160,7 @@ export default function EventDetail() {
                     key={idx}
                     src={slides[idx]}
                     alt={event?._alt || 'Event image'}
-                    className="w-full h-[56vh] sm:h-[66vh] md:h-[72vh] object-cover"
+                    className="w-full h-[46vh] sm:h-[55vh] md:h-[60vh] lg:h-[75vh] object-cover"
                   />
                   {slides.length > 1 && (
                     <>
@@ -192,7 +192,7 @@ export default function EventDetail() {
                   )}
                 </>
               ) : (
-                <div className="w-full h-[46vh] sm:h-[56vh] md:h-[64vh] bg-gray-100 flex items-center justify-center text-gray-500">
+                <div className="w-full h-[46vh] sm:h-[55vh] md:h-[60vh] lg:h-[75vh] bg-gray-100 flex items-center justify-center text-gray-500">
                   No images available
                 </div>
               )}

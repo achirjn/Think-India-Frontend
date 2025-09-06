@@ -148,17 +148,16 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
         }
       }
 
-      // Retry helper with exponential backoff
-      const fetchImageSlideWithRetry = async (imageId, alt, { retries = 2, baseDelay = 1500 } = {}) => {
+      // Retry helper with exponential backoff (unbounded attempts, capped delay)
+      const fetchImageSlideWithRetry = async (imageId, alt, { baseDelay = 1500, maxDelay = 15000 } = {}) => {
         let attempt = 0
-        while (attempt <= retries) {
+        while (true) {
           const slide = await fetchImageSlide(imageId, alt)
           if (slide && slide.src) return slide
-          const delay = baseDelay * Math.pow(2, attempt)
+          const delay = Math.min(maxDelay, baseDelay * Math.pow(2, attempt))
           await new Promise((r) => setTimeout(r, delay))
           attempt++
         }
-        return { src: '', alt }
       }
 
       // Progressive: head N=2 then tail
@@ -208,7 +207,7 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
   }, [])
   
   return (
-    <section className="relative overflow-hidden min-h-fit lg:min-h-screen flex items-center lg:items-stretch">
+    <section className="relative overflow-hidden min-h-[100dvh] lg:min-h-screen flex items-center lg:items-stretch">
       {/* Tricolor background for logged-in hero */}
       <motion.div 
         initial={{ opacity: 0 }}

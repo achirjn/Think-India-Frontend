@@ -35,7 +35,7 @@ export default function Internships() {
     { src: 'https://picsum.photos/seed/ti-6/600/800', alt: 'Temp poster 6' },
   ]), [])
 
-  // Load Internship Diaries from backend
+  // Load Internship Diaries from backend (progressive: first 2, then rest with retries)
   useEffect(() => {
     let cancelled = false
     const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/internPlacements', 'diaries-v1')
@@ -51,40 +51,100 @@ export default function Internships() {
       if (!cached) setDiaryLoading(true)
       setDiaryError('')
       try {
-        const res = await fetch('https://api.thinkindiasvnit.in/internPlacements')
+        // 1) Fetch diaries list
+        const listController = new AbortController()
+        const listTimeout = setTimeout(() => { try { listController.abort() } catch {} }, 8000)
+        const res = await fetch('https://api.thinkindiasvnit.in/internPlacements', { signal: listController.signal })
+        clearTimeout(listTimeout)
         if (!res.ok) throw new Error('Failed to fetch internship diaries')
         const data = await res.json()
         const rows = Array.isArray(data) ? data : (data?.items || [])
 
-        const mapped = await Promise.all(rows.map(async (it) => {
-          if (!it) return null
-          const id = it.imageId ?? it.imageID ?? it.imageid
-          let src = ''
-          if (id !== undefined && id !== null) {
-            try {
-              const imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${id}`)
-              if (imgRes.ok) {
-                const imgJson = await imgRes.json().catch(() => ({}))
-                const b64 = imgJson.base64Image || imgJson.image || imgJson.data || ''
-                const mime = (imgJson.contentType || imgJson.mime || 'image/jpeg')
-                if (b64) src = `data:${mime};base64,${b64}`
-              }
-            } catch {}
-          }
-          return {
-            name: it.studentName || it.name || 'Student',
-            designation: it.designation || '',
-            role: it.role || '',
-            instituteName: it.instituteName || it.institute || it.company || '',
-            message: it.message || it.quote || '',
-            src,
-          }
-        }))
+        // 2) Normalize into lightweight items containing ids + meta
+        const items = rows.map((it) => ({
+          _id: it?.imageId ?? it?.imageID ?? it?.imageid,
+          name: it?.studentName || it?.name || 'Student',
+          designation: it?.designation || '',
+          role: it?.role || '',
+          instituteName: it?.instituteName || it?.institute || it?.company || '',
+          message: it?.message || it?.quote || ''
+        })).filter((it) => it && (it._id !== undefined && it._id !== null))
 
-        if (!cancelled) {
-          const filtered = mapped.filter(Boolean)
-          setDiaryTestimonials(filtered)
-          cacheSet(cacheKey, filtered, 5 * 60 * 1000)
+        // Helpers similar to HomePage image logic
+        const buildSlide = async (id, meta, signal) => {
+          const imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(id)}`, {
+            method: 'GET', headers: { 'Accept': 'application/json, text/plain, */*' }, signal
+          })
+          if (!imgRes.ok) throw new Error('image fetch failed')
+          const text = await imgRes.text()
+          let b64 = '', mime = 'image/jpeg'
+          try {
+            const js = JSON.parse(text)
+            b64 = (js.base64Image || js.image || js.data || '').trim()
+            mime = (js.contentType || js.mime || 'image/jpeg')
+          } catch {
+            // If backend ever returns raw base64 string
+            b64 = String(text || '').trim()
+          }
+          if (!b64) throw new Error('empty image')
+          const src = `data:${mime};base64,${b64}`
+          return { src, alt: `${meta.name} • ${meta.instituteName || 'Internship'}`, caption: meta.instituteName || '', ...meta }
+        }
+
+        const fetchSlideWithTimeout = async (id, meta) => {
+          const ac = new AbortController()
+          const t = setTimeout(() => { try { ac.abort() } catch {} }, 8000)
+          try {
+            return await buildSlide(id, meta, ac.signal)
+          } finally {
+            clearTimeout(t)
+          }
+        }
+
+        const fetchSlideWithRetry = async (id, meta, { baseDelay = 1500, maxDelay = 15000 } = {}) => {
+          let attempt = 0
+          while (!cancelled) {
+            try {
+              const slide = await fetchSlideWithTimeout(id, meta)
+              if (slide && slide.src) return slide
+            } catch {}
+            const delay = Math.min(maxDelay, baseDelay * Math.pow(2, attempt))
+            await new Promise((r) => setTimeout(r, delay))
+            attempt++
+          }
+          return null
+        }
+
+        // 3) Progressive load: head first 2
+        const head = items.slice(0, 2)
+        const tail = items.slice(2)
+        const headSlides = (await Promise.all(head.map((it, i) => fetchSlideWithRetry(it._id, it)))).filter(Boolean)
+        if (!cancelled && headSlides.length) {
+          setDiaryTestimonials(headSlides)
+        }
+
+        // 4) Background fetch remaining with small concurrency (2)
+        const TTL = 5 * 60 * 1000
+        const concurrency = 2
+        let current = [...headSlides]
+        let idx = 0
+        const runNext = async () => {
+          if (cancelled || idx >= tail.length) return
+          const myIndex = idx++
+          const it = tail[myIndex]
+          const slide = await fetchSlideWithRetry(it._id, it)
+          if (!cancelled && slide) {
+            current = [...current, slide]
+            setDiaryTestimonials(current)
+            try { cacheSet(cacheKey, current, TTL) } catch {}
+          }
+          await runNext()
+        }
+        await Promise.all(Array.from({ length: Math.min(concurrency, tail.length) }, () => runNext()))
+
+        // If nothing was fetched (e.g., ids missing), write empty cache to avoid refetch loop
+        if (!cancelled && current.length === 0) {
+          cacheSet(cacheKey, [], 60 * 1000)
         }
       } catch (e) {
         if (!cancelled && !cached) {

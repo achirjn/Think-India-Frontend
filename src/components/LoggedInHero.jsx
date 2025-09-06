@@ -15,10 +15,15 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
     setLoading(true)
     setError(null)
     const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/glimpses', 'logged-hero-v1')
+    const homeCacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/glimpses', 'glimpses-v1')
 
     // Serve cached immediately (cross-tab)
     try {
-      const cached = localCacheGet(cacheKey)
+      // Prefer using the HomePage Glimpses cache if available, since it's the same endpoint
+      let cached = localCacheGet(homeCacheKey)
+      if (!cached || !Array.isArray(cached) || !cached.length) {
+        cached = localCacheGet(cacheKey)
+      }
       if (cached && Array.isArray(cached) && cached.length) {
         setImages(cached)
         setLoading(false)
@@ -152,12 +157,16 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
         setImages(normalizedHead)
       }
 
-      const tailSlides = await Promise.all(tail.map(({ imageId, alt }, i) => fetchImageSlide(imageId, alt || `Event ${i + 3}`)))
-      const normalizedTail = tailSlides.filter((s) => s.src)
-      const allSlides = [...normalizedHead, ...normalizedTail]
-      if (allSlides.length) {
-        setImages(allSlides)
-        try { localCacheSet(cacheKey, allSlides, ttlMs) } catch {}
+      // Append tail progressively as each image is fetched
+      let current = [...normalizedHead]
+      for (let i = 0; i < tail.length; i++) {
+        const { imageId, alt } = tail[i]
+        const slide = await fetchImageSlide(imageId, alt || `Event ${i + 3}`)
+        if (slide && slide.src) {
+          current = [...current, slide]
+          setImages(current)
+          try { localCacheSet(cacheKey, current, ttlMs) } catch {}
+        }
       }
     } catch (e) {
       console.error('Error loading images:', e)

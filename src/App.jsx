@@ -252,8 +252,8 @@ function NavBar() {
               {(() => {
                 const base = [
                   { to: "/#about", text: "About" },
-                  { to: "/events", text: "Events" },
                   ...(authState.isLoggedIn ? [] : [{ to: "/#glimpses", text: "Glimpses" }]),
+                  { to: "/events", text: "Events" },
                   { to: "/internships", text: "Internships" },
                   { to: "/blogs", text: "Blogs" },
                   { to: "/teams", text: "Team" },
@@ -367,8 +367,8 @@ function NavBar() {
             {(() => {
               const items = [
                 { to: "/#about", text: "About" },
-                { to: "/events", text: "Events" },
                 ...(authState.isLoggedIn ? [] : [{ to: "/#glimpses", text: "Glimpses" }]),
+                { to: "/events", text: "Events" },
                 { to: "/internships", text: "Internships" },
                 { to: "/blogs", text: "Blogs" },
                 { to: "/teams", text: "Team" },
@@ -631,6 +631,25 @@ function Section({ id, title, children, className = '' }) {
 }
 
 function Footer() {
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const handleFooterSectionNavigation = (sectionId) => {
+    const scrollToTarget = () => {
+      const element = document.getElementById(sectionId)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }
+
+    if (location.pathname === '/') {
+      scrollToTarget()
+    } else {
+      navigate('/')
+      setTimeout(scrollToTarget, 120)
+    }
+  }
+
   return (
     <footer className="text-white" style={{ backgroundColor: 'var(--color-footer-blue)' }}>
       <div className="h-1 w-full grid grid-cols-3">
@@ -658,10 +677,22 @@ function Footer() {
             <div className="my-2 h-0.5 w-16 mx-auto md:mx-0 bg-white/30" />
             <ul className="mt-2 space-y-2 text-white/80">
               <li><Link className="hover:text-white" to="/">Home</Link></li>
-              <li><a className="hover:text-white" href="#about">About</a></li>
-              <li><a className="hover:text-white" href="#glimpses">Glimpses</a></li>
+              <li>
+                <button type="button" className="hover:text-white" onClick={() => handleFooterSectionNavigation('about')}>
+                  About
+                </button>
+              </li>
+              <li>
+                <button type="button" className="hover:text-white" onClick={() => handleFooterSectionNavigation('glimpses')}>
+                  Glimpses
+                </button>
+              </li>
               <li><Link className="hover:text-white" to="/teams">Team</Link></li>
-              <li><a className="hover:text-white" href="#contact">Contact Us</a></li>
+              <li>
+                <button type="button" className="hover:text-white" onClick={() => handleFooterSectionNavigation('contact')}>
+                  Contact Us
+                </button>
+              </li>
             </ul>
           </div>
           <div className="text-center md:text-left">

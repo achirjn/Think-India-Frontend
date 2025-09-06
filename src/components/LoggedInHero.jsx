@@ -3,29 +3,52 @@ import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import Button from './Button.jsx'
 import ImageSlider from './ImageSlider.jsx'
+import { localCacheGet, localCacheSet, cacheKeyForUrl } from '../utils/swrCache.js'
 
 export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
   const [images, setImages] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   
-  // Define loadImages function outside useEffect so it can be referenced elsewhere
-  const loadImages = async () => {
+  // Enhanced loader with progressive fetch, cross-tab cache and abort handling
+  const loadImages = async ({ signal, controllersMap, ttlMs = 15 * 60 * 1000 } = {}) => {
     setLoading(true)
     setError(null)
+    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/glimpses', 'logged-hero-v1')
+
+    // Serve cached immediately (cross-tab)
     try {
-      // Mirror Glimpses section fetching from App.jsx
+      const cached = localCacheGet(cacheKey)
+      if (cached && Array.isArray(cached) && cached.length) {
+        setImages(cached)
+        setLoading(false)
+      }
+    } catch {}
+
+    try {
+      // Fetch list
       let res = await fetch('https://api.thinkindiasvnit.in/glimpses', {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
+        signal
       })
       if (!res.ok) {
-        res = await fetch('https://api.thinkindiasvnit.in/glimpses', { method: 'GET', mode: 'cors' })
+        res = await fetch('https://api.thinkindiasvnit.in/glimpses', { method: 'GET', mode: 'cors', signal })
       }
       if (!res.ok) throw new Error(`Failed to fetch glimpses: HTTP ${res.status}`)
 
       const events = await res.json()
-      const list = Array.isArray(events) ? events : []
+      const listRaw = Array.isArray(events) ? events : []
+      // Dedupe imageIds while preserving order
+      const seen = new Set()
+      const list = []
+      for (const ev of listRaw) {
+        const imageId = ev?.imageId ?? ev?.imageID ?? ev?.image_id ?? ev?.imageid
+        if (imageId == null) continue
+        if (seen.has(imageId)) continue
+        seen.add(imageId)
+        list.push({ imageId, alt: ev.eventName || 'Event' })
+      }
 
       const imageUtils = {
         detectMime: (b64) => {
@@ -40,9 +63,7 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
         sanitizeBase64: (raw) => {
           if (!raw || typeof raw !== 'string') return ''
           let cleaned = raw.trim()
-          if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
-            try { cleaned = JSON.parse(cleaned) } catch {}
-          }
+          if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) { try { cleaned = JSON.parse(cleaned) } catch {} }
           cleaned = String(cleaned).replace(/^data:[^;]+;base64,/, '')
           return cleaned.replace(/[^A-Za-z0-9+/=]/g, '')
         },
@@ -52,10 +73,7 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
           if (typeof payload === 'string') {
             const trimmed = payload.trim()
             if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
-              try {
-                const unwrapped = JSON.parse(trimmed)
-                if (typeof unwrapped === 'string') return imageUtils.extractBase64(unwrapped)
-              } catch {}
+              try { const unwrapped = JSON.parse(trimmed); if (typeof unwrapped === 'string') return imageUtils.extractBase64(unwrapped) } catch {}
             }
             if (trimmed.startsWith('data:')) {
               dataUri = trimmed
@@ -67,9 +85,7 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
             return { base64, mime, dataUri }
           }
           const candidates = [payload.base64Image, payload.base64, payload.data, payload.image, payload.base64EncodedImage]
-          for (const c of candidates) {
-            if (typeof c === 'string' && c.trim()) return imageUtils.extractBase64(c)
-          }
+          for (const c of candidates) { if (typeof c === 'string' && c.trim()) return imageUtils.extractBase64(c) }
           mime = payload.imageType || payload.mimeType || payload.contentType || mime
           const anyString = Object.values(payload).find((v) => typeof v === 'string')
           if (anyString) return imageUtils.extractBase64(anyString)
@@ -77,58 +93,72 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
         }
       }
 
-      const slides = await Promise.all(
-        list.map(async (ev, i) => {
-          const imageId = ev.imageId ?? ev.imageID ?? ev.image_id ?? ev.imageid
-          const alt = ev.eventName || `Event ${i + 1}`
-          if (imageId === undefined || imageId === null) return { src: '', alt }
-          try {
-            let imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, {
-              method: 'GET',
-              headers: { 'Accept': 'application/json, text/plain, */*' },
-            })
-            if (!imgRes.ok) {
-              imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, { method: 'GET', mode: 'cors' })
-            }
-            if (!imgRes.ok) throw new Error('image fetch error')
-            const contentType = imgRes.headers.get('content-type') || ''
-            let base64 = '', mime = '', dataUri = ''
-
-            if (contentType.includes('application/json')) {
-              const json = await imgRes.json()
-              const ext = imageUtils.extractBase64(json)
-              base64 = imageUtils.sanitizeBase64(ext.base64)
-              mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
-              dataUri = ext.dataUri
-            } else {
-              const text = await imgRes.text()
-              const maybeJson = text.trim()
-              if (maybeJson.startsWith('{') || maybeJson.startsWith('[') || (maybeJson.startsWith('"') && maybeJson.endsWith('"'))) {
-                try {
-                  const parsed = JSON.parse(maybeJson)
-                  const ext = imageUtils.extractBase64(parsed)
-                  base64 = imageUtils.sanitizeBase64(ext.base64)
-                  mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
-                  dataUri = ext.dataUri
-                } catch {
-                  base64 = imageUtils.sanitizeBase64(maybeJson)
-                  mime = imageUtils.detectMime(base64) || 'image/jpeg'
-                }
-              } else {
+      const fetchImageSlide = async (imageId, alt) => {
+        const ac = new AbortController()
+        if (controllersMap) controllersMap.set(imageId, ac)
+        try {
+          let imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json, text/plain, */*' },
+            signal: ac.signal
+          })
+          if (!imgRes.ok) {
+            imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, { method: 'GET', mode: 'cors', signal: ac.signal })
+          }
+          if (!imgRes.ok) throw new Error('image fetch error')
+          const contentType = imgRes.headers.get('content-type') || ''
+          let base64 = '', mime = '', dataUri = ''
+          if (contentType.includes('application/json')) {
+            const json = await imgRes.json()
+            const ext = imageUtils.extractBase64(json)
+            base64 = imageUtils.sanitizeBase64(ext.base64)
+            mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
+            dataUri = ext.dataUri
+          } else {
+            const text = await imgRes.text()
+            const maybeJson = text.trim()
+            if (maybeJson.startsWith('{') || maybeJson.startsWith('[') || (maybeJson.startsWith('"') && maybeJson.endsWith('"'))) {
+              try {
+                const parsed = JSON.parse(maybeJson)
+                const ext = imageUtils.extractBase64(parsed)
+                base64 = imageUtils.sanitizeBase64(ext.base64)
+                mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
+                dataUri = ext.dataUri
+              } catch {
                 base64 = imageUtils.sanitizeBase64(maybeJson)
                 mime = imageUtils.detectMime(base64) || 'image/jpeg'
               }
+            } else {
+              base64 = imageUtils.sanitizeBase64(maybeJson)
+              mime = imageUtils.detectMime(base64) || 'image/jpeg'
             }
-            const src = dataUri || (base64 ? `data:${mime};base64,${base64}` : '')
-            return { src, alt }
-          } catch {
-            return { src: '', alt }
           }
-        })
-      )
+          const src = dataUri || (base64 ? `data:${mime};base64,${base64}` : '')
+          return { src, alt }
+        } catch {
+          return { src: '', alt }
+        } finally {
+          if (controllersMap) controllersMap.delete(imageId)
+        }
+      }
 
-      const normalized = slides.filter((s) => s.src)
-      setImages(normalized)
+      // Progressive: head N=2 then tail
+      const head = list.slice(0, 2)
+      const tail = list.slice(2)
+
+      const headSlides = await Promise.all(head.map(({ imageId, alt }, i) => fetchImageSlide(imageId, alt || `Event ${i + 1}`)))
+      const normalizedHead = headSlides.filter((s) => s.src)
+      if (normalizedHead.length) {
+        setImages(normalizedHead)
+      }
+
+      const tailSlides = await Promise.all(tail.map(({ imageId, alt }, i) => fetchImageSlide(imageId, alt || `Event ${i + 3}`)))
+      const normalizedTail = tailSlides.filter((s) => s.src)
+      const allSlides = [...normalizedHead, ...normalizedTail]
+      if (allSlides.length) {
+        setImages(allSlides)
+        try { localCacheSet(cacheKey, allSlides, ttlMs) } catch {}
+      }
     } catch (e) {
       console.error('Error loading images:', e)
       setError('Failed to load images. Please try again later.')
@@ -140,11 +170,18 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
   // Call loadImages when component mounts or apiEndpoint changes
   useEffect(() => {
     let cancelled = false
+    const controller = new AbortController()
+    const imgControllers = new Map()
     const run = async () => {
-      if (!cancelled) await loadImages()
+      if (!cancelled) await loadImages({ signal: controller.signal, controllersMap: imgControllers, ttlMs: 15 * 60 * 1000 })
     }
     run()
-    return () => { cancelled = true }
+    return () => {
+      cancelled = true
+      try { controller.abort() } catch {}
+      imgControllers.forEach((ac) => { try { ac.abort() } catch {} })
+      imgControllers.clear()
+    }
   }, [])
   
   return (

@@ -1075,44 +1075,33 @@ function HomePage() {
 
         const glimpses = await res.json()
         const listRaw = Array.isArray(glimpses) ? glimpses : []
-        // 2) Dedupe imageIds while preserving order
+        // 2) Dedupe imageUrls while preserving order
         const seen = new Set()
-        const list = []
+        const slides = []
         for (const ev of listRaw) {
-          const imageId = ev?.imageId ?? ev?.imageID ?? ev?.image_id ?? ev?.imageid
-          if (imageId == null) continue
-          if (seen.has(imageId)) continue
-          seen.add(imageId)
-          list.push({ imageId, alt: ev.name || ev.eventName || 'Glimpse' })
+          const url = ev?.imageUrl || ev?.imageURL || ev?.image_url || ev?.url
+          if (!url || typeof url !== 'string') continue
+          if (seen.has(url)) continue
+          seen.add(url)
+          slides.push({ src: url, alt: ev.name || ev.eventName || 'Glimpse' })
         }
 
         // 3) Progressive loading: first N=2
-        const head = list.slice(0, 2)
-        const tail = list.slice(2)
-
-        const headSlides = await Promise.all(head.map(({ imageId, alt }, i) => fetchImageSlideWithRetry(imageId, alt || `Glimpse ${i + 1}`)))
-        const normalizedHead = headSlides.filter((s) => s.src)
-        if (!cancelled && normalizedHead.length) {
-          setEventImages(normalizedHead)
+        const head = slides.slice(0, 2)
+        const tail = slides.slice(2)
+        if (!cancelled && head.length) {
+          setEventImages(head)
         }
 
-        // 4) Background fetch remaining with small concurrency (2 at a time)
-        const concurrency = 2
-        let current = [...normalizedHead]
-        let idx = 0
-        const runNext = async () => {
-          if (cancelled || idx >= tail.length) return
-          const myIndex = idx++
-          const { imageId, alt } = tail[myIndex]
-          const slide = await fetchImageSlideWithRetry(imageId, alt || `Glimpse ${myIndex + 3}`)
-          if (!cancelled && slide && slide.src) {
-            current = [...current, slide]
-            setEventImages(current)
-            try { localCacheSet(cacheKey, current, TTL) } catch {}
-          }
-          await runNext()
+        // 4) Append remaining slides without extra fetching
+        let current = [...head]
+        for (let i = 0; i < tail.length; i++) {
+          if (cancelled) break
+          current = [...current, tail[i]]
+          setEventImages(current)
+          try { localCacheSet(cacheKey, current, TTL) } catch {}
+          await new Promise((r) => setTimeout(r, 0))
         }
-        await Promise.all(Array.from({ length: Math.min(concurrency, tail.length) }, () => runNext()))
       } catch {
         // Ignore; ImageSlider will use its fallback slides
       }

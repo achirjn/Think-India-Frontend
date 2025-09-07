@@ -106,45 +106,10 @@ export default function Events() {
         const pastList = Array.isArray(pastListRaw) ? pastListRaw : []
 
         const loadFirstImage = async (ev, i) => {
-          const ids = ev.imageIdList || ev.imageIDs || ev.imageIds || []
-          const firstId = Array.isArray(ids) && ids.length ? ids[0] : null
+          const urls = ev.imageUrls || ev.imageUrlList || ev.imageURLList || ev.images || []
+          const firstUrl = Array.isArray(urls) && urls.length ? urls[0] : (ev.imageUrl || ev.imageURL || ev.image_url || '')
           const alt = ev.eventName || ev.name || `Event ${i + 1}`
-          let src = ''
-          if (firstId !== null && firstId !== undefined) {
-            try {
-              // Use absolute backend URL to fetch image by ID (public endpoint)
-              let imgRes = await publicFetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(firstId)}`, { headers: { 'Accept': 'application/json, text/plain, */*' } })
-              if (!imgRes.ok) imgRes = await publicFetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(firstId)}`, { mode: 'cors' })
-              if (!imgRes.ok) throw new Error('image fetch error')
-              const contentType = imgRes.headers.get('content-type') || ''
-              let base64 = '', mime = '', dataUri = ''
-              if (contentType.includes('application/json')) {
-                const json = await imgRes.json()
-                const ext = imageUtils.extractBase64(json)
-                base64 = imageUtils.sanitizeBase64(ext.base64)
-                mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
-                dataUri = ext.dataUri
-              } else {
-                const text = await imgRes.text()
-                const maybeJson = text.trim()
-                if (maybeJson.startsWith('{') || maybeJson.startsWith('[') || (maybeJson.startsWith('"') && maybeJson.endsWith('"'))) {
-                  try {
-                    const parsed = JSON.parse(maybeJson)
-                    const ext = imageUtils.extractBase64(parsed)
-                    base64 = imageUtils.sanitizeBase64(ext.base64)
-                    mime = ext.mime || imageUtils.detectMime(base64) || 'image/jpeg'
-                  } catch {
-                    base64 = imageUtils.sanitizeBase64(maybeJson)
-                    mime = imageUtils.detectMime(base64) || 'image/jpeg'
-                  }
-                } else {
-                  base64 = imageUtils.sanitizeBase64(maybeJson)
-                  mime = imageUtils.detectMime(base64) || 'image/jpeg'
-                }
-              }
-              src = dataUri || (base64 ? `data:${mime};base64,${base64}` : '')
-            } catch { src = '' }
-          }
+          const src = typeof firstUrl === 'string' ? firstUrl : ''
           return {
             ...ev,
             _imgSrc: src,

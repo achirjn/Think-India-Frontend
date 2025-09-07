@@ -154,19 +154,9 @@ export default function Teams() {
       }
     }
 
-    const fetchMemberImage = async (imageId) => {
-      try {
-        const response = await fetch(`https://api.thinkindiasvnit.in/image/${imageId}`)
-        if (!response.ok) {
-          throw new Error(`Failed to fetch image ${imageId}`)
-        }
-        const data = await response.json()
-        // Return the base64 image data with proper data URL format
-        return `data:image/jpeg;base64,${data.base64Image}`
-      } catch (error) {
-        console.error(`Error fetching image ${imageId}:`, error)
-        return null
-      }
+    // No image fetch needed; we now receive direct URLs from backend
+    const fetchMemberImage = async (imageUrl) => {
+      return typeof imageUrl === 'string' ? imageUrl : null
     }
 
     const load = async () => {
@@ -181,7 +171,8 @@ export default function Teams() {
 
         // Fetch images for all members and map to component structure
         const mapMemberWithImage = async (member) => {
-          const image = member.imageId ? await fetchMemberImage(member.imageId) : null
+          const imageUrl = member.imageUrl || member.imageURL || member.image_url || member.photoUrl || ''
+          const image = imageUrl ? await fetchMemberImage(imageUrl) : null
           return {
             id: member.id,
             name: member.name,

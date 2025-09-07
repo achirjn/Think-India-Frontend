@@ -49,20 +49,15 @@ export default function EventDetail() {
         const match = all.find((ev) => String(ev.id ?? ev.eventId ?? ev.eventID ?? ev.uuid) === id)
         if (!match) throw new Error('Event not found')
 
-        // load images for gallery
-        const ids = match.imageIdList || match.imageIDs || match.imageIds || []
-        const images = Array.isArray(ids)
-          ? (await Promise.all(ids.map(async (imgId) => {
-              try {
-                const r = await authFetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imgId)}`)
-                if (!r.ok) return null
-                const j = await r.json().catch(() => ({}))
-                const ext = imageUtils.extractBase64(j)
-                const src = ext.dataUri || (ext.base64 ? `data:${ext.mime || 'image/jpeg'};base64,${ext.base64}` : '')
-                return src ? { id: imgId, src } : null
-              } catch { return null }
-            }))).filter(Boolean)
-          : []
+        // load images for gallery using direct URLs
+        const urls = match.imageUrls || match.imageUrlList || match.imageURLList || match.images || []
+        let images = []
+        if (Array.isArray(urls) && urls.length) {
+          images = urls.map((u, idx) => (typeof u === 'string' && u) ? { id: idx, src: u } : null).filter(Boolean)
+        } else {
+          const single = match.imageUrl || match.imageURL || match.image_url || ''
+          if (typeof single === 'string' && single) images = [{ id: 0, src: single }]
+        }
         const composed = { ...match, _images: images, _imgSrc: images[0]?.src || '', _alt: match.name || match.eventName || 'Event' }
         if (!cancelled) setEvent(composed)
       } catch (e) {
@@ -81,18 +76,9 @@ export default function EventDetail() {
     const maybeLoadGallery = async () => {
       if (!eventFromState || !event || Array.isArray(event._images)) return
       try {
-        const ids = event.imageIdList || event.imageIDs || event.imageIds || []
-        if (!Array.isArray(ids) || !ids.length) return
-        const images = (await Promise.all(ids.map(async (imgId) => {
-          try {
-            const r = await authFetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imgId)}`)
-            if (!r.ok) return null
-            const j = await r.json().catch(() => ({}))
-            const ext = imageUtils.extractBase64(j)
-            const src = ext.dataUri || (ext.base64 ? `data:${ext.mime || 'image/jpeg'};base64,${ext.base64}` : '')
-            return src ? { id: imgId, src } : null
-          } catch { return null }
-        }))).filter(Boolean)
+        const urls = event.imageUrls || event.imageUrlList || event.imageURLList || event.images || []
+        if (!Array.isArray(urls) || !urls.length) return
+        const images = urls.map((u, idx) => (typeof u === 'string' && u) ? { id: idx, src: u } : null).filter(Boolean)
         if (!cancelled && images.length) setEvent((prev) => ({ ...(prev || {}), _images: images, _imgSrc: prev?._imgSrc || images[0]?.src }))
       } catch {}
     }

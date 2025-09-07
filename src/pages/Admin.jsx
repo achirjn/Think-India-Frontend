@@ -556,10 +556,10 @@ function TeamsPanel() {
               <tr key={member.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 text-gray-700 font-medium">{member.id}</td>
                 <td className="px-4 py-3">
-                  {member.imageId ? (
+                  {member.imageUrl ? (
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
                       <img
-                        src={`https://api.thinkindiasvnit.in/image/${member.imageId}`}
+                        src={member.imageUrl}
                         alt={member.name}
                         className="w-full h-full object-cover"
                         onError={(e) => {

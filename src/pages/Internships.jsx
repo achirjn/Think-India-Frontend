@@ -60,52 +60,28 @@ export default function Internships() {
         const data = await res.json()
         const rows = Array.isArray(data) ? data : (data?.items || [])
 
-        // 2) Normalize into lightweight items containing ids + meta
+        // 2) Normalize into lightweight items containing imageUrl + meta
         const items = rows.map((it) => ({
-          _id: it?.imageId ?? it?.imageID ?? it?.imageid,
+          _src: it?.imageUrl || it?.imageURL || it?.image_url || it?.url || '',
           name: it?.studentName || it?.name || 'Student',
           designation: it?.designation || '',
           role: it?.role || '',
           instituteName: it?.instituteName || it?.institute || it?.company || '',
           message: it?.message || it?.quote || ''
-        })).filter((it) => it && (it._id !== undefined && it._id !== null))
+        })).filter((it) => it && typeof it._src === 'string' && it._src)
 
-        // Helpers similar to HomePage image logic
-        const buildSlide = async (id, meta, signal) => {
-          const imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(id)}`, {
-            method: 'GET', headers: { 'Accept': 'application/json, text/plain, */*' }, signal
-          })
-          if (!imgRes.ok) throw new Error('image fetch failed')
-          const text = await imgRes.text()
-          let b64 = '', mime = 'image/jpeg'
-          try {
-            const js = JSON.parse(text)
-            b64 = (js.base64Image || js.image || js.data || '').trim()
-            mime = (js.contentType || js.mime || 'image/jpeg')
-          } catch {
-            // If backend ever returns raw base64 string
-            b64 = String(text || '').trim()
-          }
-          if (!b64) throw new Error('empty image')
-          const src = `data:${mime};base64,${b64}`
+        // Build slide directly from URL (no extra fetch)
+        const buildSlide = async (src, meta) => {
           return { src, alt: `${meta.name} • ${meta.instituteName || 'Internship'}`, caption: meta.instituteName || '', ...meta }
         }
 
-        const fetchSlideWithTimeout = async (id, meta) => {
-          const ac = new AbortController()
-          const t = setTimeout(() => { try { ac.abort() } catch {} }, 8000)
-          try {
-            return await buildSlide(id, meta, ac.signal)
-          } finally {
-            clearTimeout(t)
-          }
-        }
+        const fetchSlideWithTimeout = async (src, meta) => buildSlide(src, meta)
 
-        const fetchSlideWithRetry = async (id, meta, { baseDelay = 1500, maxDelay = 15000 } = {}) => {
+        const fetchSlideWithRetry = async (src, meta, { baseDelay = 1500, maxDelay = 15000 } = {}) => {
           let attempt = 0
           while (!cancelled) {
             try {
-              const slide = await fetchSlideWithTimeout(id, meta)
+              const slide = await fetchSlideWithTimeout(src, meta)
               if (slide && slide.src) return slide
             } catch {}
             const delay = Math.min(maxDelay, baseDelay * Math.pow(2, attempt))
@@ -118,7 +94,7 @@ export default function Internships() {
         // 3) Progressive load: head first 2
         const head = items.slice(0, 2)
         const tail = items.slice(2)
-        const headSlides = (await Promise.all(head.map((it, i) => fetchSlideWithRetry(it._id, it)))).filter(Boolean)
+        const headSlides = (await Promise.all(head.map((it) => fetchSlideWithRetry(it._src, it)))).filter(Boolean)
         if (!cancelled && headSlides.length) {
           setDiaryTestimonials(headSlides)
         }
@@ -132,7 +108,7 @@ export default function Internships() {
           if (cancelled || idx >= tail.length) return
           const myIndex = idx++
           const it = tail[myIndex]
-          const slide = await fetchSlideWithRetry(it._id, it)
+          const slide = await fetchSlideWithRetry(it._src, it)
           if (!cancelled && slide) {
             current = [...current, slide]
             setDiaryTestimonials(current)
@@ -236,36 +212,23 @@ export default function Internships() {
     const fetchPosters = async () => {
       if (!cached) setPostersLoading(true)
       try {
-        // 1) Get internship placements list (contains imageId per record)
+        // 1) Get internship placements list (now contains imageUrl per record)
         const res = await fetch('https://api.thinkindiasvnit.in/internPlacements')
         if (!res.ok) throw new Error('Failed to fetch internship placements')
         const data = await res.json()
 
-        // 2) Normalize to slider format using imageId
-        //    If backend returns: [{ id, studentName, instituteName, imageId }]
+        // 2) Normalize to slider format using imageUrl
+        //    If backend returns: [{ id, studentName, instituteName, imageUrl }]
         const rows = Array.isArray(data) ? data : (data?.items || [])
-        // 3) Your /image/{id} returns JSON with base64 string, not raw bytes.
-        //    Fetch each image JSON, turn into data URL for <img src="...">.
-        const images = await Promise.all(rows.map(async (it) => {
-          if (!it) return null
-          const id = it.imageId ?? it.imageID ?? it.imageid
-          if (id === undefined || id === null) return null
-          try {
-            const imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${id}`)
-            if (!imgRes.ok) throw new Error('image fetch failed')
-            const imgJson = await imgRes.json().catch(() => ({}))
-            const b64 = imgJson.base64Image || imgJson.image || imgJson.data || ''
-            if (!b64) return null
-            const mime = (imgJson.contentType || imgJson.mime || 'image/jpeg')
-            return {
-              src: `data:${mime};base64,${b64}`,
-              alt: it.studentName ? `${it.studentName} • ${it.instituteName || 'Internship'}` : 'Internship poster',
-              caption: it.instituteName || ''
-            }
-          } catch {
-            return null
+        const images = rows.map((it) => {
+          const src = it?.imageUrl || it?.imageURL || it?.image_url || it?.url || ''
+          if (!src) return null
+          return {
+            src,
+            alt: it.studentName ? `${it.studentName} • ${it.instituteName || 'Internship'}` : 'Internship poster',
+            caption: it.instituteName || ''
           }
-        }))
+        }).filter(Boolean)
 
         if (!cancelled) {
           const filtered = images.filter(Boolean)

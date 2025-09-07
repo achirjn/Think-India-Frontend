@@ -132,14 +132,20 @@ export default function Teams() {
     const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/getMemberByPosition/*', 'teams-v1')
     const TTL = 5 * 60 * 1000
 
-    // helper to fetch one position
+    // helper to fetch one position (never throw; return [])
     const fetchTeamMembers = async (position) => {
-      const response = await fetch(`https://api.thinkindiasvnit.in/getMemberByPosition/${position}`)
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${position} members`)
+      try {
+        const response = await fetch(`https://api.thinkindiasvnit.in/getMemberByPosition/${position}`)
+        if (!response.ok) {
+          console.warn(`[Teams] ${position} request failed:`, response.status, response.statusText)
+          return []
+        }
+        const data = await response.json().catch(() => [])
+        return Array.isArray(data) ? data : (data ? [data] : [])
+      } catch (err) {
+        console.error(`[Teams] Error fetching ${position}:`, err)
+        return []
       }
-      const data = await response.json()
-      return Array.isArray(data) ? data : [data]
     }
 
     // map incoming member into UI shape; images are direct URLs from backend
@@ -156,25 +162,31 @@ export default function Teams() {
     }
 
     const fetchAggregated = async () => {
-      const [facultyData, coreTeamData, cellHeadsData, seniorExecutivesData] = await Promise.all([
-        fetchTeamMembers('Faculty'),
-        fetchTeamMembers('Core'),
-        fetchTeamMembers('Cell_Heads'),
-        fetchTeamMembers('Senior_Executive')
-      ])
+      try {
+        const [facultyData, coreTeamData, cellHeadsData, seniorExecutivesData] = await Promise.all([
+          fetchTeamMembers('Faculty'),
+          fetchTeamMembers('Core'),
+          fetchTeamMembers('Cell_Heads'),
+          fetchTeamMembers('Senior_Executive')
+        ])
 
-      const [facultyWithImages, coreTeamWithImages, cellHeadsWithImages, seniorExecutivesWithImages] = await Promise.all([
-        Promise.all(facultyData.map(mapMemberWithImage)),
-        Promise.all(coreTeamData.map(mapMemberWithImage)),
-        Promise.all(cellHeadsData.map(mapMemberWithImage)),
-        Promise.all(seniorExecutivesData.map(mapMemberWithImage))
-      ])
+        const [facultyWithImages, coreTeamWithImages, cellHeadsWithImages, seniorExecutivesWithImages] = await Promise.all([
+          Promise.all(facultyData.map(mapMemberWithImage)),
+          Promise.all(coreTeamData.map(mapMemberWithImage)),
+          Promise.all(cellHeadsData.map(mapMemberWithImage)),
+          Promise.all(seniorExecutivesData.map(mapMemberWithImage))
+        ])
 
-      return {
-        faculty: facultyWithImages,
-        coreTeam: coreTeamWithImages,
-        cellHeads: cellHeadsWithImages,
-        seniorExecutives: seniorExecutivesWithImages
+        return {
+          faculty: facultyWithImages,
+          coreTeam: coreTeamWithImages,
+          cellHeads: cellHeadsWithImages,
+          seniorExecutives: seniorExecutivesWithImages
+        }
+      } catch (e) {
+        console.error('[Teams] Aggregated fetch error:', e)
+        // Never throw; return empty structure so UI renders without crashing
+        return { faculty: [], coreTeam: [], cellHeads: [], seniorExecutives: [] }
       }
     }
 

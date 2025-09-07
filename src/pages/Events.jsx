@@ -5,7 +5,7 @@ import SectionDivider from '../components/SectionDivider.jsx'
 import { HoverCard } from '../components/ui/card-hover-effect.jsx'
 import Button from '../components/Button.jsx'
 import { publicFetch } from '../utils/auth'
-import { cacheGet, cacheSet, cacheKeyForUrl } from '../utils/swrCache.js'
+import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
 import { stripHtmlToText } from '../utils/text.js'
 
 export default function Events() {
@@ -81,73 +81,80 @@ export default function Events() {
     const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/upcommingEvents+pastEvents', 'events-v1')
     const TTL = 5 * 60 * 1000
 
-    // Serve cached immediately if present
-    const cached = cacheGet(cacheKey)
+    const fetchAggregated = async () => {
+      const [upRes, pastRes] = await Promise.all([
+        publicFetch('https://api.thinkindiasvnit.in/upcommingEvents', { headers: { Accept: 'application/json' } }),
+        publicFetch('https://api.thinkindiasvnit.in/pastEvents', { headers: { Accept: 'application/json' } })
+      ])
+      if (!upRes.ok && !pastRes.ok) throw new Error(`Failed to fetch events: UPC ${upRes.status}, PAST ${pastRes.status}`)
+
+      const upListRaw = upRes.ok ? await upRes.json() : []
+      const pastListRaw = pastRes.ok ? await pastRes.json() : []
+      const upList = Array.isArray(upListRaw) ? upListRaw : []
+      const pastList = Array.isArray(pastListRaw) ? pastListRaw : []
+
+      const mapEvent = async (ev, i) => {
+        const urls = ev.imageUrls || ev.imageUrlList || ev.imageURLList || ev.images || []
+        const firstUrl = Array.isArray(urls) && urls.length ? urls[0] : (ev.imageUrl || ev.imageURL || ev.image_url || '')
+        const alt = ev.eventName || ev.name || `Event ${i + 1}`
+        const src = typeof firstUrl === 'string' ? firstUrl : ''
+        return {
+          ...ev,
+          _imgSrc: src,
+          _alt: alt,
+          _date: parseDate(ev),
+          _name: ev.eventName || ev.name || 'Event',
+          _desc: ev.details || ev.description || ev.eventDescription || ev.summary || '',
+          _register: ev.registrationLink || ev.formLink || ev.registerUrl || ev.link || ''
+        }
+      }
+
+      const [upWith, pastWith] = await Promise.all([
+        Promise.all(upList.map((ev, i) => mapEvent(ev, i))),
+        Promise.all(pastList.map((ev, i) => mapEvent(ev, i)))
+      ])
+
+      return { upcoming: upWith, past: pastWith }
+    }
+
+    const { cached, revalidate } = swrFetch({ key: cacheKey, fetcher: fetchAggregated, ttlMs: TTL })
     if (cached && typeof cached === 'object' && !cancelled) {
-      if (Array.isArray(cached.upcoming)) setUpcoming(cached.upcoming)
-      if (Array.isArray(cached.past)) setPast(cached.past)
+      setUpcoming(Array.isArray(cached.upcoming) ? cached.upcoming : [])
+      setPast(Array.isArray(cached.past) ? cached.past : [])
       setLoading(false)
     }
 
-    const load = async () => {
-      if (!cached) setLoading(true)
-      setError(null)
-      try {
-        // Public endpoints
-        const [upRes, pastRes] = await Promise.all([
-          publicFetch('https://api.thinkindiasvnit.in/upcommingEvents', { headers: { Accept: 'application/json' } }),
-          publicFetch('https://api.thinkindiasvnit.in/pastEvents', { headers: { Accept: 'application/json' } })
-        ])
-        if (!upRes.ok && !pastRes.ok) throw new Error(`Failed to fetch events: UPC ${upRes.status}, PAST ${pastRes.status}`)
-
-        const upListRaw = upRes.ok ? await upRes.json() : []
-        const pastListRaw = pastRes.ok ? await pastRes.json() : []
-        const upList = Array.isArray(upListRaw) ? upListRaw : []
-        const pastList = Array.isArray(pastListRaw) ? pastListRaw : []
-
-        const loadFirstImage = async (ev, i) => {
-          const urls = ev.imageUrls || ev.imageUrlList || ev.imageURLList || ev.images || []
-          const firstUrl = Array.isArray(urls) && urls.length ? urls[0] : (ev.imageUrl || ev.imageURL || ev.image_url || '')
-          const alt = ev.eventName || ev.name || `Event ${i + 1}`
-          const src = typeof firstUrl === 'string' ? firstUrl : ''
-          return {
-            ...ev,
-            _imgSrc: src,
-            _alt: alt,
-            _date: parseDate(ev),
-            _name: ev.eventName || ev.name || 'Event',
-            _desc: ev.details || ev.description || ev.eventDescription || ev.summary || '',
-            _register: ev.registrationLink || ev.formLink || ev.registerUrl || ev.link || ''
-          }
+    revalidate
+      .then((fresh) => {
+        if (cancelled) return
+        setUpcoming(Array.isArray(fresh.upcoming) ? fresh.upcoming : [])
+        setPast(Array.isArray(fresh.past) ? fresh.past : [])
+        setLoading(false)
+      })
+      .catch((e) => {
+        if (cancelled) return
+        const msg = (e?.message || '').toLowerCase()
+        if (msg.includes('cors') || msg.includes('cross-origin')) {
+          setError('CORS error: Unable to access the API. Please try again later.')
+        } else if (msg.includes('network') || msg.includes('fetch')) {
+          setError('Network error: Unable to reach the backend. Please try again later.')
+        } else {
+          setError(`Failed to load events: ${e.message || ''}`.trim())
         }
+        setLoading(false)
+      })
 
-        const [upWith, pastWith] = await Promise.all([
-          Promise.all(upList.map((ev, i) => loadFirstImage(ev, i))),
-          Promise.all(pastList.map((ev, i) => loadFirstImage(ev, i)))
-        ])
-
-        if (!cancelled) {
-          setUpcoming(upWith)
-          setPast(pastWith)
-          try { cacheSet(cacheKey, { upcoming: upWith, past: pastWith }, TTL) } catch {}
-        }
-      } catch (e) {
-        if (!cancelled && !cached) {
-          const msg = (e?.message || '').toLowerCase()
-          if (msg.includes('cors') || msg.includes('cross-origin')) {
-            setError('CORS error: Unable to access the API. Please try again later.')
-          } else if (msg.includes('network') || msg.includes('fetch')) {
-            setError('Network error: Unable to reach the backend. Please try again later.')
-          } else {
-            setError(`Failed to load events: ${e.message || ''}`.trim())
-          }
-        }
-      } finally {
-        if (!cancelled && !cached) setLoading(false)
-      }
+    const onFocus = () => {
+      swrFetch({ key: cacheKey, fetcher: fetchAggregated, ttlMs: TTL }).revalidate
+        .then((fresh) => {
+          if (cancelled) return
+          setUpcoming(Array.isArray(fresh.upcoming) ? fresh.upcoming : [])
+          setPast(Array.isArray(fresh.past) ? fresh.past : [])
+        })
+        .catch(() => {})
     }
-    load()
-    return () => { cancelled = true }
+    window.addEventListener('focus', onFocus)
+    return () => { cancelled = true; window.removeEventListener('focus', onFocus) }
   }, [imageUtils])
 
   return (

@@ -717,16 +717,16 @@ function Footer() {
           <div className="hidden md:flex items-center justify-between">
             <div className="text-lg"> 2024 Think India, SVNIT</div>
             <div className="text-right">
-              <div className="text-lg">Developed by <span className="text-white font-bold">Achir Jain</span></div>
-              <div className="text-md">Managed by <span className="text-white font-bold">Vivek Yadav</span></div>
+              <div className="text-lg">Developed by <a href="https://www.linkedin.com/in/achir-jain" target="_blank" rel="noopener noreferrer" className="text-white font-bold hover:underline">Achir Jain</a></div>
+              <div className="text-md">Managed by <a href="https://www.linkedin.com/in/vivek-yadav-5bab81280/" target="_blank" rel="noopener noreferrer" className="text-white font-bold hover:underline">Vivek Yadav</a></div>
             </div>
           </div>
           
           {/* Mobile Layout - Same content, different pattern */}
           <div className="md:hidden text-center space-y-2">
             <div className="text-md"> 2024 Think India, SVNIT</div>
-            <div className="text-lg">Developed by  <span className="text-white font-bold">Achir Jain</span></div>
-            <div className="text-md">Managed by  <span className="text-white font-bold">Vivek Yadav</span></div>
+            <div className="text-lg">Developed by  <a href="https://www.linkedin.com/in/achir-jain" target="_blank" rel="noopener noreferrer" className="text-white font-bold hover:underline">Achir Jain</a></div>
+            <div className="text-md">Managed by  <a href="https://www.linkedin.com/in/vivek-yadav-5bab81280/" target="_blank" rel="noopener noreferrer" className="text-white font-bold hover:underline">Vivek Yadav</a></div>
           </div>
         </div>
       </div>

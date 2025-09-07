@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import useAuth from '../hooks/useAuth.jsx'
 import { authFetch } from '../utils/auth'
+import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
 
 export default function EventDetail() {
   const { id } = useParams()
@@ -33,41 +34,68 @@ export default function EventDetail() {
 
   useEffect(() => {
     let cancelled = false
-    const loadIfNeeded = async () => {
-      if (eventFromState) return
-      try {
-        setLoading(true)
-        setError('')
-        // try upcoming and past, pick first match by id
-        const [upRes, pastRes] = await Promise.all([
-          authFetch('https://api.thinkindiasvnit.in/upcommingEvents').catch(() => null),
-          authFetch('https://api.thinkindiasvnit.in/pastEvents').catch(() => null)
-        ])
-        const upList = upRes?.ok ? await upRes.json() : []
-        const pastList = pastRes?.ok ? await pastRes.json() : []
-        const all = [...(Array.isArray(upList) ? upList : []), ...(Array.isArray(pastList) ? pastList : [])]
-        const match = all.find((ev) => String(ev.id ?? ev.eventId ?? ev.eventID ?? ev.uuid) === id)
-        if (!match) throw new Error('Event not found')
+    const cacheKey = cacheKeyForUrl(`event-detail:${id}`, 'event-detail-v1')
+    const TTL = 5 * 60 * 1000
 
-        // load images for gallery using direct URLs
-        const urls = match.imageUrls || match.imageUrlList || match.imageURLList || match.images || []
-        let images = []
-        if (Array.isArray(urls) && urls.length) {
-          images = urls.map((u, idx) => (typeof u === 'string' && u) ? { id: idx, src: u } : null).filter(Boolean)
-        } else {
-          const single = match.imageUrl || match.imageURL || match.image_url || ''
-          if (typeof single === 'string' && single) images = [{ id: 0, src: single }]
-        }
-        const composed = { ...match, _images: images, _imgSrc: images[0]?.src || '', _alt: match.name || match.eventName || 'Event' }
-        if (!cancelled) setEvent(composed)
-      } catch (e) {
-        if (!cancelled) setError(typeof e?.message === 'string' ? e.message : 'Failed to load event')
-      } finally {
-        if (!cancelled) setLoading(false)
+    const fetchEvent = async () => {
+      // try upcoming and past, pick first match by id
+      const [upRes, pastRes] = await Promise.all([
+        authFetch('https://api.thinkindiasvnit.in/upcommingEvents').catch(() => null),
+        authFetch('https://api.thinkindiasvnit.in/pastEvents').catch(() => null)
+      ])
+      const upList = upRes?.ok ? await upRes.json() : []
+      const pastList = pastRes?.ok ? await pastRes.json() : []
+      const all = [...(Array.isArray(upList) ? upList : []), ...(Array.isArray(pastList) ? pastList : [])]
+      const match = all.find((ev) => String(ev.id ?? ev.eventId ?? ev.eventID ?? ev.uuid) === id)
+      if (!match) throw new Error('Event not found')
+
+      const urls = match.imageUrls || match.imageUrlList || match.imageURLList || match.images || []
+      let images = []
+      if (Array.isArray(urls) && urls.length) {
+        images = urls.map((u, idx) => (typeof u === 'string' && u) ? { id: idx, src: u } : null).filter(Boolean)
+      } else {
+        const single = match.imageUrl || match.imageURL || match.image_url || ''
+        if (typeof single === 'string' && single) images = [{ id: 0, src: single }]
       }
+      const composed = { ...match, _images: images, _imgSrc: images[0]?.src || '', _alt: match.name || match.eventName || 'Event' }
+      return composed
     }
-    loadIfNeeded()
-    return () => { cancelled = true }
+
+    if (eventFromState) {
+      // Show state immediately but still revalidate in background
+      setEvent(eventFromState)
+      setLoading(false)
+      swrFetch({ key: cacheKey, fetcher: fetchEvent, ttlMs: TTL }).revalidate
+        .then((fresh) => { if (!cancelled) setEvent(fresh) })
+        .catch(() => {})
+    } else {
+      const { cached, revalidate } = swrFetch({ key: cacheKey, fetcher: fetchEvent, ttlMs: TTL })
+      if (cached && !cancelled) {
+        setEvent(cached)
+        setLoading(false)
+      } else {
+        setLoading(true)
+      }
+      revalidate
+        .then((fresh) => {
+          if (cancelled) return
+          setEvent(fresh)
+          setLoading(false)
+        })
+        .catch((e) => {
+          if (cancelled) return
+          setError(typeof e?.message === 'string' ? e.message : 'Failed to load event')
+          setLoading(false)
+        })
+    }
+
+    const onFocus = () => {
+      swrFetch({ key: cacheKey, fetcher: fetchEvent, ttlMs: TTL }).revalidate
+        .then((fresh) => { if (!cancelled) setEvent(fresh) })
+        .catch(() => {})
+    }
+    window.addEventListener('focus', onFocus)
+    return () => { cancelled = true; window.removeEventListener('focus', onFocus) }
   }, [auth?.isLoggedIn, eventFromState, id, imageUtils])
 
   // If arrived with state, still try to populate gallery images if missing

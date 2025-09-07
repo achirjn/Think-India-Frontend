@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
 
 export default function BlogDetail() {
   const { slug } = useParams()
@@ -11,45 +12,55 @@ export default function BlogDetail() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const loadBlog = async () => {
-      try {
-        setLoading(true)
-        
-        // Prefer id from slug if numeric, else try fetching by heading
-        const isNumeric = /^\d+$/.test(String(slug || ''))
-        const endpoint = isNumeric ? `https://api.thinkindiasvnit.in/blog/${encodeURIComponent(slug)}` : `https://api.thinkindiasvnit.in/blog/${encodeURIComponent(slug)}`
-        const res = await fetch(endpoint, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
+    let cancelled = false
+    const statePost = location.state && location.state.post
+    const isNumeric = /^\d+$/.test(String(slug || ''))
+    const endpoint = isNumeric ? `https://api.thinkindiasvnit.in/blog/${encodeURIComponent(slug)}` : `https://api.thinkindiasvnit.in/blog/${encodeURIComponent(slug)}`
+    const cacheKey = cacheKeyForUrl(endpoint, 'blog-detail-v1')
+    const TTL = 5 * 60 * 1000
 
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: Failed to fetch blog`)
-        }
-
-        const data = await res.json()
-        // Prefer direct URL field from backend
-        const imageUrl = data.imageUrl || data.imageURL || data.image_url || data.coverImageUrl || data.thumbnailUrl || ''
-        const imageSrc = imageUrl || ''
-        setPost({ ...data, imageSrc })
-      } catch (e) {
-        console.error('Error fetching blog:', e)
-        setError(e.message)
-      } finally {
-        setLoading(false)
-      }
+    const fetchBlog = async () => {
+      const res = await fetch(endpoint, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+      if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to fetch blog`)
+      const data = await res.json()
+      const imageUrl = data.imageUrl || data.imageURL || data.image_url || data.coverImageUrl || data.thumbnailUrl || ''
+      const imageSrc = imageUrl || ''
+      return { ...data, imageSrc }
     }
 
-    // Use post from navigation state if present to avoid a refetch
-    const statePost = location.state && location.state.post
+    // If we have state, show it immediately, but still revalidate in background
     if (statePost) {
       setPost(statePost)
       setLoading(false)
+      swrFetch({ key: cacheKey, fetcher: fetchBlog, ttlMs: TTL }).revalidate
+        .then((fresh) => { if (!cancelled) setPost(fresh) })
+        .catch(() => {})
     } else if (slug) {
-      loadBlog()
+      const { cached, revalidate } = swrFetch({ key: cacheKey, fetcher: fetchBlog, ttlMs: TTL })
+      if (cached && !cancelled) {
+        setPost(cached)
+        setLoading(false)
+      }
+      revalidate
+        .then((fresh) => {
+          if (cancelled) return
+          setPost(fresh)
+          setLoading(false)
+        })
+        .catch((e) => {
+          if (cancelled) return
+          setError(e.message)
+          if (!cached) setLoading(false)
+        })
     }
+
+    const onFocus = () => {
+      swrFetch({ key: cacheKey, fetcher: fetchBlog, ttlMs: TTL }).revalidate
+        .then((fresh) => { if (!cancelled) setPost(fresh) })
+        .catch(() => {})
+    }
+    window.addEventListener('focus', onFocus)
+    return () => { cancelled = true; window.removeEventListener('focus', onFocus) }
   }, [slug, location.state])
 
   const handleBackToBlogs = () => {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { cacheGet, cacheSet, cacheKeyForUrl } from '../utils/swrCache.js'
+import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
 
 // Team Member Card Component with Tricolor Border
 const TeamMemberCard = ({ member, index }) => {
@@ -132,81 +132,90 @@ export default function Teams() {
     const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/getMemberByPosition/*', 'teams-v1')
     const TTL = 5 * 60 * 1000
 
-    // Serve cached team data immediately if present
-    const cached = cacheGet(cacheKey)
+    // helper to fetch one position
+    const fetchTeamMembers = async (position) => {
+      const response = await fetch(`https://api.thinkindiasvnit.in/getMemberByPosition/${position}`)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${position} members`)
+      }
+      const data = await response.json()
+      return Array.isArray(data) ? data : [data]
+    }
+
+    // map incoming member into UI shape; images are direct URLs from backend
+    const mapMemberWithImage = async (member) => {
+      const imageUrl = member.imageUrl || member.imageURL || member.image_url || member.photoUrl || ''
+      const image = typeof imageUrl === 'string' && imageUrl.length > 0 ? imageUrl : null
+      return {
+        id: member.id,
+        name: member.name,
+        position: member.position,
+        committee: member.committee,
+        image
+      }
+    }
+
+    const fetchAggregated = async () => {
+      const [facultyData, coreTeamData, cellHeadsData, seniorExecutivesData] = await Promise.all([
+        fetchTeamMembers('Faculty'),
+        fetchTeamMembers('Core'),
+        fetchTeamMembers('Cell_Heads'),
+        fetchTeamMembers('Senior_Executive')
+      ])
+
+      const [facultyWithImages, coreTeamWithImages, cellHeadsWithImages, seniorExecutivesWithImages] = await Promise.all([
+        Promise.all(facultyData.map(mapMemberWithImage)),
+        Promise.all(coreTeamData.map(mapMemberWithImage)),
+        Promise.all(cellHeadsData.map(mapMemberWithImage)),
+        Promise.all(seniorExecutivesData.map(mapMemberWithImage))
+      ])
+
+      return {
+        faculty: facultyWithImages,
+        coreTeam: coreTeamWithImages,
+        cellHeads: cellHeadsWithImages,
+        seniorExecutives: seniorExecutivesWithImages
+      }
+    }
+
+    // Serve cached immediately, always revalidate in background
+    const { cached, revalidate } = swrFetch({ key: cacheKey, fetcher: fetchAggregated, ttlMs: TTL })
+    let cancelled = false
+
     if (cached && typeof cached === 'object') {
       setTeamData(cached)
       setLoading(false)
     }
 
-    const fetchTeamMembers = async (position) => {
-      try {
-        const response = await fetch(`https://api.thinkindiasvnit.in/getMemberByPosition/${position}`)
-        if (!response.ok) {
-          throw new Error(`Failed to fetch ${position} members`)
-        }
-        const data = await response.json()
-        // Handle both single object and array responses
-        return Array.isArray(data) ? data : [data]
-      } catch (error) {
-        console.error(`Error fetching ${position}:`, error)
-        return []
-      }
-    }
-
-    // No image fetch needed; we now receive direct URLs from backend
-    const fetchMemberImage = async (imageUrl) => {
-      return typeof imageUrl === 'string' ? imageUrl : null
-    }
-
-    const load = async () => {
-      try {
-        // Fetch different team categories
-        const [facultyData, coreTeamData, cellHeadsData, seniorExecutivesData] = await Promise.all([
-          fetchTeamMembers('Faculty'),
-          fetchTeamMembers('Core'),
-          fetchTeamMembers('Cell_Heads'),
-          fetchTeamMembers('Senior_Executive')
-        ])
-
-        // Fetch images for all members and map to component structure
-        const mapMemberWithImage = async (member) => {
-          const imageUrl = member.imageUrl || member.imageURL || member.image_url || member.photoUrl || ''
-          const image = imageUrl ? await fetchMemberImage(imageUrl) : null
-          return {
-            id: member.id,
-            name: member.name,
-            position: member.position,
-            committee: member.committee,
-            image: image
-          }
-        }
-
-        // Process all members with their images
-        const [facultyWithImages, coreTeamWithImages, cellHeadsWithImages, seniorExecutivesWithImages] = await Promise.all([
-          Promise.all(facultyData.map(mapMemberWithImage)),
-          Promise.all(coreTeamData.map(mapMemberWithImage)),
-          Promise.all(cellHeadsData.map(mapMemberWithImage)),
-          Promise.all(seniorExecutivesData.map(mapMemberWithImage))
-        ])
-
-        const aggregated = {
-          faculty: facultyWithImages,
-          coreTeam: coreTeamWithImages,
-          cellHeads: cellHeadsWithImages,
-          seniorExecutives: seniorExecutivesWithImages
-        }
-        setTeamData(aggregated)
-        try { cacheSet(cacheKey, aggregated, TTL) } catch {}
+    revalidate
+      .then((fresh) => {
+        if (cancelled) return
+        setTeamData(fresh)
         setLoading(false)
-      } catch (e) {
+      })
+      .catch((e) => {
+        if (cancelled) return
         if (!cached) {
-          setError(e.message)
+          setError(e?.message || 'Failed to load team data')
           setLoading(false)
         }
-      }
+      })
+
+    // Revalidate on window focus to pick up recent admin changes
+    const onFocus = () => {
+      swrFetch({ key: cacheKey, fetcher: fetchAggregated, ttlMs: TTL }).revalidate
+        .then((fresh) => {
+          if (cancelled) return
+          setTeamData(fresh)
+        })
+        .catch(() => {})
     }
-    if (!cached) load()
+    window.addEventListener('focus', onFocus)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('focus', onFocus)
+    }
   }, [])
 
   if (loading) {

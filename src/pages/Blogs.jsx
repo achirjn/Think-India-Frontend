@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import SectionDivider from '../components/SectionDivider.jsx'
 import { HoverCard } from '../components/ui/card-hover-effect.jsx'
 import { stripHtmlToText } from '../utils/text.js'
+import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
 
 export default function Blogs() {
   const [posts, setPosts] = useState([])
@@ -11,49 +12,65 @@ export default function Blogs() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        let res = await fetch('https://api.thinkindiasvnit.in/blogPageGetAllBlogs', {
+    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/blogPageGetAllBlogs', 'blogs-v1')
+    const TTL = 5 * 60 * 1000
+
+    const fetchBlogs = async () => {
+      let res = await fetch('https://api.thinkindiasvnit.in/blogPageGetAllBlogs', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      if (!res.ok) {
+        res = await fetch('https://api.thinkindiasvnit.in/blogPageGetAllBlogs', {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          mode: 'cors',
+          headers: { 'Content-Type': 'application/json' },
         })
-        
-        if (!res.ok) {
-          res = await fetch('https://api.thinkindiasvnit.in/blogPageGetAllBlogs', {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          })
-        }
-        
-        if (!res.ok) {
-          const errorText = await res.text()
-          throw new Error(`HTTP ${res.status}: ${errorText || 'Failed to fetch blogs'}`)
-        }
-        
-        const data = await res.json()
-        const posts = (Array.isArray(data) ? data : []).map((post) => {
-          const imageUrl = post.imageUrl || post.imageURL || post.image_url || post.coverImageUrl || post.thumbnailUrl || ''
-          return { ...post, imageSrc: imageUrl || '' }
-        })
-        setPosts(posts)
-      } catch (e) {
-        if (e.message.includes('CORS') || e.message.includes('cross-origin')) {
+      }
+      if (!res.ok) {
+        const errorText = await res.text()
+        throw new Error(`HTTP ${res.status}: ${errorText || 'Failed to fetch blogs'}`)
+      }
+      const data = await res.json()
+      const mapped = (Array.isArray(data) ? data : []).map((post) => {
+        const imageUrl = post.imageUrl || post.imageURL || post.image_url || post.coverImageUrl || post.thumbnailUrl || ''
+        return { ...post, imageSrc: imageUrl || '' }
+      })
+      return mapped
+    }
+
+    let cancelled = false
+    const { cached, revalidate } = swrFetch({ key: cacheKey, fetcher: fetchBlogs, ttlMs: TTL })
+    if (cached && !cancelled) {
+      setPosts(cached)
+      setLoading(false)
+    }
+    revalidate
+      .then((fresh) => {
+        if (cancelled) return
+        setPosts(fresh)
+        setLoading(false)
+      })
+      .catch((e) => {
+        if (cancelled) return
+        const msg = (e?.message || '').toLowerCase()
+        if (msg.includes('cors') || msg.includes('cross-origin')) {
           setError('CORS error: Unable to access the API. Please try again later.')
-        } else if (e.message.toLowerCase().includes('fetch') || e.message.toLowerCase().includes('network')) {
+        } else if (msg.includes('network') || msg.includes('fetch')) {
           setError('Network error: Unable to reach the backend. Please try again later.')
         } else {
           setError(`Failed to fetch blogs: ${e.message}`)
         }
-      } finally {
-        setLoading(false)
-      }
+        if (!cached) setLoading(false)
+      })
+
+    const onFocus = () => {
+      swrFetch({ key: cacheKey, fetcher: fetchBlogs, ttlMs: TTL }).revalidate
+        .then((fresh) => { if (!cancelled) setPosts(fresh) })
+        .catch(() => {})
     }
-    load()
+    window.addEventListener('focus', onFocus)
+    return () => { cancelled = true; window.removeEventListener('focus', onFocus) }
   }, [])
 
   return (

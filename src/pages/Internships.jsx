@@ -5,7 +5,7 @@ import SectionDivider from '../components/SectionDivider.jsx'
 import AnimatedTestimonials from '../components/ui/AnimatedTestimonials.jsx'
 import useAuth from '../hooks/useAuth.jsx'
 import { authFetch } from '../utils/auth.js'
-import { cacheGet, cacheSet, cacheKeyForUrl } from '../utils/swrCache.js'
+import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
 
 export default function Internships() {
   // posters for successful placements
@@ -35,111 +35,64 @@ export default function Internships() {
     { src: 'https://picsum.photos/seed/ti-6/600/800', alt: 'Temp poster 6' },
   ]), [])
 
-  // Load Internship Diaries from backend (progressive: first 2, then rest with retries)
+  // Load Internship Diaries from backend using SWR pattern
   useEffect(() => {
     let cancelled = false
     const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/internPlacements', 'diaries-v1')
+    const TTL = 5 * 60 * 1000
 
-    // 1) Serve cached immediately if present
-    const cached = cacheGet(cacheKey)
+    const fetchDiaries = async () => {
+      const controller = new AbortController()
+      const listTimeout = setTimeout(() => { try { controller.abort() } catch {} }, 8000)
+      const res = await fetch('https://api.thinkindiasvnit.in/internPlacements', { signal: controller.signal })
+      clearTimeout(listTimeout)
+      if (!res.ok) throw new Error('Failed to fetch internship diaries')
+      const data = await res.json()
+      const rows = Array.isArray(data) ? data : (data?.items || [])
+      const items = rows.map((it) => ({
+        _src: it?.imageUrl || it?.imageURL || it?.image_url || it?.url || '',
+        name: it?.studentName || it?.name || 'Student',
+        designation: it?.designation || '',
+        role: it?.role || '',
+        instituteName: it?.instituteName || it?.institute || it?.company || '',
+        message: it?.message || it?.quote || ''
+      })).filter((it) => it && typeof it._src === 'string' && it._src)
+      // Build slides directly from URL
+      const slides = await Promise.all(items.map(async (it) => ({ src: it._src, alt: `${it.name} • ${it.instituteName || 'Internship'}`, caption: it.instituteName || '', ...it })))
+      return slides
+    }
+
+    const { cached, revalidate } = swrFetch({ key: cacheKey, fetcher: fetchDiaries, ttlMs: TTL })
     if (cached && !cancelled) {
       setDiaryTestimonials(cached)
       setDiaryLoading(false)
     }
-
-    const load = async () => {
-      if (!cached) setDiaryLoading(true)
-      setDiaryError('')
-      try {
-        // 1) Fetch diaries list
-        const listController = new AbortController()
-        const listTimeout = setTimeout(() => { try { listController.abort() } catch {} }, 8000)
-        const res = await fetch('https://api.thinkindiasvnit.in/internPlacements', { signal: listController.signal })
-        clearTimeout(listTimeout)
-        if (!res.ok) throw new Error('Failed to fetch internship diaries')
-        const data = await res.json()
-        const rows = Array.isArray(data) ? data : (data?.items || [])
-
-        // 2) Normalize into lightweight items containing imageUrl + meta
-        const items = rows.map((it) => ({
-          _src: it?.imageUrl || it?.imageURL || it?.image_url || it?.url || '',
-          name: it?.studentName || it?.name || 'Student',
-          designation: it?.designation || '',
-          role: it?.role || '',
-          instituteName: it?.instituteName || it?.institute || it?.company || '',
-          message: it?.message || it?.quote || ''
-        })).filter((it) => it && typeof it._src === 'string' && it._src)
-
-        // Build slide directly from URL (no extra fetch)
-        const buildSlide = async (src, meta) => {
-          return { src, alt: `${meta.name} • ${meta.instituteName || 'Internship'}`, caption: meta.instituteName || '', ...meta }
+    revalidate
+      .then((fresh) => {
+        if (cancelled) return
+        setDiaryTestimonials(fresh)
+        setDiaryLoading(false)
+      })
+      .catch((e) => {
+        if (cancelled) return
+        const msg = (e?.message || '').toLowerCase()
+        if (msg.includes('cors') || msg.includes('cross-origin')) {
+          setDiaryError('CORS error: Unable to access the API. Please try again later.')
+        } else if (msg.includes('network') || msg.includes('fetch')) {
+          setDiaryError('Network error: Unable to reach the backend. Please try again later.')
+        } else {
+          setDiaryError(e.message)
         }
+        setDiaryLoading(false)
+      })
 
-        const fetchSlideWithTimeout = async (src, meta) => buildSlide(src, meta)
-
-        const fetchSlideWithRetry = async (src, meta, { baseDelay = 1500, maxDelay = 15000 } = {}) => {
-          let attempt = 0
-          while (!cancelled) {
-            try {
-              const slide = await fetchSlideWithTimeout(src, meta)
-              if (slide && slide.src) return slide
-            } catch {}
-            const delay = Math.min(maxDelay, baseDelay * Math.pow(2, attempt))
-            await new Promise((r) => setTimeout(r, delay))
-            attempt++
-          }
-          return null
-        }
-
-        // 3) Progressive load: head first 2
-        const head = items.slice(0, 2)
-        const tail = items.slice(2)
-        const headSlides = (await Promise.all(head.map((it) => fetchSlideWithRetry(it._src, it)))).filter(Boolean)
-        if (!cancelled && headSlides.length) {
-          setDiaryTestimonials(headSlides)
-        }
-
-        // 4) Background fetch remaining with small concurrency (2)
-        const TTL = 5 * 60 * 1000
-        const concurrency = 2
-        let current = [...headSlides]
-        let idx = 0
-        const runNext = async () => {
-          if (cancelled || idx >= tail.length) return
-          const myIndex = idx++
-          const it = tail[myIndex]
-          const slide = await fetchSlideWithRetry(it._src, it)
-          if (!cancelled && slide) {
-            current = [...current, slide]
-            setDiaryTestimonials(current)
-            try { cacheSet(cacheKey, current, TTL) } catch {}
-          }
-          await runNext()
-        }
-        await Promise.all(Array.from({ length: Math.min(concurrency, tail.length) }, () => runNext()))
-
-        // If nothing was fetched (e.g., ids missing), write empty cache to avoid refetch loop
-        if (!cancelled && current.length === 0) {
-          cacheSet(cacheKey, [], 60 * 1000)
-        }
-      } catch (e) {
-        if (!cancelled && !cached) {
-          const msg = (e?.message || '').toLowerCase()
-          if (msg.includes('cors') || msg.includes('cross-origin')) {
-            setDiaryError('CORS error: Unable to access the API. Please try again later.')
-          } else if (msg.includes('network') || msg.includes('fetch')) {
-            setDiaryError('Network error: Unable to reach the backend. Please try again later.')
-          } else {
-            setDiaryError(e.message)
-          }
-        }
-      } finally {
-        if (!cancelled && !cached) setDiaryLoading(false)
-      }
+    const onFocus = () => {
+      swrFetch({ key: cacheKey, fetcher: fetchDiaries, ttlMs: TTL }).revalidate
+        .then((fresh) => { if (!cancelled) setDiaryTestimonials(fresh) })
+        .catch(() => {})
     }
-    // 2) Always revalidate in background
-    load()
-    return () => { cancelled = true }
+    window.addEventListener('focus', onFocus)
+    return () => { cancelled = true; window.removeEventListener('focus', onFocus) }
   }, [])
 
   // Removed legacy public internships fetch (/api/internships)
@@ -147,111 +100,103 @@ export default function Internships() {
   // Fetch upcoming internships for logged-in users only
   useEffect(() => {
     let cancelled = false
-    const loadUpcoming = async () => {
-      if (!isLoggedIn) return
-      const authDiscriminator = 'logged-in' // avoids cross-user leakage without storing PII
-      const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/user/getUpcommingInternships', authDiscriminator)
+    if (!isLoggedIn) return () => {}
+    const authDiscriminator = 'logged-in'
+    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/user/getUpcommingInternships', authDiscriminator)
+    const TTL = 5 * 60 * 1000
 
-      // Serve cached immediately if present
-      const cached = cacheGet(cacheKey)
-      if (cached && !cancelled) {
-        setUpcoming(cached)
-        setUpcomingLoading(false)
-      }
-
-      setUpcomingError('')
-      if (!cached) setUpcomingLoading(true)
-      try {
-        // Directly call backend. If the response isn't JSON, treat as empty list (no error shown).
-        const res = await authFetch('https://api.thinkindiasvnit.in/user/getUpcommingInternships')
-        if (!res.ok) throw new Error('Failed to fetch upcoming internships')
-        let data
-        try {
-          data = await res.json()
-        } catch {
-          // Non-JSON (e.g., HTML) -> treat as empty
-          data = []
-        }
-        const list = Array.isArray(data) ? data : (data?.items || [])
-        if (!cancelled) {
-          setUpcoming(list)
-          cacheSet(cacheKey, list, 5 * 60 * 1000)
-        }
-      } catch (e) {
-        // Network/auth errors => show a concise, production-friendly message (only if no cache)
-        if (!cancelled && !cached) {
-          const msg = (e?.message || '').toLowerCase()
-          if (msg.includes('cors') || msg.includes('cross-origin')) {
-            setUpcomingError('CORS error: Unable to access the API. Please try again later.')
-          } else if (msg.includes('network') || msg.includes('fetch')) {
-            setUpcomingError('Network error: Unable to reach the backend. Please try again later.')
-          } else {
-            setUpcomingError(e.message)
-          }
-        }
-      } finally {
-        if (!cancelled && !cached) setUpcomingLoading(false)
-      }
+    const fetchUpcoming = async () => {
+      const res = await authFetch('https://api.thinkindiasvnit.in/user/getUpcommingInternships')
+      if (!res.ok) throw new Error('Failed to fetch upcoming internships')
+      let data
+      try { data = await res.json() } catch { data = [] }
+      const list = Array.isArray(data) ? data : (data?.items || [])
+      return list
     }
-    loadUpcoming()
-    return () => { cancelled = true }
+
+    const { cached, revalidate } = swrFetch({ key: cacheKey, fetcher: fetchUpcoming, ttlMs: TTL })
+    if (cached && !cancelled) {
+      setUpcoming(cached)
+      setUpcomingLoading(false)
+    }
+    revalidate
+      .then((fresh) => {
+        if (cancelled) return
+        setUpcoming(fresh)
+        setUpcomingLoading(false)
+      })
+      .catch((e) => {
+        if (cancelled) return
+        const msg = (e?.message || '').toLowerCase()
+        if (msg.includes('cors') || msg.includes('cross-origin')) {
+          setUpcomingError('CORS error: Unable to access the API. Please try again later.')
+        } else if (msg.includes('network') || msg.includes('fetch')) {
+          setUpcomingError('Network error: Unable to reach the backend. Please try again later.')
+        } else {
+          setUpcomingError(e.message)
+        }
+        setUpcomingLoading(false)
+      })
+
+    const onFocus = () => {
+      swrFetch({ key: cacheKey, fetcher: fetchUpcoming, ttlMs: TTL }).revalidate
+        .then((fresh) => { if (!cancelled) setUpcoming(fresh) })
+        .catch(() => {})
+    }
+    window.addEventListener('focus', onFocus)
+    return () => { cancelled = true; window.removeEventListener('focus', onFocus) }
   }, [isLoggedIn])
 
   // Fetch successful placements posters
   useEffect(() => {
     let cancelled = false
     const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/internPlacements', 'posters-v1')
+    const TTL = 5 * 60 * 1000
 
-    // Serve cached posters immediately if present
-    const cached = cacheGet(cacheKey)
+    const fetchPosters = async () => {
+      const res = await fetch('https://api.thinkindiasvnit.in/internPlacements')
+      if (!res.ok) throw new Error('Failed to fetch internship placements')
+      const data = await res.json()
+      const rows = Array.isArray(data) ? data : (data?.items || [])
+      const images = rows.map((it) => {
+        const src = it?.imageUrl || it?.imageURL || it?.image_url || it?.url || ''
+        if (!src) return null
+        return { src, alt: it.studentName ? `${it.studentName} • ${it.instituteName || 'Internship'}` : 'Internship poster', caption: it.instituteName || '' }
+      }).filter(Boolean)
+      return images
+    }
+
+    const { cached, revalidate } = swrFetch({ key: cacheKey, fetcher: fetchPosters, ttlMs: TTL })
     if (cached && !cancelled) {
       setPosters(cached)
       setPostersLoading(false)
     }
-
-    const fetchPosters = async () => {
-      if (!cached) setPostersLoading(true)
-      try {
-        // 1) Get internship placements list (now contains imageUrl per record)
-        const res = await fetch('https://api.thinkindiasvnit.in/internPlacements')
-        if (!res.ok) throw new Error('Failed to fetch internship placements')
-        const data = await res.json()
-
-        // 2) Normalize to slider format using imageUrl
-        //    If backend returns: [{ id, studentName, instituteName, imageUrl }]
-        const rows = Array.isArray(data) ? data : (data?.items || [])
-        const images = rows.map((it) => {
-          const src = it?.imageUrl || it?.imageURL || it?.image_url || it?.url || ''
-          if (!src) return null
-          return {
-            src,
-            alt: it.studentName ? `${it.studentName} • ${it.instituteName || 'Internship'}` : 'Internship poster',
-            caption: it.instituteName || ''
-          }
-        }).filter(Boolean)
-
-        if (!cancelled) {
-          const filtered = images.filter(Boolean)
-          setPosters(filtered)
-          cacheSet(cacheKey, filtered, 5 * 60 * 1000)
-        }
-      } catch (e) {
+    revalidate
+      .then((fresh) => {
+        if (cancelled) return
+        setPosters(fresh)
+        setPostersLoading(false)
+      })
+      .catch((e) => {
+        if (cancelled) return
         const msg = (e?.message || '').toLowerCase()
-        if (!cached) {
-          if (msg.includes('cors') || msg.includes('cross-origin')) {
-            setPostersError('CORS error: Unable to access the API. Please try again later.')
-          } else if (msg.includes('network') || msg.includes('fetch')) {
-            setPostersError('Network error: Unable to reach the backend. Please try again later.')
-          } else {
-            setPostersError(e.message)
-          }
+        if (msg.includes('cors') || msg.includes('cross-origin')) {
+          setPostersError('CORS error: Unable to access the API. Please try again later.')
+        } else if (msg.includes('network') || msg.includes('fetch')) {
+          setPostersError('Network error: Unable to reach the backend. Please try again later.')
+        } else {
+          setPostersError(e.message)
         }
-      } finally {
-        if (!cached) setPostersLoading(false)
-      }
+        setPostersLoading(false)
+      })
+
+    const onFocus = () => {
+      swrFetch({ key: cacheKey, fetcher: fetchPosters, ttlMs: TTL }).revalidate
+        .then((fresh) => { if (!cancelled) setPosters(fresh) })
+        .catch(() => {})
     }
-    fetchPosters()
-    return () => { cancelled = true }
+    window.addEventListener('focus', onFocus)
+    return () => { cancelled = true; window.removeEventListener('focus', onFocus) }
   }, [])
 
   // Show diaries section only when successfully loaded with non-empty data

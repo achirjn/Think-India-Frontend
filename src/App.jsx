@@ -28,6 +28,53 @@ import ThinkIndiaLogo from './assets/Think_India_Logo.svg'
 import NITSuratLogo from './assets/NIT_Surat_Logo.svg'
 import { localCacheGet, localCacheSet, cacheKeyForUrl } from './utils/swrCache.js'
 
+// Scroll to top on route path change (prevents landing at footer when navigating from footer links)
+function ScrollToTop() {
+  const location = useLocation()
+
+  // Scroll to top when path changes and no hash is present
+  useEffect(() => {
+    if (!location.hash) {
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      } catch (_) {
+        window.scrollTo(0, 0)
+      }
+    }
+    // else: handled by the hash effect below
+  }, [location.pathname])
+
+  // Smooth-scroll to hash targets with navbar offset (e.g., /#about)
+  useEffect(() => {
+    if (!location.hash) return
+    const id = location.hash.replace(/^#/, '')
+    if (!id) return
+    const tryScroll = () => {
+      const el = document.getElementById(id)
+      if (el) {
+        // Offset for sticky navbar (~80px)
+        const y = el.getBoundingClientRect().top + window.scrollY - 80
+        window.scrollTo({ top: y < 0 ? 0 : y, behavior: 'smooth' })
+        return true
+      }
+      return false
+    }
+    // Try immediately, then on next frames if element hasn't mounted yet
+    if (!tryScroll()) {
+      let attempts = 0
+      const maxAttempts = 10
+      const rafLoop = () => {
+        attempts += 1
+        if (tryScroll()) return
+        if (attempts < maxAttempts) requestAnimationFrame(rafLoop)
+      }
+      requestAnimationFrame(rafLoop)
+    }
+  }, [location.hash, location.pathname])
+
+  return null
+}
+
 function NavBar() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -1356,6 +1403,7 @@ export default function App() {
           </div>
         )}
         <main className="flex-1">
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/internships" element={<Internships />} />

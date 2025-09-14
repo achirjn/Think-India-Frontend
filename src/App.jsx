@@ -1132,16 +1132,12 @@ function HomePage() {
             { title: 'Leadership', desc: 'Workshops and programs that build character and capability.', barClass: 'bg-[color:var(--color-india-green)]' },
           ].map((card, index) => (
             <motion.div 
-              key={card.title} 
-              initial={{ y: 50, opacity: 0 }}
-              whileInView={{ y: 0, opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ 
-                type: 'spring', 
-                stiffness: 100, 
-                damping: 20, 
-                delay: index * 0.1 
-              }}
+              key={card.title}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ type: 'spring', stiffness: 100, damping: 20, delay: index * 0.1 }}
+              variants={{ hidden: { y: 50, opacity: 0 }, show: { y: 0, opacity: 1 } }}
               className="glass-card-container"
             >
               <motion.div
@@ -1155,10 +1151,8 @@ function HomePage() {
                 className="relative overflow-hidden rounded-2xl p-8 bg-[var(--bg-saffron-50)] shadow-sm cursor-pointer"
               >
                 <motion.div 
-                  initial={{ scaleX: 0 }}
-                  whileInView={{ scaleX: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.3 + index * 0.1, duration: 0.8 }}
+                  variants={{ hidden: { scaleX: 0 }, show: { scaleX: 1 } }}
+                  transition={{ duration: 0.8, delay: 0.3 + index * 0.1 }}
                   className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${card.barClass} origin-left`} 
                 />
                 <motion.div 

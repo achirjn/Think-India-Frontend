@@ -128,14 +128,11 @@ export default function EventDetail() {
   const next = () => setIdx((p) => (slides.length ? (p + 1) % slides.length : 0))
   const prev = () => setIdx((p) => (slides.length ? (p - 1 + slides.length) % slides.length : 0))
 
-  // Autoplay with pause on hover
+  // Autoplay disabled: images change only via user interaction (Next/Prev or dots)
+  // Keeping state for potential future use, but no interval is set.
   useEffect(() => {
-    if (paused || slides.length < 2) return
-    const handle = setInterval(() => {
-      setIdx((p) => (p + 1) % slides.length)
-    }, 3500)
-    return () => clearInterval(handle)
-  }, [paused, slides.length])
+    return () => {}
+  }, [])
 
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
@@ -165,8 +162,6 @@ export default function EventDetail() {
           <div className="mt-6">
             <div
               className="relative rounded-xl overflow-hidden shadow-lg bg-white"
-              onMouseEnter={() => setPaused(true)}
-              onMouseLeave={() => setPaused(false)}
             >
               {slides.length > 0 ? (
                 <>

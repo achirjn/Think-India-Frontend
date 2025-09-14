@@ -69,12 +69,37 @@ export default function Events() {
     }
   }), [])
 
+  // Parse raw event to a Date (when available)
   const parseDate = (ev) => {
     const d = ev.dateTime || ev.date || ev.eventDate || ev.event_date || ev.when || null
     if (!d) return null
     const dt = new Date(d)
     return isNaN(dt.getTime()) ? null : dt
   }
+
+  // Normalize a single mapped event to use numeric timestamp for cache robustness
+  const normalizeEventDateMs = (ev) => {
+    if (!ev || typeof ev !== 'object') return ev
+    // Prefer existing numeric timestamp
+    if (typeof ev._dateMs === 'number' && Number.isFinite(ev._dateMs)) return ev
+    // Legacy cached shape: _date may be string (from JSON serialization)
+    if (ev._date instanceof Date && !isNaN(ev._date.getTime())) {
+      return { ...ev, _dateMs: ev._date.getTime() }
+    }
+    if (typeof ev._date === 'string') {
+      const t = Date.parse(ev._date)
+      if (!Number.isNaN(t)) return { ...ev, _dateMs: t }
+    }
+    // Fallback: derive from raw fields again
+    const dt = parseDate(ev)
+    if (dt) return { ...ev, _dateMs: dt.getTime() }
+    return { ...ev, _dateMs: undefined }
+  }
+
+  const normalizeLists = ({ upcoming = [], past = [] } = {}) => ({
+    upcoming: Array.isArray(upcoming) ? upcoming.map(normalizeEventDateMs) : [],
+    past: Array.isArray(past) ? past.map(normalizeEventDateMs) : []
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -98,11 +123,13 @@ export default function Events() {
         const firstUrl = Array.isArray(urls) && urls.length ? urls[0] : (ev.imageUrl || ev.imageURL || ev.image_url || '')
         const alt = ev.eventName || ev.name || `Event ${i + 1}`
         const src = typeof firstUrl === 'string' ? firstUrl : ''
+        const dt = parseDate(ev)
         return {
           ...ev,
           _imgSrc: src,
           _alt: alt,
-          _date: parseDate(ev),
+          // Store numeric timestamp for robust caching across sessions
+          _dateMs: dt ? dt.getTime() : undefined,
           _name: ev.eventName || ev.name || 'Event',
           _desc: ev.details || ev.description || ev.eventDescription || ev.summary || '',
           _register: ev.registrationLink || ev.formLink || ev.registerUrl || ev.link || ''
@@ -114,21 +141,24 @@ export default function Events() {
         Promise.all(pastList.map((ev, i) => mapEvent(ev, i)))
       ])
 
-      return { upcoming: upWith, past: pastWith }
+      // Ensure normalized shape before caching via SWR
+      return normalizeLists({ upcoming: upWith, past: pastWith })
     }
 
     const { cached, revalidate } = swrFetch({ key: cacheKey, fetcher: fetchAggregated, ttlMs: TTL })
     if (cached && typeof cached === 'object' && !cancelled) {
-      setUpcoming(Array.isArray(cached.upcoming) ? cached.upcoming : [])
-      setPast(Array.isArray(cached.past) ? cached.past : [])
+      const normalized = normalizeLists(cached)
+      setUpcoming(normalized.upcoming)
+      setPast(normalized.past)
       setLoading(false)
     }
 
     revalidate
       .then((fresh) => {
         if (cancelled) return
-        setUpcoming(Array.isArray(fresh.upcoming) ? fresh.upcoming : [])
-        setPast(Array.isArray(fresh.past) ? fresh.past : [])
+        const normalized = normalizeLists(fresh)
+        setUpcoming(normalized.upcoming)
+        setPast(normalized.past)
         setLoading(false)
       })
       .catch((e) => {
@@ -229,8 +259,8 @@ export default function Events() {
                       >
                         {ev._name}
                       </motion.h3>
-                      {ev._date && (
-                        <p className="mt-1 text-sm text-[color:var(--color-ashoka-blue)]/70">{ev._date.toLocaleString()}</p>
+                      {typeof ev._dateMs === 'number' && Number.isFinite(ev._dateMs) && (
+                        <p className="mt-1 text-sm text-[color:var(--color-ashoka-blue)]/70">{new Date(ev._dateMs).toLocaleString()}</p>
                       )}
                       {ev._desc && (
                         <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-3">{stripHtmlToText(ev._desc)}</p>
@@ -299,8 +329,8 @@ export default function Events() {
                       >
                         {ev._name}
                       </motion.h3>
-                      {ev._date && (
-                        <p className="mt-1 text-sm text-[color:var(--color-ashoka-blue)]/70">{ev._date.toLocaleDateString()}</p>
+                      {typeof ev._dateMs === 'number' && Number.isFinite(ev._dateMs) && (
+                        <p className="mt-1 text-sm text-[color:var(--color-ashoka-blue)]/70">{new Date(ev._dateMs).toLocaleDateString()}</p>
                       )}
                       {ev._desc && (
                         <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-3">{stripHtmlToText(ev._desc)}</p>

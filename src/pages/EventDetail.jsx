@@ -161,7 +161,7 @@ export default function EventDetail() {
             )}
           </motion.header>
 
-          {/* Image Slider (match LoggedInHero's 4:3 aspect) */}
+          {/* Image Slider (16:9 aspect for slimmer height) */}
           <div className="mt-6">
             <div
               className="relative rounded-xl overflow-hidden shadow-lg bg-white"
@@ -170,7 +170,7 @@ export default function EventDetail() {
             >
               {slides.length > 0 ? (
                 <>
-                  <div className="aspect-[4/3] w-full">
+                  <div className="aspect-[16/9] w-full">
                     <img
                       key={idx}
                       src={slides[idx]}
@@ -208,7 +208,7 @@ export default function EventDetail() {
                   )}
                 </>
               ) : (
-                <div className="w-full aspect-[4/3] bg-gray-100 flex items-center justify-center text-gray-500">
+                <div className="w-full aspect-[16/9] bg-gray-100 flex items-center justify-center text-gray-500">
                   No images available
                 </div>
               )}

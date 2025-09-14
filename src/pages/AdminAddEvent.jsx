@@ -68,11 +68,19 @@ export default function AdminAddEvent() {
   const onPickImages = (e) => {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
-    // Merge selections, avoid duplicates by name+size lastModified
-    const mapKey = (f) => `${f.name}|${f.size}|${f.lastModified}`
-    const existing = new Map(images.map(f => [mapKey(f), f]))
-    for (const f of files) existing.set(mapKey(f), f)
-    setImages(Array.from(existing.values()))
+    
+    // Create a Set of existing file keys for quick lookup
+    const existingKeys = new Set(
+      images.map(f => `${f.name}|${f.size}|${f.lastModified}`)
+    )
+    
+    // Add new files that aren't already in the images array
+    const newFiles = files.filter(
+      file => !existingKeys.has(`${file.name}|${file.size}|${file.lastModified}`)
+    )
+    
+    // Append new files to maintain order
+    setImages(prev => [...prev, ...newFiles])
   }
 
   const removeImageAt = (idx) => {

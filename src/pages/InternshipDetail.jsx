@@ -63,6 +63,16 @@ export default function InternshipDetail() {
     return `${n} day${n > 1 ? 's' : ''}`
   }
 
+  // Build slides from potential image fields (only show slider if images exist)
+  const imageUrls = (item?.imageUrls || item?.imageUrlList || item?.imageURLList || item?.images || [])
+  const slides = Array.isArray(imageUrls) && imageUrls.length
+    ? imageUrls.map((u) => (typeof u === 'string' && u) ? u : null).filter(Boolean)
+    : (typeof item?.imageUrl === 'string' && item?.imageUrl ? [item.imageUrl] : [])
+  const [idx, setIdx] = useState(0)
+  useEffect(() => { setIdx(0) }, [id])
+  const next = () => setIdx((p) => (slides.length ? (p + 1) % slides.length : 0))
+  const prev = () => setIdx((p) => (slides.length ? (p - 1 + slides.length) % slides.length : 0))
+
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
       <button
@@ -86,38 +96,64 @@ export default function InternshipDetail() {
             </h1>
           </motion.header>
 
-          {/* Description */}
+          {/* Image Slider - only render if at least one image */}
+          {slides.length > 0 && (
+            <div className="mt-6">
+              <div className="relative rounded-xl overflow-hidden shadow-lg bg-white">
+                <div className="aspect-[16/9] w-full">
+                  <img
+                    key={idx}
+                    src={slides[idx]}
+                    alt={heading || 'Internship image'}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                {slides.length > 1 && (
+                  <>
+                    <button
+                      aria-label="Previous image"
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[color:var(--color-ashoka-blue)] shadow rounded-full w-9 h-9 flex items-center justify-center"
+                      onClick={prev}
+                    >
+                      ‹
+                    </button>
+                    <button
+                      aria-label="Next image"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[color:var(--color-ashoka-blue)] shadow rounded-full w-9 h-9 flex items-center justify-center"
+                      onClick={next}
+                    >
+                      ›
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 bg-white/70 px-3 py-1 rounded-full shadow">
+                      {slides.map((_, i) => (
+                        <button
+                          key={i}
+                          aria-label={`Go to image ${i + 1}`}
+                          className={`h-2.5 w-2.5 rounded-full ${i === idx ? 'bg-[color:var(--color-ashoka-blue)]' : 'bg-gray-300'}`}
+                          onClick={() => setIdx(i)}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Description - render as raw HTML without headings/backgrounds */}
           {description && (
-            <div className="mt-6 rounded-xl border p-5 bg-white/70">
-              <h3 className="text-lg font-semibold text-[color:var(--color-ashoka-blue)]">Description</h3>
-              <p className="mt-2 text-gray-700 whitespace-pre-line">{description}</p>
-            </div>
+            <div
+              className="mt-8 text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: description }}
+            />
           )}
 
-          {/* Eligibility */}
+          {/* Eligibility - render as raw HTML without headings/backgrounds */}
           {eligibility && (
-            <div className="mt-6 rounded-xl border p-5 bg-white/70">
-              <h3 className="text-lg font-semibold text-[color:var(--color-ashoka-blue)]">Eligibility</h3>
-              <p className="mt-2 text-gray-700 whitespace-pre-line">{eligibility}</p>
-            </div>
-          )}
-
-          {/* Start date and duration */}
-          {(formattedStart || durationDays) && (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              {formattedStart && (
-                <div className="rounded-xl border p-5 bg-white/70">
-                  <h3 className="text-lg font-semibold text-[color:var(--color-ashoka-blue)]">Start Date</h3>
-                  <p className="mt-2 text-gray-700">{formattedStart}</p>
-                </div>
-              )}
-              {durationDays && (
-                <div className="rounded-xl border p-5 bg-white/70">
-                  <h3 className="text-lg font-semibold text-[color:var(--color-ashoka-blue)]">Duration</h3>
-                  <p className="mt-2 text-gray-700">{durationText(durationDays)}</p>
-                </div>
-              )}
-            </div>
+            <div
+              className="mt-6 text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: eligibility }}
+            />
           )}
         </>
       )}

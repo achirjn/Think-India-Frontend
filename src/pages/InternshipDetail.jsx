@@ -74,7 +74,7 @@ export default function InternshipDetail() {
   const prev = () => setIdx((p) => (slides.length ? (p - 1 + slides.length) % slides.length : 0))
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
+    <div className="mx-auto max-w-4xl px-[6px] sm:px-[14px] lg:px-[22px] py-12">
       <button
         className="mb-6 text-[color:var(--color-ashoka-blue)] hover:text-[color:var(--color-india-saffron)]"
         onClick={() => navigate(-1)}

@@ -317,7 +317,7 @@ function BlogsPanel() {
       <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700">Title</label>
-          <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
+          <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
         </div>
         <div className="sm:col-span-2">
           <label className="block text-sm font-medium text-gray-700">Excerpt</label>
@@ -478,7 +478,6 @@ function TeamsPanel() {
           <input 
             value={form.name} 
             onChange={(e) => setForm({ ...form, name: e.target.value })} 
-            required 
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
             placeholder="Enter member name"
           />
@@ -488,7 +487,6 @@ function TeamsPanel() {
           <input 
             value={form.position} 
             onChange={(e) => setForm({ ...form, position: e.target.value })} 
-            required 
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
             placeholder="e.g., President, Vice President"
           />
@@ -498,7 +496,6 @@ function TeamsPanel() {
           <input 
             value={form.committee} 
             onChange={(e) => setForm({ ...form, committee: e.target.value })} 
-            required 
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
             placeholder="e.g., Core Team, Cell Heads"
           />
@@ -736,7 +733,6 @@ function EventsPanel() {
           <input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
             className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
             placeholder="Event title"
           />
@@ -1091,11 +1087,11 @@ function GlimpsesPanel() {
       <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="block text-sm font-medium text-gray-700">Name</label>
-          <input value={name} onChange={(e) => setName(e.target.value)} required className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
+          <input value={name} onChange={(e) => setName(e.target.value)} className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">Image File</label>
-          <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} required className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border file:border-gray-300 file:bg-white file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-50" />
+          <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border file:border-gray-300 file:bg-white file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-50" />
         </div>
         <div className="sm:col-span-2 flex items-center justify-between">
           <div className="text-sm text-red-600">{error}</div>
@@ -1356,6 +1352,7 @@ function InternshipsPanel() {
     startDate: '', // yyyy-MM-dd
     duration: '', // days (number)
     isActive: false,
+    image: null,
   })
   const [upSubmitting, setUpSubmitting] = useState(false)
   const [upError, setUpError] = useState('')
@@ -1497,6 +1494,8 @@ function InternshipsPanel() {
       if (upForm.startDate) fd.append('Start Date', upForm.startDate)
       if (upForm.duration !== '') fd.append('duration', String(parseInt(upForm.duration || 0, 10)))
       fd.append('IsActive', upForm.isActive ? '1' : '0')
+      // Optional image upload supported by backend as 'Internship_image'
+      if (upForm.image) fd.append('Internship_image', upForm.image)
 
       const res = await authFetch('https://api.thinkindiasvnit.in/api/admin/addUpcommingInternship', {
         method: 'POST',
@@ -1505,7 +1504,7 @@ function InternshipsPanel() {
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       await res.text().catch(() => '')
       setUpSuccess('Upcoming internship added successfully!')
-      setUpForm({ role: '', description: '', institute: '', eligibility: '', startDate: '', duration: '', isActive: false })
+      setUpForm({ role: '', description: '', institute: '', eligibility: '', startDate: '', duration: '', isActive: false, image: null })
       try { await loadUpcoming() } catch {}
     } catch (e2) {
       setUpError(typeof e2?.message === 'string' ? e2.message : 'Failed to add upcoming internship')
@@ -1525,7 +1524,6 @@ function InternshipsPanel() {
             <input
               value={upForm.role}
               onChange={(e) => setUpForm({ ...upForm, role: e.target.value })}
-              required
               className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
               placeholder="e.g., SDE Intern"
             />
@@ -1535,7 +1533,6 @@ function InternshipsPanel() {
             <input
               value={upForm.institute}
               onChange={(e) => setUpForm({ ...upForm, institute: e.target.value })}
-              required
               className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
               placeholder="e.g., SVNIT / Company"
             />
@@ -1566,7 +1563,6 @@ function InternshipsPanel() {
               type="date"
               value={upForm.startDate}
               onChange={(e) => setUpForm({ ...upForm, startDate: e.target.value })}
-              required
               className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
             />
           </div>
@@ -1577,10 +1573,21 @@ function InternshipsPanel() {
               min="0"
               value={upForm.duration}
               onChange={(e) => setUpForm({ ...upForm, duration: e.target.value })}
-              required
               className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
               placeholder="e.g., 60"
             />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700">Image (optional)</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setUpForm({ ...upForm, image: e.target.files?.[0] || null })}
+              className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border file:border-gray-300 file:bg-white file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-50"
+            />
+            {upForm.image && (
+              <p className="mt-2 text-sm text-gray-600">Selected: {upForm.image.name}</p>
+            )}
           </div>
           <div className="sm:col-span-2">
             <label className="inline-flex items-center gap-2 text-[color:var(--color-ashoka-blue)] font-semibold">
@@ -1616,7 +1623,6 @@ function InternshipsPanel() {
             <input
               value={placeForm.name}
               onChange={(e) => setPlaceForm({ ...placeForm, name: e.target.value })}
-              required
               className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
               placeholder="Enter student's name"
             />
@@ -1626,7 +1632,6 @@ function InternshipsPanel() {
             <input
               value={placeForm.designation}
               onChange={(e) => setPlaceForm({ ...placeForm, designation: e.target.value })}
-              required
               className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
               placeholder="e.g., CSE 3rd year"
             />
@@ -1636,7 +1641,6 @@ function InternshipsPanel() {
             <input
               value={placeForm.role}
               onChange={(e) => setPlaceForm({ ...placeForm, role: e.target.value })}
-              required
               className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
               placeholder="e.g., SDE"
             />
@@ -1646,7 +1650,6 @@ function InternshipsPanel() {
             <input
               value={placeForm.institute}
               onChange={(e) => setPlaceForm({ ...placeForm, institute: e.target.value })}
-              required
               className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
               placeholder="e.g., SVNIT Surat"
             />
@@ -1657,7 +1660,6 @@ function InternshipsPanel() {
               value={placeForm.message}
               onChange={(e) => setPlaceForm({ ...placeForm, message: e.target.value })}
               rows={3}
-              required
               className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
               placeholder="Share a short experience"
             />
@@ -1668,7 +1670,6 @@ function InternshipsPanel() {
               type="file"
               accept="image/*"
               onChange={(e) => setPlaceForm({ ...placeForm, image: e.target.files?.[0] || null })}
-              required
               className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border file:border-gray-300 file:bg-white file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-50"
             />
             {placeForm.image && (

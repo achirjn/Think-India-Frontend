@@ -107,7 +107,7 @@ export default function AdminAddEvent() {
       <motion.form onSubmit={handleSubmit} className="grid gap-5 max-w-2xl" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div>
           <label className="block text-sm font-semibold text-[color:var(--color-ashoka-blue)]">Name</label>
-          <input name="name" required className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
+          <input name="name" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" />
         </div>
 
         <div>

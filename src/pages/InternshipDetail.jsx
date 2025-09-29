@@ -119,64 +119,69 @@ export default function InternshipDetail() {
             )}
           </div>
 
-          {/* Image Slider - only render if at least one image */}
-          {slides.length > 0 && (
-            <div className="mt-6">
-              <div className="relative rounded-xl overflow-hidden shadow-lg bg-white border border-gray-200">
-                {/* Flexible height to fit square (1:1) and portrait (2:3, 3:4) posters */}
-                <div className="w-full bg-gray-50 flex items-center justify-center"
-                     style={{ minHeight: '280px', height: '60vh', maxHeight: '760px' }}>
-                  <img
-                    key={idx}
-                    src={slides[idx]}
-                    alt={heading || 'Internship image'}
-                    className="max-h-full max-w-full object-contain"
-                  />
-                </div>
-                {slides.length > 1 && (
-                  <>
-                    <button
-                      aria-label="Previous image"
-                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[color:var(--color-ashoka-blue)] shadow rounded-full w-9 h-9 flex items-center justify-center"
-                      onClick={prev}
-                    >
-                      ‹
-                    </button>
-                    <button
-                      aria-label="Next image"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[color:var(--color-ashoka-blue)] shadow rounded-full w-9 h-9 flex items-center justify-center"
-                      onClick={next}
-                    >
-                      ›
-                    </button>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 bg-white/70 px-3 py-1 rounded-full shadow">
-                      {slides.map((_, i) => (
-                        <button
-                          key={i}
-                          aria-label={`Go to image ${i + 1}`}
-                          className={`h-2.5 w-2.5 rounded-full ${i === idx ? 'bg-[color:var(--color-ashoka-blue)]' : 'bg-gray-300'}`}
-                          onClick={() => setIdx(i)}
-                        />
-                      ))}
-                    </div>
-                  </>
-                )}
+          {/* Two-column overview: description left, image right */}
+          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left: description (spans full if no images) */}
+            {description && (
+              <div className={slides.length > 0 ? '' : 'lg:col-span-2'}>
+                <div
+                  className="text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed sm:leading-8 tracking-normal"
+                  dangerouslySetInnerHTML={{ __html: description }}
+                />
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Description - render as raw HTML without headings/backgrounds */}
-          {description && (
-            <div
-              className="mt-8 max-w-3xl text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed sm:leading-8 tracking-normal"
-              dangerouslySetInnerHTML={{ __html: description }}
-            />
-          )}
+            {/* Right: image slider (only when images exist) */}
+            {slides.length > 0 && (
+              <div>
+                <div className="relative rounded-xl overflow-hidden shadow-lg bg-white border border-gray-200">
+                  {/* Flexible height to fit square (1:1) and portrait (2:3, 3:4) posters */}
+                  <div className="w-full bg-gray-50 flex items-center justify-center"
+                       style={{ minHeight: '280px', height: '60vh', maxHeight: '760px' }}>
+                    <img
+                      key={idx}
+                      src={slides[idx]}
+                      alt={heading || 'Internship image'}
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+                  {slides.length > 1 && (
+                    <>
+                      <button
+                        aria-label="Previous image"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[color:var(--color-ashoka-blue)] shadow rounded-full w-9 h-9 flex items-center justify-center"
+                        onClick={prev}
+                      >
+                        ‹
+                      </button>
+                      <button
+                        aria-label="Next image"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[color:var(--color-ashoka-blue)] shadow rounded-full w-9 h-9 flex items-center justify-center"
+                        onClick={next}
+                      >
+                        ›
+                      </button>
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 bg-white/70 px-3 py-1 rounded-full shadow">
+                        {slides.map((_, i) => (
+                          <button
+                            key={i}
+                            aria-label={`Go to image ${i + 1}`}
+                            className={`h-2.5 w-2.5 rounded-full ${i === idx ? 'bg-[color:var(--color-ashoka-blue)]' : 'bg-gray-300'}`}
+                            onClick={() => setIdx(i)}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
-          {/* Eligibility - render as raw HTML without headings/backgrounds */}
+          {/* Bottom: full-width details (eligibility, extra info) */}
           {eligibility && (
             <div
-              className="mt-6 max-w-3xl text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed sm:leading-8 tracking-normal"
+              className="mt-10 text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed sm:leading-8 tracking-normal"
               dangerouslySetInnerHTML={{ __html: eligibility }}
             />
           )}

@@ -96,16 +96,41 @@ export default function InternshipDetail() {
             </h1>
           </motion.header>
 
+          {/* Share actions */}
+          <div className="mt-3 flex gap-2">
+            <button
+              className="text-sm px-3 py-1.5 rounded-md border border-gray-300 bg-white text-[color:var(--color-ashoka-blue)] hover:bg-gray-50"
+              onClick={() => {
+                const url = window.location.href
+                try { navigator.clipboard.writeText(url) } catch {}
+              }}
+            >
+              Copy link
+            </button>
+            {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
+              <button
+                className="text-sm px-3 py-1.5 rounded-md border border-gray-300 bg-white text-[color:var(--color-ashoka-blue)] hover:bg-gray-50"
+                onClick={async () => {
+                  try { await navigator.share({ title: heading, url: window.location.href }) } catch {}
+                }}
+              >
+                Share
+              </button>
+            )}
+          </div>
+
           {/* Image Slider - only render if at least one image */}
           {slides.length > 0 && (
             <div className="mt-6">
-              <div className="relative rounded-xl overflow-hidden shadow-lg bg-white">
-                <div className="aspect-[16/9] w-full">
+              <div className="relative rounded-xl overflow-hidden shadow-lg bg-white border border-gray-200">
+                {/* Flexible height to fit square (1:1) and portrait (2:3, 3:4) posters */}
+                <div className="w-full bg-gray-50 flex items-center justify-center"
+                     style={{ minHeight: '280px', height: '60vh', maxHeight: '760px' }}>
                   <img
                     key={idx}
                     src={slides[idx]}
                     alt={heading || 'Internship image'}
-                    className="h-full w-full object-cover"
+                    className="max-h-full max-w-full object-contain"
                   />
                 </div>
                 {slides.length > 1 && (
@@ -143,7 +168,7 @@ export default function InternshipDetail() {
           {/* Description - render as raw HTML without headings/backgrounds */}
           {description && (
             <div
-              className="mt-8 text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed"
+              className="mt-8 max-w-3xl text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed sm:leading-8 tracking-normal"
               dangerouslySetInnerHTML={{ __html: description }}
             />
           )}
@@ -151,7 +176,7 @@ export default function InternshipDetail() {
           {/* Eligibility - render as raw HTML without headings/backgrounds */}
           {eligibility && (
             <div
-              className="mt-6 text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed"
+              className="mt-6 max-w-3xl text-[color:var(--color-ashoka-blue)] text-lg sm:text-xl leading-relaxed sm:leading-8 tracking-normal"
               dangerouslySetInnerHTML={{ __html: eligibility }}
             />
           )}

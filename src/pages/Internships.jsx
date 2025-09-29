@@ -5,6 +5,7 @@ import SectionDivider from '../components/SectionDivider.jsx'
 import AnimatedTestimonials from '../components/ui/AnimatedTestimonials.jsx'
 import useAuth from '../hooks/useAuth.jsx'
 import { authFetch } from '../utils/auth.js'
+import { stripHtmlToText } from '../utils/text.js'
 import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
 
 export default function Internships() {
@@ -304,7 +305,14 @@ export default function Internships() {
                         return institute ? `${role} — ${institute}` : role
                       })()}
                     </div>
-                    {it.description && <p className="mt-1 text-sm text-gray-600">{it.description}</p>}
+                    {it.description && (
+                      <p className="mt-1 text-sm text-gray-600">
+                        {(() => {
+                          const txt = stripHtmlToText(String(it.description || ''))
+                          return txt.length > 180 ? txt.slice(0, 180).trimEnd() + '…' : txt
+                        })()}
+                      </p>
+                    )}
                     {it.applyUrl && (
                       <a
                         className="mt-3 inline-block text-[color:var(--color-india-green)] font-medium"

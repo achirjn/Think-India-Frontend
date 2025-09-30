@@ -8,6 +8,15 @@
 /dist
 /out
 /public
+!/public/favicon.svg
+!/public/site.webmanifest
+!/public/favicon.ico
+!/public/apple-touch-icon.png
+!/public/favicon-32x32.png
+!/public/favicon-16x16.png
+!/public/favicon-48x48.png
+!/public/android-chrome-192x192.png
+!/public/android-chrome-512x512.png
 
 # env files
 .env.local

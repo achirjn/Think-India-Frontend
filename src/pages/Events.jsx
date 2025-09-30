@@ -227,13 +227,13 @@ export default function Events() {
               <p className="mt-1 text-[color:var(--color-ashoka-blue)]/70">Stay with us for interesting events in the future.</p>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid auto-rows-fr gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {upcoming.map((ev, idx) => (
-                <HoverCard key={idx} className="rounded-xl">
+                <HoverCard key={idx} className="rounded-xl h-full">
                   <motion.article
                     whileHover={{ y: -8, scale: 1.02, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer"
+                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer h-full"
                     onClick={() => {
                       const name = (ev.eventName || ev.name || `Event ${idx + 1}`).toString()
                       const slug = name
@@ -251,7 +251,7 @@ export default function Events() {
                         <div className="h-full w-full bg-gray-100" />
                       )}
                     </motion.div>
-                    <div className="p-5">
+                    <div className="p-5 flex flex-col flex-1">
                       <motion.h3
                         whileHover={{ x: 5 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
@@ -265,7 +265,7 @@ export default function Events() {
                       {ev._desc && (
                         <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-3">{stripHtmlToText(ev._desc)}</p>
                       )}
-                      <div className="mt-4">
+                      <div className="mt-auto">
                         {ev._register ? (
                           <a href={ev._register} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
                             <Button className="bg-[color:var(--color-india-saffron)] text-white" onClick={(e) => e.stopPropagation()}>Register</Button>
@@ -297,13 +297,13 @@ export default function Events() {
               <p className="mt-1 text-[color:var(--color-ashoka-blue)]/70">Check back later for highlights from our previous activities.</p>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid auto-rows-fr gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {past.map((ev, idx) => (
-                <HoverCard key={idx} className="rounded-xl">
+                <HoverCard key={idx} className="rounded-xl h-full">
                   <motion.article
                     whileHover={{ y: -8, scale: 1.02, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer"
+                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer h-full"
                     onClick={() => {
                       const name = (ev.eventName || ev.name || `Event ${idx + 1}`).toString()
                       const slug = name
@@ -321,7 +321,7 @@ export default function Events() {
                         <div className="h-full w-full bg-gray-100" />
                       )}
                     </motion.div>
-                    <div className="p-5">
+                    <div className="p-5 flex flex-col flex-1">
                       <motion.h3
                         whileHover={{ x: 5 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 20 }}

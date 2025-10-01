@@ -233,7 +233,7 @@ export default function Events() {
                   <motion.article
                     whileHover={{ y: -8, scale: 1.02, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer h-[420px] sm:h-[460px] md:h-[480px]"
+                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer h-[380px] sm:h-[420px] md:h-[440px]"
                     onClick={() => {
                       const name = (ev.eventName || ev.name || `Event ${idx + 1}`).toString()
                       const slug = name
@@ -263,7 +263,7 @@ export default function Events() {
                         <p className="mt-1 text-sm text-[color:var(--color-ashoka-blue)]/70">{new Date(ev._dateMs).toLocaleString()}</p>
                       )}
                       {ev._desc && (
-                        <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-3">{stripHtmlToText(ev._desc)}</p>
+                        <p className="mt-2 text-[color:var(--color-ashoka-blue)]/80 line-clamp-2">{stripHtmlToText(ev._desc)}</p>
                       )}
                       <div className="mt-auto">
                         {ev._register ? (
@@ -303,7 +303,7 @@ export default function Events() {
                   <motion.article
                     whileHover={{ y: -8, scale: 1.02, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer h-[420px] sm:h-[460px] md:h-[480px]"
+                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer h-[360px] sm:h-[400px] md:h-[420px]"
                     onClick={() => {
                       const name = (ev.eventName || ev.name || `Event ${idx + 1}`).toString()
                       const slug = name

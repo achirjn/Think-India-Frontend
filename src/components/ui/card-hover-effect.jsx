@@ -9,7 +9,6 @@ export function HoverCard({ children, className = '' }) {
 
 	const handleMouseMove = useCallback((event) => {
 		const target = containerRef.current
-		if (!target) return
 		const rect = target.getBoundingClientRect()
 		const x = event.clientX - rect.left
 		const y = event.clientY - rect.top
@@ -17,31 +16,31 @@ export function HoverCard({ children, className = '' }) {
 		target.style.setProperty('--hover-y', `${y}px`)
 	}, [])
 
-    return (
+	return (
 		<div
 			ref={containerRef}
 			onMouseMove={handleMouseMove}
-			className={`relative group ${className}`}
+			className={`relative group overflow-hidden rounded-xl ${className}`}
 		>
-			{/* Spotlight layer */}
+			{/* Spotlight layer (above content but pointer-events-none) */}
 			<div
 				aria-hidden
-                className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+				className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-200 group-hover:opacity-100"
 				style={{
 					background:
-                        'radial-gradient(360px 360px at var(--hover-x) var(--hover-y), rgba(255,153,51,0.55), transparent 45%), radial-gradient(420px 420px at var(--hover-x) var(--hover-y), rgba(19,136,8,0.35), transparent 60%), radial-gradient(180px 180px at var(--hover-x) var(--hover-y), rgba(255,255,255,0.28), transparent 65%)',
-                    zIndex: 2,
-                    mixBlendMode: 'soft-light',
+						'radial-gradient(360px 360px at var(--hover-x) var(--hover-y), rgba(255,153,51,0.55), transparent 45%), radial-gradient(420px 420px at var(--hover-x) var(--hover-y), rgba(19,136,8,0.35), transparent 60%), radial-gradient(180px 180px at var(--hover-x) var(--hover-y), rgba(255,255,255,0.28), transparent 65%)',
+					zIndex: 2,
+					mixBlendMode: 'soft-light',
 				}}
 			/>
 			{/* Content layer */}
-            <div className="relative z-[1] transition-transform duration-200 group-hover:scale-[1.015] group-hover:-translate-y-0.5 group-hover:saturate-110">{children}</div>
+			<div className="relative z-[1] transition-transform duration-200 group-hover:scale-[1.015] group-hover:-translate-y-0.5 group-hover:saturate-110">{children}</div>
 		</div>
 	)
 }
 
 /**
- * Optional list wrapper that applies consistent grid gaps and simply
+{{ ... }}
  * renders children. Included to mirror the API suggested in the snippet.
  */
 export function HoverEffect({ children, className = '' }) {

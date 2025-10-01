@@ -233,7 +233,7 @@ export default function Events() {
                   <motion.article
                     whileHover={{ y: -8, scale: 1.02, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer h-[480px] sm:h-[500px]"
+                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer h-[420px] sm:h-[460px] md:h-[480px]"
                     onClick={() => {
                       const name = (ev.eventName || ev.name || `Event ${idx + 1}`).toString()
                       const slug = name
@@ -303,7 +303,7 @@ export default function Events() {
                   <motion.article
                     whileHover={{ y: -8, scale: 1.02, boxShadow: '0 25px 50px rgba(0,0,0,0.15)' }}
                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer h-[480px] sm:h-[500px]"
+                    className="group rounded-xl overflow-hidden border bg-white shadow-lg flex flex-col cursor-pointer h-[420px] sm:h-[460px] md:h-[480px]"
                     onClick={() => {
                       const name = (ev.eventName || ev.name || `Event ${idx + 1}`).toString()
                       const slug = name

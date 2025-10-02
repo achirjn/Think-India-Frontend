@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
 
-# Optional: add your sitemap once available
-# Sitemap: https://www.thinkindiasvnit.in/sitemap.xml
+Sitemap: https://www.thinkindiasvnit.in/sitemap.xml
+Sitemap: https://www.thinkindiasvnit.in/sitemap-blogs.xml
+Sitemap: https://www.thinkindiasvnit.in/sitemap-events.xml
+Sitemap: https://www.thinkindiasvnit.in/sitemap-internships.xml

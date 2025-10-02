@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Optional: add your sitemap once available
+# Sitemap: https://www.thinkindiasvnit.in/sitemap.xml

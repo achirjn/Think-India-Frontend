@@ -75,6 +75,25 @@ function ScrollToTop() {
   return null
 }
 
+function AnalyticsTracker() {
+  const location = useLocation()
+  const firstRender = useRef(true)
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.gtag !== 'function') return
+    const host = (window.location && window.location.hostname) || ''
+    if (host === 'localhost' || host === '127.0.0.1') return
+    if (firstRender.current) {
+      // Initial page_view already sent by index.html
+      firstRender.current = false
+      return
+    }
+    window.gtag('config', 'G-G8QTSNDZV6', {
+      page_path: `${location.pathname}${location.search}${location.hash}`
+    })
+  }, [location.pathname, location.search, location.hash])
+  return null
+}
+
 function NavBar() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -1380,6 +1399,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToHash />
+      <AnalyticsTracker />
       <OAuthCallbackHandler />
       <div className="min-h-screen flex flex-col">
         <NavBar />

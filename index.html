@@ -3,21 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-G8QTSNDZV6"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      // Avoid sending page views from localhost/dev
-      (function(){
-        var host = (window.location && window.location.hostname) || '';
-        if (host !== 'localhost' && host !== '127.0.0.1') {
-          gtag('config', 'G-G8QTSNDZV6');
-        }
-      })();
-    </script>
     <!-- Performance: speed up TLS and DNS for API domain -->
     <link rel="preconnect" href="https://api.thinkindiasvnit.in" crossorigin>
 

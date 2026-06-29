@@ -17,10 +17,10 @@ const LabelInputContainer = ({ children, className = '' }) => (
 
 const GoogleIcon = ({ className = 'h-4 w-4' }) => (
   <svg className={className} viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-    <path fill="#4285F4" d="M533.5 278.4c0-18.4-1.5-36.8-4.7-54.6H272.1v103.4h146.7c-6.3 34.2-26.8 63.2-57.1 82.5v68.3h92.4c54.1-49.8 79.4-123.2 79.4-199.6z"/>
-    <path fill="#34A853" d="M272.1 544.3c77.4 0 142.6-25.6 190.2-69.3l-92.4-68.3c-25.7 17.3-58.7 27.5-97.8 27.5-75 0-138.6-50.6-161.4-118.6H14.7v74.6c48.2 95.7 146.8 154.1 257.4 154.1z"/>
-    <path fill="#FBBC05" d="M110.7 315.6c-12.3-36.9-12.3-76.4 0-113.3V127.7H14.7c-47.2 94.3-47.2 206.3 0 300.6l95.9-72.7z"/>
-    <path fill="#EA4335" d="M272.1 106.8c41.9-.6 82.4 14.9 113.2 43.7l84.2-84.2C428.4 24.1 353.6-1 272.1 0 161.5 0 62.9 58.4 14.7 154.1l96 74.6C133.4 160.7 197 110.1 272.1 110.1z"/>
+    <path fill="#4285F4" d="M533.5 278.4c0-18.4-1.5-36.8-4.7-54.6H272.1v103.4h146.7c-6.3 34.2-26.8 63.2-57.1 82.5v68.3h92.4c54.1-49.8 79.4-123.2 79.4-199.6z" />
+    <path fill="#34A853" d="M272.1 544.3c77.4 0 142.6-25.6 190.2-69.3l-92.4-68.3c-25.7 17.3-58.7 27.5-97.8 27.5-75 0-138.6-50.6-161.4-118.6H14.7v74.6c48.2 95.7 146.8 154.1 257.4 154.1z" />
+    <path fill="#FBBC05" d="M110.7 315.6c-12.3-36.9-12.3-76.4 0-113.3V127.7H14.7c-47.2 94.3-47.2 206.3 0 300.6l95.9-72.7z" />
+    <path fill="#EA4335" d="M272.1 106.8c41.9-.6 82.4 14.9 113.2 43.7l84.2-84.2C428.4 24.1 353.6-1 272.1 0 161.5 0 62.9 58.4 14.7 154.1l96 74.6C133.4 160.7 197 110.1 272.1 110.1z" />
   </svg>
 )
 
@@ -92,45 +92,45 @@ export default function Signup() {
 
   const validateForm = () => {
     const newErrors = {}
-    
+
     if (!formData.name) {
       newErrors.name = 'Name is required'
     } else if (formData.name.trim().length < 2) {
       newErrors.name = 'Name must be at least 2 characters'
     }
-    
+
     if (!formData.email) {
       newErrors.email = 'Email is required'
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email'
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'Password is required'
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters'
     }
-    
+
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password'
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match'
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
-    
+
     setIsLoading(true)
     setErrors({})
-    
+
     try {
       // Create FormData object to match the API expectation
       const formDataToSend = new FormData()
@@ -173,7 +173,7 @@ export default function Signup() {
     } catch (error) {
       // Provide more specific error messages based on the error type
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        setErrors({ submit: `Cannot connect to server. Please ensure the backend is running on ${API_BASE_URL}` })
+        setErrors({ submit: 'Cannot connect to server. Please ensure the backend is running on ${API_BASE_URL}' })
       } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
         setErrors({ submit: 'Connection refused. Please check if the backend server is running and accessible.' })
       } else {
@@ -186,7 +186,7 @@ export default function Signup() {
 
   const handleGoogleLogin = () => {
     // This URL should point to your backend endpoint that initiates the Google OAuth flow
-    window.location.href = `${API_BASE_URL}/oauth2/authorization/google`; 
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
   };
 
   return (

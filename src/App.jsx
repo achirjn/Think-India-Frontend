@@ -27,7 +27,6 @@ import useAuth from './hooks/useAuth.jsx'
 import ThinkIndiaLogo from './assets/Think_India_Logo.svg'
 import NITSuratLogo from './assets/NIT_Surat_Logo.svg'
 import { localCacheGet, localCacheSet, cacheKeyForUrl } from './utils/swrCache.js'
-import { API_BASE_URL } from './utils/config.js'
 
 // Scroll to top on route path change (prevents landing at footer when navigating from footer links)
 function ScrollToTop() {
@@ -124,7 +123,7 @@ function NavBar() {
     } else {
       document.body.style.overflow = 'unset'
     }
-    
+
     // Cleanup on unmount
     return () => {
       document.body.style.overflow = 'unset'
@@ -135,10 +134,10 @@ function NavBar() {
     const checkAuth = () => {
       const token = getToken()
       const isAdmin = localStorage.getItem('is_admin') === 'true'
-      
+
       // Use isAuthenticated() which checks token validity
       const isValidAuth = token && isAuthenticated()
-      
+
       setAuthState({
         isAdmin: isValidAuth && isAdmin,
         isLoggedIn: isValidAuth
@@ -155,19 +154,19 @@ function NavBar() {
       const token = getToken()
       const isAdmin = localStorage.getItem('is_admin') === 'true'
       const isValidAuth = token && isAuthenticated()
-      
+
       setAuthState({
         isAdmin: isValidAuth && isAdmin,
         isLoggedIn: isValidAuth
       })
     }
-    
+
     checkAuth()
-    
+
     // Check periodically for a short time after page load
     const interval = setInterval(checkAuth, 500)
     const timeout = setTimeout(() => clearInterval(interval), 3000)
-    
+
     return () => {
       clearInterval(interval)
       clearTimeout(timeout)
@@ -227,7 +226,7 @@ function NavBar() {
         <div className="container-responsive">
           <div className="flex h-16 md:h-18 items-center justify-between">
             <div className="flex items-center gap-3">
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
@@ -235,42 +234,42 @@ function NavBar() {
               >
                 {/* Think India Logo (scroll to Hero) */}
                 <button onClick={() => { handleSectionNavigation('hero'); refreshNav() }} className="contents" aria-label="Go to Hero">
-                  <motion.div 
+                  <motion.div
                     whileHover={{ scale: 1.1, rotate: 5 }}
                     whileTap={{ scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     className="h-12 w-12 rounded-full overflow-hidden ring-2 ring-white shadow-lg cursor-pointer"
                   >
-                    <img 
-                      src={ThinkIndiaLogo} 
-                      alt="Think India Logo" 
+                    <img
+                      src={ThinkIndiaLogo}
+                      alt="Think India Logo"
                       className="h-full w-full object-cover"
                     />
                   </motion.div>
                 </button>
                 {/* SVNIT Logo */}
                 <a href="https://www.svnit.ac.in/index.php" target="_blank" rel="noopener noreferrer" onClick={refreshNav}>
-                  <motion.div 
+                  <motion.div
                     whileHover={{ scale: 1.1, rotate: -5 }}
                     whileTap={{ scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     className="h-12 w-12 flex items-center justify-center"
                   >
-                    <img 
-                      src={NITSuratLogo} 
-                      alt="NIT Surat Logo" 
+                    <img
+                      src={NITSuratLogo}
+                      alt="NIT Surat Logo"
                       className="h-full w-full object-contain"
                     />
                   </motion.div>
                 </a>
               </motion.div>
-              <motion.div 
+              <motion.div
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
                 className="flex flex-col items-center ml-2 sm:ml-3 md:ml-4"
               >
-                <motion.button 
+                <motion.button
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   onClick={() => { handleSectionNavigation('hero'); refreshNav() }}
@@ -278,7 +277,7 @@ function NavBar() {
                 >
                   Think India
                 </motion.button>
-                <motion.a 
+                <motion.a
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   href="https://www.svnit.ac.in/index.php"
@@ -291,7 +290,7 @@ function NavBar() {
                 </motion.a>
               </motion.div>
             </div>
-            <motion.nav 
+            <motion.nav
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.6 }}
@@ -316,7 +315,7 @@ function NavBar() {
                   transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
                 >
                   {item.to.startsWith('/#') ? (
-                    <button 
+                    <button
                       onClick={() => { handleSectionNavigation(item.to.substring(2)); refreshNav() }}
                       className="relative hover:text-[color:var(--color-ashoka-blue)] transition-colors duration-200 group"
                     >
@@ -324,8 +323,8 @@ function NavBar() {
                       <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[color:var(--color-ashoka-blue)] transition-all duration-300 group-hover:w-full" />
                     </button>
                   ) : (
-                    <Link 
-                      className="relative hover:text-[color:var(--color-ashoka-blue)] transition-colors duration-200 group" 
+                    <Link
+                      className="relative hover:text-[color:var(--color-ashoka-blue)] transition-colors duration-200 group"
                       to={item.to}
                       onClick={refreshNav}
                     >
@@ -339,7 +338,7 @@ function NavBar() {
                 </motion.div>
               ))}
             </motion.nav>
-            <motion.div 
+            <motion.div
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.6, duration: 0.6 }}
@@ -370,7 +369,7 @@ function NavBar() {
                   </motion.div>
                 </>
               )}
-              
+
               {/* Mobile Menu Button */}
               <motion.button
                 initial={{ scale: 0 }}
@@ -398,11 +397,11 @@ function NavBar() {
         <div className="bg-white" />
         <div className="bg-[color:var(--color-india-green)]" />
       </div>
-      
+
       {/* Mobile Menu */}
       <motion.div
         initial={{ height: 0, opacity: 0 }}
-        animate={{ 
+        animate={{
           height: mobileMenuOpen ? 'auto' : 0,
           opacity: mobileMenuOpen ? 1 : 0
         }}
@@ -427,14 +426,14 @@ function NavBar() {
               <motion.div
                 key={item.text}
                 initial={{ x: -20, opacity: 0 }}
-                animate={{ 
+                animate={{
                   x: mobileMenuOpen ? 0 : -20,
                   opacity: mobileMenuOpen ? 1 : 0
                 }}
                 transition={{ delay: index * 0.1, duration: 0.3 }}
               >
                 {item.to.startsWith('/#') ? (
-                  <button 
+                  <button
                     onClick={() => {
                       // Close menu first, then scroll to section after animation/remount
                       refreshNav()
@@ -445,7 +444,7 @@ function NavBar() {
                     {item.text}
                   </button>
                 ) : (
-                  <Link 
+                  <Link
                     to={item.to}
                     onClick={() => { refreshNav() }}
                     className="block py-2 px-4 text-inverse-lg font-semibold text-[color:var(--color-ashoka-blue)] hover:bg-gray-50 rounded-lg transition-colors"
@@ -455,7 +454,7 @@ function NavBar() {
                 )}
               </motion.div>
             ))}
-            
+
             {/* Mobile Auth Buttons */}
             <div className="pt-4 border-t border-gray-200 space-y-3 pb-2">
               {authState.isAdmin ? (
@@ -502,11 +501,11 @@ function Hero() {
   const isPortrait = height > width;
   const isTooNarrow = width < 500;
   const { isLoggedIn, user } = useAuth();
-  
+
   // If user is logged in, render the LoggedInHero component instead
   if (isLoggedIn) {
     // Replace this with the actual API endpoint when provided
-    const heroImagesApiEndpoint = `${API_BASE_URL}/heroImages`; // This will be replaced with the actual endpoint
+    const heroImagesApiEndpoint = 'https://api.thinkindiasvnit.in/heroImages'; // This will be replaced with the actual endpoint
     return <LoggedInHero userName={user?.name || ''} apiEndpoint={heroImagesApiEndpoint} />;
   }
 
@@ -545,8 +544,8 @@ function Hero() {
           key="desktop-chakra-2"
           initial={{ x: -200, opacity: 0 }}
           animate={{ x: 100, opacity: 1 }}
-          transition={{ 
-            duration: 2.5, 
+          transition={{
+            duration: 2.5,
             delay: 0.5,
             ease: "easeInOut",
             opacity: { duration: 0.5, delay: 0.5 }
@@ -560,7 +559,7 @@ function Hero() {
 
   return (
     <section id="hero" className="relative overflow-hidden min-h-[100dvh] flex items-center">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1.2 }}
@@ -568,23 +567,23 @@ function Hero() {
       >
         <div className="h-full bg-gradient-to-b from-[color:var(--color-india-saffron)] via-white to-[color:var(--color-india-green)]" />
       </motion.div>
-      
+
       {renderChakras()}
 
       <div className="container-responsive py-12 sm:py-16 md:py-20 lg:py-24">
-        <motion.div 
-          initial={{ y: 50, opacity: 0 }} 
-          animate={{ y: 0, opacity: 1 }} 
-          transition={{ type: 'spring', stiffness: 100, damping: 20, delay: 0.2 }} 
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 100, damping: 20, delay: 0.2 }}
           className="max-w-3xl text-[color:var(--color-ashoka-blue)] md:ml-12 lg:ml-20"
         >
-          <motion.h1 
+          <motion.h1
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.4 }}
             className="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-tight"
           >
-            <motion.span 
+            <motion.span
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.6, duration: 0.8 }}
@@ -592,7 +591,7 @@ function Hero() {
             >
               Think
             </motion.span>{' '}
-            <motion.span 
+            <motion.span
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.8, duration: 0.8 }}
@@ -601,7 +600,7 @@ function Hero() {
               India
             </motion.span>
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1.0, duration: 0.6 }}
@@ -611,28 +610,30 @@ function Hero() {
             <br />
             Join the country's brightest young minds in nation-building and intellectual engagement.
           </motion.p>
-          <motion.div 
+          <motion.div
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 1.4, duration: 0.8 }}
             className="mt-6 sm:mt-8 md:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4"
           >
-            {(() => { const MotionLink = motion(Link); return (
-              <MotionLink 
-                whileHover={{ y: -3, scale: 1.02, boxShadow: "0 10px 25px rgba(255, 153, 51, 0.3)" }} 
-                whileTap={{ scale: 0.98 }} 
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                to="/signup" 
-                className="btn-responsive inline-flex items-center justify-center rounded-xl bg-[color:var(--color-india-saffron)] text-white font-semibold shadow-md"
-              >
-                Join Our Mission
-              </MotionLink>
-            )})()}
-            <motion.a 
-              whileHover={{ y: -3, scale: 1.02, boxShadow: "0 10px 25px rgba(19, 136, 8, 0.3)" }} 
-              whileTap={{ scale: 0.98 }} 
+            {(() => {
+              const MotionLink = motion(Link); return (
+                <MotionLink
+                  whileHover={{ y: -3, scale: 1.02, boxShadow: "0 10px 25px rgba(255, 153, 51, 0.3)" }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  to="/signup"
+                  className="btn-responsive inline-flex items-center justify-center rounded-xl bg-[color:var(--color-india-saffron)] text-white font-semibold shadow-md"
+                >
+                  Join Our Mission
+                </MotionLink>
+              )
+            })()}
+            <motion.a
+              whileHover={{ y: -3, scale: 1.02, boxShadow: "0 10px 25px rgba(19, 136, 8, 0.3)" }}
+              whileTap={{ scale: 0.98 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              href="#initiatives" 
+              href="#initiatives"
               className="btn-responsive inline-flex items-center justify-center rounded-xl bg-[color:var(--color-india-green)] text-white font-semibold shadow-md"
             >
               Learn More
@@ -646,8 +647,8 @@ function Hero() {
 
 function Section({ id, title, children, className = '' }) {
   return (
-    <motion.section 
-      id={id} 
+    <motion.section
+      id={id}
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true, margin: "-100px" }}
@@ -655,20 +656,20 @@ function Section({ id, title, children, className = '' }) {
       className={`py-8 sm:py-10 md:py-14 ${className}`}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.h2 
-          initial={{ y: 30, opacity: 0 }} 
-          whileInView={{ y: 0, opacity: 1 }} 
-          viewport={{ once: true }} 
-          transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.1 }} 
+        <motion.h2
+          initial={{ y: 30, opacity: 0 }}
+          whileInView={{ y: 0, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ type: 'spring', stiffness: 120, damping: 18, delay: 0.1 }}
           className="text-4xl sm:text-5xl font-extrabold text-[color:var(--color-ashoka-blue)]"
         >
           {title}
         </motion.h2>
-        <motion.div 
-          initial={{ y: 40, opacity: 0 }} 
-          whileInView={{ y: 0, opacity: 1 }} 
-          viewport={{ once: true, amount: 0.2 }} 
-          transition={{ delay: 0.2, type: 'spring', stiffness: 100, damping: 20 }} 
+        <motion.div
+          initial={{ y: 40, opacity: 0 }}
+          whileInView={{ y: 0, opacity: 1 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ delay: 0.2, type: 'spring', stiffness: 100, damping: 20 }}
           className="mt-6"
         >
           {children}
@@ -710,9 +711,9 @@ function Footer() {
           <div className="text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-3">
               <div className="h-12 w-12 rounded-full overflow-hidden ring-2 ring-white shadow-lg flex items-center justify-center bg-white shrink-0">
-                <img 
-                  src={ThinkIndiaLogo} 
-                  alt="Think India Logo" 
+                <img
+                  src={ThinkIndiaLogo}
+                  alt="Think India Logo"
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -769,7 +770,7 @@ function Footer() {
               <div className="text-md">Managed by <a href="https://www.linkedin.com/in/vivek-yadav-5bab81280/" target="_blank" rel="noopener noreferrer" className="text-white font-bold hover:underline">Vivek Yadav</a></div>
             </div>
           </div>
-          
+
           {/* Mobile Layout - Same content, different pattern */}
           <div className="md:hidden text-center space-y-2">
             <div className="text-md"> 2024 Think India, SVNIT</div>
@@ -807,14 +808,14 @@ function ContactSection() {
       formData.append('Email', emailVal)
       formData.append('Message', form.message.value || '')
 
-      let res = await fetch(`${API_BASE_URL}/recommend`, {
+      let res = await fetch('https://api.thinkindiasvnit.in/recommend', {
         method: 'POST',
         body: formData,
         mode: 'cors',
       })
       if (!res.ok) {
         // retry without explicit cors if needed
-        res = await fetch(`${API_BASE_URL}/recommend`, { method: 'POST', body: formData })
+        res = await fetch('https://api.thinkindiasvnit.in/recommend', { method: 'POST', body: formData })
       }
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       // backend returns plain text id (e.g., 1)
@@ -854,14 +855,14 @@ function ContactSection() {
                 </div>
               </div>
             </div>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               className="relative"
             >
-              <motion.div 
+              <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
                 whileInView={{ scale: 1, opacity: 1 }}
                 viewport={{ once: true, amount: 0.3 }}
@@ -878,14 +879,14 @@ function ContactSection() {
                         transition={{ delay: 0.6, duration: 0.4 }}
                       >
                         <label htmlFor="name" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Name</label>
-                        <motion.input 
+                        <motion.input
                           whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(15, 28, 63, 0.1)" }}
                           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                          id="name" 
-                          name="name" 
-                          type="text" 
+                          id="name"
+                          name="name"
+                          type="text"
                           autoComplete="name"
-                          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
+                          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
                         />
                       </motion.div>
                       <motion.div
@@ -895,15 +896,15 @@ function ContactSection() {
                         transition={{ delay: 0.7, duration: 0.4 }}
                       >
                         <label htmlFor="email" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Email <span className="text-red-500">*</span></label>
-                        <motion.input 
+                        <motion.input
                           whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(15, 28, 63, 0.1)" }}
                           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                          id="email" 
-                          name="email" 
-                          type="email" 
-                          required 
+                          id="email"
+                          name="email"
+                          type="email"
+                          required
                           autoComplete="email"
-                          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
+                          className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
                         />
                       </motion.div>
                     </>
@@ -926,18 +927,18 @@ function ContactSection() {
                     transition={{ delay: 0.8, duration: 0.4 }}
                   >
                     <label htmlFor="message" className="block text-sm font-medium text-[color:var(--color-ashoka-blue)]">Message <span className="text-red-500">*</span></label>
-                    <motion.textarea 
+                    <motion.textarea
                       whileFocus={{ scale: 1.02, boxShadow: "0 0 0 3px rgba(15, 28, 63, 0.1)" }}
                       transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                      id="message" 
-                      name="message" 
-                      required 
-                      rows="4" 
-                      className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]" 
+                      id="message"
+                      name="message"
+                      required
+                      rows="4"
+                      className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-3 text-[color:var(--color-ashoka-blue)] placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)]"
                     />
                   </motion.div>
                   {submitError && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -947,7 +948,7 @@ function ContactSection() {
                     </motion.div>
                   )}
                   {submitSuccess && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -956,7 +957,7 @@ function ContactSection() {
                       {submitSuccess}
                     </motion.div>
                   )}
-                  <motion.div 
+                  <motion.div
                     initial={{ y: 20, opacity: 0 }}
                     whileInView={{ y: 0, opacity: 1 }}
                     viewport={{ once: true }}
@@ -985,7 +986,7 @@ function HomePage() {
     const controller = new AbortController()
     const imgControllers = new Map()
     const TTL = 15 * 60 * 1000 // 15 minutes
-    const cacheKey = cacheKeyForUrl(`${API_BASE_URL}/glimpses`, 'glimpses-v1')
+    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/glimpses', 'glimpses-v1')
 
     // 0) Serve cached immediately (cross-tab)
     try {
@@ -993,7 +994,7 @@ function HomePage() {
       if (cached && Array.isArray(cached) && cached.length && !cancelled) {
         setEventImages(cached)
       }
-    } catch {}
+    } catch { }
 
     const imageUtils = {
       detectMime: (b64) => {
@@ -1009,7 +1010,7 @@ function HomePage() {
         if (!raw || typeof raw !== 'string') return ''
         let cleaned = raw.trim()
         if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
-          try { cleaned = JSON.parse(cleaned) } catch {}
+          try { cleaned = JSON.parse(cleaned) } catch { }
         }
         cleaned = String(cleaned).replace(/^data:[^;]+;base64,/, '')
         return cleaned.replace(/[^A-Za-z0-9+/=]/g, '')
@@ -1023,7 +1024,7 @@ function HomePage() {
             try {
               const unwrapped = JSON.parse(trimmed)
               if (typeof unwrapped === 'string') return imageUtils.extractBase64(unwrapped)
-            } catch {}
+            } catch { }
           }
           if (trimmed.startsWith('data:')) {
             dataUri = trimmed
@@ -1048,9 +1049,9 @@ function HomePage() {
       const ac = new AbortController()
       imgControllers.set(imageId, ac)
       // Per-image timeout to avoid hanging on slow networks
-      const t = setTimeout(() => { try { ac.abort() } catch {} }, 8000)
+      const t = setTimeout(() => { try { ac.abort() } catch { } }, 8000)
       try {
-        let imgRes = await fetch(`${API_BASE_URL}/image/${encodeURIComponent(imageId)}`, {
+        let imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, {
           method: 'GET',
           headers: { 'Accept': 'application/json, text/plain, */*' },
           signal: ac.signal
@@ -1112,8 +1113,8 @@ function HomePage() {
       try {
         // 1) Fetch glimpses list with timeout
         const listController = new AbortController()
-        const listTimeout = setTimeout(() => { try { listController.abort() } catch {} }, 8000)
-        let res = await fetch(`${API_BASE_URL}/glimpses`, {
+        const listTimeout = setTimeout(() => { try { listController.abort() } catch { } }, 8000)
+        let res = await fetch('https://api.thinkindiasvnit.in/glimpses', {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           signal: listController.signal
@@ -1147,7 +1148,7 @@ function HomePage() {
           if (cancelled) break
           current = [...current, tail[i]]
           setEventImages(current)
-          try { localCacheSet(cacheKey, current, TTL) } catch {}
+          try { localCacheSet(cacheKey, current, TTL) } catch { }
           await new Promise((r) => setTimeout(r, 0))
         }
       } catch {
@@ -1158,8 +1159,8 @@ function HomePage() {
     load()
     return () => {
       cancelled = true
-      try { controller.abort() } catch {}
-      imgControllers.forEach((ac) => { try { ac.abort() } catch {} })
+      try { controller.abort() } catch { }
+      imgControllers.forEach((ac) => { try { ac.abort() } catch { } })
       imgControllers.clear()
     }
   }, [isLoggedIn])
@@ -1179,7 +1180,7 @@ function HomePage() {
             { title: 'Research', desc: 'Collaborative projects addressing national priorities.', barClass: 'bg-white' },
             { title: 'Leadership', desc: 'Workshops and programs that build character and capability.', barClass: 'bg-[color:var(--color-india-green)]' },
           ].map((card, index) => (
-            <motion.div 
+            <motion.div
               key={card.title}
               initial="hidden"
               whileInView="show"
@@ -1189,8 +1190,8 @@ function HomePage() {
               className="glass-card-container"
             >
               <motion.div
-                whileHover={{ 
-                  y: -8, 
+                whileHover={{
+                  y: -8,
                   scale: 1.02,
                   boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
                 }}
@@ -1198,12 +1199,12 @@ function HomePage() {
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className="relative overflow-hidden rounded-2xl p-8 bg-[var(--bg-saffron-50)] shadow-sm cursor-pointer"
               >
-                <motion.div 
+                <motion.div
                   variants={{ hidden: { scaleX: 0 }, show: { scaleX: 1 } }}
                   transition={{ duration: 0.8, delay: 0.3 + index * 0.1 }}
-                  className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${card.barClass} origin-left`} 
+                  className={`pointer-events-none absolute inset-x-0 top-0 h-1 ${card.barClass} origin-left`}
                 />
-                <motion.div 
+                <motion.div
                   initial={{ y: 10, opacity: 0 }}
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true }}
@@ -1212,7 +1213,7 @@ function HomePage() {
                 >
                   {card.title}
                 </motion.div>
-                <motion.p 
+                <motion.p
                   initial={{ y: 10, opacity: 0 }}
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true }}
@@ -1353,7 +1354,7 @@ export default function App() {
     let cancelled = false
     const checkBackend = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/`, { method: 'GET' })
+        const res = await fetch('https://api.thinkindiasvnit.in/', { method: 'GET' })
         const ok = !!res?.ok
         if (!cancelled) setBackendStatus({ checked: true, down: !ok })
       } catch {
@@ -1369,7 +1370,7 @@ export default function App() {
     // Show loading page for ~2 seconds only on first load per session
     const timer = setTimeout(() => {
       setIsLoading(false)
-      try { sessionStorage.setItem('hasSeenLoading', 'true') } catch {}
+      try { sessionStorage.setItem('hasSeenLoading', 'true') } catch { }
     }, 2000)
     return () => clearTimeout(timer)
   }, [isLoading])

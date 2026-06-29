@@ -2,20 +2,19 @@ import { motion } from 'framer-motion'
 import { useEffect } from 'react'
 import AshokaChakra from './AshokaChakra.jsx'
 import { localCacheSet, cacheKeyForUrl } from '../utils/swrCache.js'
-import { API_BASE_URL } from '../utils/config.js'
 
 const LoadingPage = () => {
   // Prewarm: fetch glimpses list and first image; cache for HomePage
   useEffect(() => {
     let cancelled = false
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => { try { controller.abort() } catch {} }, 8000)
+    const timeoutId = setTimeout(() => { try { controller.abort() } catch { } }, 8000)
 
-    const cacheKey = cacheKeyForUrl(`${API_BASE_URL}/glimpses`, 'glimpses-v1')
+    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/glimpses', 'glimpses-v1')
 
     const run = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/glimpses`, {
+        const res = await fetch('https://api.thinkindiasvnit.in/glimpses', {
           method: 'GET', headers: { 'Accept': 'application/json' }, signal: controller.signal
         })
         if (!res.ok) return
@@ -27,14 +26,14 @@ const LoadingPage = () => {
         if (!cancelled && src) {
           localCacheSet(cacheKey, [{ src, alt }], 15 * 60 * 1000)
         }
-      } catch {}
+      } catch { }
     }
 
     run()
     return () => {
       cancelled = true
       clearTimeout(timeoutId)
-      try { controller.abort() } catch {}
+      try { controller.abort() } catch { }
     }
   }, [])
   return (

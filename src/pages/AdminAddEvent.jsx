@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Button from '../components/Button.jsx'
 import useAuth from '../hooks/useAuth.jsx'
-import { API_BASE_URL } from '../utils/config.js'
 
 export default function AdminAddEvent() {
   const navigate = useNavigate()
@@ -47,7 +46,7 @@ export default function AdminAddEvent() {
 
     try {
       // Adjust if your base path differs
-      const url = `${API_BASE_URL}/api/admin/addEvent`
+      const url = 'https://api.thinkindiasvnit.in/api/admin/addEvent'
       let res = await fetch(url, { method: 'POST', body: fd, mode: 'cors' })
       if (!res.ok) {
         // retry without explicit cors if server handles it
@@ -69,17 +68,17 @@ export default function AdminAddEvent() {
   const onPickImages = (e) => {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
-    
+
     // Create a Set of existing file keys for quick lookup
     const existingKeys = new Set(
       images.map(f => `${f.name}|${f.size}|${f.lastModified}`)
     )
-    
+
     // Add new files that aren't already in the images array
     const newFiles = files.filter(
       file => !existingKeys.has(`${file.name}|${file.size}|${file.lastModified}`)
     )
-    
+
     // Append new files to maintain order
     setImages(prev => [...prev, ...newFiles])
   }
@@ -154,7 +153,7 @@ export default function AdminAddEvent() {
               {images.map((img, idx) => (
                 <div key={idx} className="relative border rounded-lg p-2 bg-white shadow-sm">
                   <div className="text-xs font-medium truncate" title={img.name}>{img.name}</div>
-                  <div className="text-[10px] text-gray-500">{(img.size/1024).toFixed(1)} KB</div>
+                  <div className="text-[10px] text-gray-500">{(img.size / 1024).toFixed(1)} KB</div>
                   <button
                     type="button"
                     onClick={() => removeImageAt(idx)}

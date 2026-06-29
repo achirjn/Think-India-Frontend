@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { authFetch } from '../utils/auth'
-import { API_BASE_URL } from '../utils/config.js'
 
 export default function ProtectedComponent() {
   const [data, setData] = useState(null)
@@ -11,11 +10,11 @@ export default function ProtectedComponent() {
   const fetchProtectedData = async () => {
     setLoading(true)
     setError(null)
-    
+
     try {
       // This will automatically include the JWT token in the Authorization header
-      const response = await authFetch(`${API_BASE_URL}/api/protected-endpoint`)
-      
+      const response = await authFetch('https://api.thinkindiasvnit.in/api/protected-endpoint')
+
       if (response.ok) {
         const result = await response.json()
         setData(result)
@@ -32,11 +31,11 @@ export default function ProtectedComponent() {
   // Example of posting data with authentication
   const postProtectedData = async (postData) => {
     try {
-      const response = await authFetch(`${API_BASE_URL}/api/protected-endpoint`, {
+      const response = await authFetch('https://api.thinkindiasvnit.in/api/protected-endpoint', {
         method: 'POST',
         body: JSON.stringify(postData)
       })
-      
+
       if (response.ok) {
         const result = await response.json()
         console.log('Data posted successfully:', result)
@@ -58,7 +57,7 @@ export default function ProtectedComponent() {
   return (
     <div className="p-4 border rounded-lg">
       <h3 className="text-lg font-semibold mb-4">Protected API Example</h3>
-      
+
       <div className="space-y-4">
         <button
           onClick={fetchProtectedData}
@@ -67,20 +66,20 @@ export default function ProtectedComponent() {
         >
           {loading ? 'Loading...' : 'Fetch Protected Data'}
         </button>
-        
+
         <button
           onClick={() => postProtectedData({ message: 'Hello from frontend!' })}
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
         >
           Post Protected Data
         </button>
-        
+
         {error && (
           <div className="text-red-600 text-sm">
             Error: {error}
           </div>
         )}
-        
+
         {data && (
           <div className="text-sm">
             <strong>Response:</strong>

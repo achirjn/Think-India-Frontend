@@ -66,58 +66,58 @@ export default function Login() {
     }
   }
 
-  
+
 
   const validateForm = () => {
     const newErrors = {}
-    
+
     if (!formData.email) {
       newErrors.email = 'Email is required'
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email'
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'Password is required'
     }
-    
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
-    
+
     setIsLoading(true)
     setErrors({})
-    
+
     try {
       // Create FormData object to match the API expectation
       const formDataToSend = new FormData()
       formDataToSend.append('email', formData.email)
       formDataToSend.append('password', formData.password)
-      
+
       const response = await fetch(`${API_BASE_URL}/generate-token`, {
         method: 'POST',
         body: formDataToSend
       })
-      
+
       if (response.ok) {
         // Parse JSON response for token and isAdmin
         const data = await response.json()
         const token = data.token
         const isAdmin = data.isAdmin
-        
+
         if (token) {
           setToken(token)
           if (isAdmin) {
-              localStorage.setItem('is_admin', 'true')
+            localStorage.setItem('is_admin', 'true')
           } else {
-              localStorage.removeItem('is_admin')
+            localStorage.removeItem('is_admin')
           }
           // Redirect all users to home (Hero section)
           window.location.href = '/'
@@ -135,7 +135,7 @@ export default function Login() {
           } else {
             serverMsg = await response.text()
           }
-        } catch {}
+        } catch { }
 
         // Friendly message map
         let friendly = ''
@@ -165,7 +165,7 @@ export default function Login() {
     } catch (error) {
       // Provide specific error messages based on the error type
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        setErrors({ submit: `Cannot connect to server. Please ensure the backend is running on ${API_BASE_URL}` })
+        setErrors({ submit: 'Cannot connect to server. Please ensure the backend is running on ${API_BASE_URL}' })
       } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
         setErrors({ submit: 'Connection refused. Please check if the backend server is running and accessible.' })
       } else {
@@ -177,17 +177,17 @@ export default function Login() {
   }
   const handleGoogleLogin = () => {
     // This URL should point to your backend endpoint that initiates the Google OAuth flow
-    window.location.href = `${API_BASE_URL}/oauth2/authorization/google`; 
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
   };
   return (
-    <motion.section 
+    <motion.section
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
       className="py-16"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <motion.div 
+        <motion.div
           initial={{ y: 50, opacity: 0, scale: 0.9 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
           transition={{ type: 'spring', stiffness: 100, damping: 20, delay: 0.1 }}
@@ -201,7 +201,7 @@ export default function Login() {
           >
             Welcome back
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ y: 15, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.6 }}
@@ -210,14 +210,14 @@ export default function Login() {
             Login to your account
           </motion.p>
 
-          <motion.div 
+          <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.6 }}
             className="mt-6"
           >
             {errors.submit && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
@@ -227,14 +227,14 @@ export default function Login() {
               </motion.div>
             )}
 
-            <motion.form 
+            <motion.form
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.6 }}
-              className="my-6" 
+              className="my-6"
               onSubmit={handleSubmit}
             >
-              <motion.div 
+              <motion.div
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.6, duration: 0.5 }}
@@ -242,20 +242,19 @@ export default function Login() {
               >
                 <label htmlFor="email" className="text-sm font-medium text-[color:var(--color-ashoka-blue)]">Email</label>
                 <FieldHover className="mt-2">
-                <input 
-                  id="email" 
-                  name="email" 
-                  type="email" 
-                  required 
-                  value={formData.email}
-                  onChange={handleInputChange}
-                    className={`w-full rounded-md border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)] hover:border-[color:var(--color-ashoka-blue)] transition-all duration-200 ${
-                    errors.email ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                />
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-md border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)] hover:border-[color:var(--color-ashoka-blue)] transition-all duration-200 ${errors.email ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                  />
                 </FieldHover>
                 {errors.email && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-1 text-sm text-red-600"
@@ -264,8 +263,8 @@ export default function Login() {
                   </motion.p>
                 )}
               </motion.div>
-              
-              <motion.div 
+
+              <motion.div
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.7, duration: 0.5 }}
@@ -273,20 +272,19 @@ export default function Login() {
               >
                 <label htmlFor="password" className="text-sm font-medium text-[color:var(--color-ashoka-blue)]">Password</label>
                 <FieldHover className="mt-2">
-                <input 
-                  id="password" 
-                  name="password" 
-                  type="password" 
-                  required 
-                  value={formData.password}
-                  onChange={handleInputChange}
-                    className={`w-full rounded-md border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)] hover:border-[color:var(--color-ashoka-blue)] transition-all duration-200 ${
-                    errors.password ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                />
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-md border px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--color-ashoka-blue)] hover:border-[color:var(--color-ashoka-blue)] transition-all duration-200 ${errors.password ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                  />
                 </FieldHover>
                 {errors.password && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="mt-1 text-sm text-red-600"
@@ -295,18 +293,17 @@ export default function Login() {
                   </motion.p>
                 )}
               </motion.div>
-              
-              <motion.button 
-                type="submit" 
+
+              <motion.button
+                type="submit"
                 disabled={isLoading}
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.8, duration: 0.5 }}
-                className={`group/btn relative block h-11 w-full rounded-md bg-gradient-to-br from-[color:var(--color-ashoka-blue)] to-[color:var(--color-ashoka-blue)]/80 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] transition-all duration-200 hover:from-[color:var(--color-ashoka-blue)]/90 hover:to-[color:var(--color-ashoka-blue)]/70 ${
-                  isLoading ? 'opacity-70 cursor-not-allowed' : ''
-                }`}
+                className={`group/btn relative block h-11 w-full rounded-md bg-gradient-to-br from-[color:var(--color-ashoka-blue)] to-[color:var(--color-ashoka-blue)]/80 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] transition-all duration-200 hover:from-[color:var(--color-ashoka-blue)]/90 hover:to-[color:var(--color-ashoka-blue)]/70 ${isLoading ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center">
@@ -324,15 +321,15 @@ export default function Login() {
               </motion.button>
             </motion.form>
 
-            <motion.div 
+            <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
               transition={{ delay: 0.9, duration: 0.8 }}
-              className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-300 to-transparent" 
+              className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-300 to-transparent"
             />
 
-            <motion.button 
-              type="button" 
+            <motion.button
+              type="button"
               onClick={handleGoogleLogin}
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
@@ -342,16 +339,16 @@ export default function Login() {
               className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-[color:var(--color-ashoka-blue)] transition-all duration-200 hover:bg-gray-100"
             >
               <svg className="h-4 w-4" viewBox="0 0 533.5 544.3" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                <path fill="#4285F4" d="M533.5 278.4c0-18.4-1.5-36.8-4.7-54.6H272.1v103.4h146.7c-6.3 34.2-26.8 63.2-57.1 82.5v68.3h92.4c54.1-49.8 79.4-123.2 79.4-199.6z"/>
-                <path fill="#34A853" d="M272.1 544.3c77.4 0 142.6-25.6 190.2-69.3l-92.4-68.3c-25.7 17.3-58.7 27.5-97.8 27.5-75 0-138.6-50.6-161.4-118.6H14.7v74.6c48.2 95.7 146.8 154.1 257.4 154.1z"/>
-                <path fill="#FBBC05" d="M110.7 315.6c-12.3-36.9-12.3-76.4 0-113.3V127.7H14.7c-47.2 94.3-47.2 206.3 0 300.6l95.9-72.7z"/>
-                <path fill="#EA4335" d="M272.1 106.8c41.9-.6 82.4 14.9 113.2 43.7l84.2-84.2C428.4 24.1 353.6-1 272.1 0 161.5 0 62.9 58.4 14.7 154.1l96 74.6C133.4 160.7 197 110.1 272.1 110.1z"/>
+                <path fill="#4285F4" d="M533.5 278.4c0-18.4-1.5-36.8-4.7-54.6H272.1v103.4h146.7c-6.3 34.2-26.8 63.2-57.1 82.5v68.3h92.4c54.1-49.8 79.4-123.2 79.4-199.6z" />
+                <path fill="#34A853" d="M272.1 544.3c77.4 0 142.6-25.6 190.2-69.3l-92.4-68.3c-25.7 17.3-58.7 27.5-97.8 27.5-75 0-138.6-50.6-161.4-118.6H14.7v74.6c48.2 95.7 146.8 154.1 257.4 154.1z" />
+                <path fill="#FBBC05" d="M110.7 315.6c-12.3-36.9-12.3-76.4 0-113.3V127.7H14.7c-47.2 94.3-47.2 206.3 0 300.6l95.9-72.7z" />
+                <path fill="#EA4335" d="M272.1 106.8c41.9-.6 82.4 14.9 113.2 43.7l84.2-84.2C428.4 24.1 353.6-1 272.1 0 161.5 0 62.9 58.4 14.7 154.1l96 74.6C133.4 160.7 197 110.1 272.1 110.1z" />
               </svg>
               <span className="text-sm text-[color:var(--color-ashoka-blue)]/80">Continue with Google</span>
               <BottomGradient />
             </motion.button>
 
-            <motion.p 
+            <motion.p
               initial={{ y: 15, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 1.1, duration: 0.5 }}

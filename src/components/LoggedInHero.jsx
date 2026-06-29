@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import Button from './Button.jsx'
 import ImageSlider from './ImageSlider.jsx'
 import { localCacheGet, localCacheSet, cacheKeyForUrl } from '../utils/swrCache.js'
+import { API_BASE_URL } from '../utils/config.js'
 
 export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
   const [images, setImages] = useState([])
@@ -14,8 +15,8 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
   const loadImages = async ({ signal, controllersMap, ttlMs = 15 * 60 * 1000 } = {}) => {
     setLoading(true)
     setError(null)
-    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/glimpses', 'logged-hero-v1')
-    const homeCacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/glimpses', 'glimpses-v1')
+    const cacheKey = cacheKeyForUrl(`${API_BASE_URL}/glimpses`, 'logged-hero-v1')
+    const homeCacheKey = cacheKeyForUrl(`${API_BASE_URL}/glimpses`, 'glimpses-v1')
 
     // Serve cached immediately (cross-tab)
     try {
@@ -32,13 +33,13 @@ export default function LoggedInHero({ userName = '', apiEndpoint = '' }) {
 
     try {
       // Fetch list
-      let res = await fetch('https://api.thinkindiasvnit.in/glimpses', {
+      let res = await fetch(`${API_BASE_URL}/glimpses`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
         signal
       })
       if (!res.ok) {
-        res = await fetch('https://api.thinkindiasvnit.in/glimpses', { method: 'GET', mode: 'cors', signal })
+        res = await fetch(`${API_BASE_URL}/glimpses`, { method: 'GET', mode: 'cors', signal })
       }
       if (!res.ok) throw new Error(`Failed to fetch glimpses: HTTP ${res.status}`)
 

@@ -5,6 +5,7 @@ import SectionDivider from '../components/SectionDivider.jsx'
 import { HoverCard } from '../components/ui/card-hover-effect.jsx'
 import { stripHtmlToText } from '../utils/text.js'
 import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
+import { API_BASE_URL } from '../utils/config.js'
 
 export default function Blogs() {
   const [posts, setPosts] = useState([])
@@ -12,16 +13,16 @@ export default function Blogs() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/blogPageGetAllBlogs', 'blogs-v1')
+    const cacheKey = cacheKeyForUrl(`${API_BASE_URL}/blogPageGetAllBlogs`, 'blogs-v1')
     const TTL = 5 * 60 * 1000
 
     const fetchBlogs = async () => {
-      let res = await fetch('https://api.thinkindiasvnit.in/blogPageGetAllBlogs', {
+      let res = await fetch(`${API_BASE_URL}/blogPageGetAllBlogs`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       })
       if (!res.ok) {
-        res = await fetch('https://api.thinkindiasvnit.in/blogPageGetAllBlogs', {
+        res = await fetch(`${API_BASE_URL}/blogPageGetAllBlogs`, {
           method: 'GET',
           mode: 'cors',
           headers: { 'Content-Type': 'application/json' },

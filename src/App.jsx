@@ -27,6 +27,7 @@ import useAuth from './hooks/useAuth.jsx'
 import ThinkIndiaLogo from './assets/Think_India_Logo.svg'
 import NITSuratLogo from './assets/NIT_Surat_Logo.svg'
 import { localCacheGet, localCacheSet, cacheKeyForUrl } from './utils/swrCache.js'
+import { API_BASE_URL } from './utils/config.js'
 
 // Scroll to top on route path change (prevents landing at footer when navigating from footer links)
 function ScrollToTop() {
@@ -505,7 +506,7 @@ function Hero() {
   // If user is logged in, render the LoggedInHero component instead
   if (isLoggedIn) {
     // Replace this with the actual API endpoint when provided
-    const heroImagesApiEndpoint = 'https://api.thinkindiasvnit.in/heroImages'; // This will be replaced with the actual endpoint
+    const heroImagesApiEndpoint = `${API_BASE_URL}/heroImages`; // This will be replaced with the actual endpoint
     return <LoggedInHero userName={user?.name || ''} apiEndpoint={heroImagesApiEndpoint} />;
   }
 
@@ -806,14 +807,14 @@ function ContactSection() {
       formData.append('Email', emailVal)
       formData.append('Message', form.message.value || '')
 
-      let res = await fetch('https://api.thinkindiasvnit.in/recommend', {
+      let res = await fetch(`${API_BASE_URL}/recommend`, {
         method: 'POST',
         body: formData,
         mode: 'cors',
       })
       if (!res.ok) {
         // retry without explicit cors if needed
-        res = await fetch('https://api.thinkindiasvnit.in/recommend', { method: 'POST', body: formData })
+        res = await fetch(`${API_BASE_URL}/recommend`, { method: 'POST', body: formData })
       }
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       // backend returns plain text id (e.g., 1)
@@ -984,7 +985,7 @@ function HomePage() {
     const controller = new AbortController()
     const imgControllers = new Map()
     const TTL = 15 * 60 * 1000 // 15 minutes
-    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/glimpses', 'glimpses-v1')
+    const cacheKey = cacheKeyForUrl(`${API_BASE_URL}/glimpses`, 'glimpses-v1')
 
     // 0) Serve cached immediately (cross-tab)
     try {
@@ -1049,7 +1050,7 @@ function HomePage() {
       // Per-image timeout to avoid hanging on slow networks
       const t = setTimeout(() => { try { ac.abort() } catch {} }, 8000)
       try {
-        let imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${encodeURIComponent(imageId)}`, {
+        let imgRes = await fetch(`${API_BASE_URL}/image/${encodeURIComponent(imageId)}`, {
           method: 'GET',
           headers: { 'Accept': 'application/json, text/plain, */*' },
           signal: ac.signal
@@ -1112,7 +1113,7 @@ function HomePage() {
         // 1) Fetch glimpses list with timeout
         const listController = new AbortController()
         const listTimeout = setTimeout(() => { try { listController.abort() } catch {} }, 8000)
-        let res = await fetch('https://api.thinkindiasvnit.in/glimpses', {
+        let res = await fetch(`${API_BASE_URL}/glimpses`, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           signal: listController.signal
@@ -1352,7 +1353,7 @@ export default function App() {
     let cancelled = false
     const checkBackend = async () => {
       try {
-        const res = await fetch('https://api.thinkindiasvnit.in/', { method: 'GET' })
+        const res = await fetch(`${API_BASE_URL}/`, { method: 'GET' })
         const ok = !!res?.ok
         if (!cancelled) setBackendStatus({ checked: true, down: !ok })
       } catch {

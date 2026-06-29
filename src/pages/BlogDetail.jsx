@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
+import { API_BASE_URL } from '../utils/config.js'
 
 export default function BlogDetail() {
   const { slug } = useParams()
@@ -15,7 +16,7 @@ export default function BlogDetail() {
     let cancelled = false
     const statePost = location.state && location.state.post
     const isNumeric = /^\d+$/.test(String(slug || ''))
-    const endpoint = isNumeric ? `https://api.thinkindiasvnit.in/blog/${encodeURIComponent(slug)}` : `https://api.thinkindiasvnit.in/blog/${encodeURIComponent(slug)}`
+    const endpoint = isNumeric ? `${API_BASE_URL}/blog/${encodeURIComponent(slug)}` : `${API_BASE_URL}/blog/${encodeURIComponent(slug)}`
     const cacheKey = cacheKeyForUrl(endpoint, 'blog-detail-v1')
     const TTL = 5 * 60 * 1000
 

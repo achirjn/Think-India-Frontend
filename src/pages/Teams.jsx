@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
+import { API_BASE_URL } from '../utils/config.js'
 
 // Team Member Card Component with Tricolor Border
 const TeamMemberCard = ({ member, index }) => {
@@ -129,13 +130,13 @@ export default function Teams() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/getMemberByPosition/*', 'teams-v1')
+    const cacheKey = cacheKeyForUrl(`${API_BASE_URL}/getMemberByPosition/*`, 'teams-v1')
     const TTL = 5 * 60 * 1000
 
     // helper to fetch one position (never throw; return [])
     const fetchTeamMembers = async (position) => {
       try {
-        const response = await fetch(`https://api.thinkindiasvnit.in/getMemberByPosition/${position}`)
+        const response = await fetch(`${API_BASE_URL}/getMemberByPosition/${position}`)
         if (!response.ok) {
           console.warn(`[Teams] ${position} request failed:`, response.status, response.statusText)
           return []

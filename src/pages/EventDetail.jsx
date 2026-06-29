@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import useAuth from '../hooks/useAuth.jsx'
 import { authFetch } from '../utils/auth'
 import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
+import { API_BASE_URL } from '../utils/config.js'
 
 export default function EventDetail() {
   const { id } = useParams()
@@ -40,8 +41,8 @@ export default function EventDetail() {
     const fetchEvent = async () => {
       // try upcoming and past, pick first match by id
       const [upRes, pastRes] = await Promise.all([
-        authFetch('https://api.thinkindiasvnit.in/upcommingEvents').catch(() => null),
-        authFetch('https://api.thinkindiasvnit.in/pastEvents').catch(() => null)
+        authFetch(`${API_BASE_URL}/upcommingEvents`).catch(() => null),
+        authFetch(`${API_BASE_URL}/pastEvents`).catch(() => null)
       ])
       const upList = upRes?.ok ? await upRes.json() : []
       const pastList = pastRes?.ok ? await pastRes.json() : []

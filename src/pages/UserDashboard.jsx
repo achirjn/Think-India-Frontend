@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getToken } from '../utils/auth'
 import useAuth from '../hooks/useAuth'
+import { API_BASE_URL } from '../utils/config.js'
 
 export default function UserDashboard() {
   const navigate = useNavigate()
@@ -112,7 +113,7 @@ export default function UserDashboard() {
           setLoadingUser(false)
           return
         }
-        const url = `https://api.thinkindiasvnit.in/user/getUserData/${encodeURIComponent(email)}`
+        const url = `${API_BASE_URL}/user/getUserData/${encodeURIComponent(email)}`
         const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
         if (response.ok) {
           const data = await response.json()
@@ -141,7 +142,7 @@ export default function UserDashboard() {
             }
             if (val.startsWith('/')) {
               // Treat as relative path from backend
-              resolvedImage = `https://api.thinkindiasvnit.in${val}`
+              resolvedImage = `${API_BASE_URL}${val}`
               break
             }
             if (/^[A-Za-z0-9+/=]{100,}$/.test(val)) {
@@ -162,7 +163,7 @@ export default function UserDashboard() {
             if (possibleIds.length > 0) {
               const imgId = possibleIds[0]
               try {
-                const imgRes = await fetch(`https://api.thinkindiasvnit.in/image/${imgId}`, { headers: { 'Authorization': `Bearer ${token}` } })
+                const imgRes = await fetch(`${API_BASE_URL}/image/${imgId}`, { headers: { 'Authorization': `Bearer ${token}` } })
                 if (imgRes.ok) {
                   const imgJson = await imgRes.json()
                   if (imgJson?.base64Image) {
@@ -434,7 +435,7 @@ export default function UserDashboard() {
                 setSavingEdit(true)
                 setFeedback('')
                 try {
-                  const res = await fetch(`https://api.thinkindiasvnit.in/user/editProfile/${encodeURIComponent(userData.email)}` ,{
+                  const res = await fetch(`${API_BASE_URL}/user/editProfile/${encodeURIComponent(userData.email)}` ,{
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
@@ -497,7 +498,7 @@ export default function UserDashboard() {
                   const fd = new FormData()
                   fd.set('Old_password', oldPassword)
                   fd.set('New_password', newPassword)
-                  let res = await fetch(`https://api.thinkindiasvnit.in/user/changePassword/${encodeURIComponent(userData.email)}` ,{
+                  let res = await fetch(`${API_BASE_URL}/user/changePassword/${encodeURIComponent(userData.email)}` ,{
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: fd
@@ -601,7 +602,7 @@ export default function UserDashboard() {
                 setUploadingResume(true)
                 setResumeFeedback('')
                 try {
-                  const res = await fetch(`https://api.thinkindiasvnit.in/user/uploadResume/${encodeURIComponent(userData.email)}` ,{
+                  const res = await fetch(`${API_BASE_URL}/user/uploadResume/${encodeURIComponent(userData.email)}` ,{
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: fd

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { useRef, useState } from 'react'
 import { setToken } from '../utils/auth'
+import { API_BASE_URL } from '../utils/config.js'
 
 // Shared UI helpers to mirror Signup design
 const BottomGradient = () => (
@@ -100,7 +101,7 @@ export default function Login() {
       formDataToSend.append('email', formData.email)
       formDataToSend.append('password', formData.password)
       
-      const response = await fetch('https://api.thinkindiasvnit.in/generate-token', {
+      const response = await fetch(`${API_BASE_URL}/generate-token`, {
         method: 'POST',
         body: formDataToSend
       })
@@ -164,7 +165,7 @@ export default function Login() {
     } catch (error) {
       // Provide specific error messages based on the error type
       if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        setErrors({ submit: 'Cannot connect to server. Please ensure the backend is running on https://api.thinkindiasvnit.in' })
+        setErrors({ submit: `Cannot connect to server. Please ensure the backend is running on ${API_BASE_URL}` })
       } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
         setErrors({ submit: 'Connection refused. Please check if the backend server is running and accessible.' })
       } else {
@@ -176,7 +177,7 @@ export default function Login() {
   }
   const handleGoogleLogin = () => {
     // This URL should point to your backend endpoint that initiates the Google OAuth flow
-    window.location.href = 'https://api.thinkindiasvnit.in/oauth2/authorization/google'; 
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/google`; 
   };
   return (
     <motion.section 

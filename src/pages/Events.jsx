@@ -7,6 +7,7 @@ import Button from '../components/Button.jsx'
 import { publicFetch } from '../utils/auth'
 import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
 import { stripHtmlToText } from '../utils/text.js'
+import { API_BASE_URL } from '../utils/config.js'
 
 export default function Events() {
   const navigate = useNavigate()
@@ -103,13 +104,13 @@ export default function Events() {
 
   useEffect(() => {
     let cancelled = false
-    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/upcommingEvents+pastEvents', 'events-v1')
+    const cacheKey = cacheKeyForUrl(`${API_BASE_URL}/upcommingEvents+pastEvents`, 'events-v1')
     const TTL = 5 * 60 * 1000
 
     const fetchAggregated = async () => {
       const [upRes, pastRes] = await Promise.all([
-        publicFetch('https://api.thinkindiasvnit.in/upcommingEvents', { headers: { Accept: 'application/json' } }),
-        publicFetch('https://api.thinkindiasvnit.in/pastEvents', { headers: { Accept: 'application/json' } })
+        publicFetch(`${API_BASE_URL}/upcommingEvents`, { headers: { Accept: 'application/json' } }),
+        publicFetch(`${API_BASE_URL}/pastEvents`, { headers: { Accept: 'application/json' } })
       ])
       if (!upRes.ok && !pastRes.ok) throw new Error(`Failed to fetch events: UPC ${upRes.status}, PAST ${pastRes.status}`)
 

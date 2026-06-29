@@ -7,6 +7,7 @@ import useAuth from '../hooks/useAuth.jsx'
 import { authFetch } from '../utils/auth.js'
 import { stripHtmlToText } from '../utils/text.js'
 import { cacheKeyForUrl, swrFetch } from '../utils/swrCache.js'
+import { API_BASE_URL } from '../utils/config.js'
 
 export default function Internships() {
   // posters for successful placements
@@ -39,13 +40,13 @@ export default function Internships() {
   // Load Internship Diaries from backend using SWR pattern
   useEffect(() => {
     let cancelled = false
-    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/internPlacements', 'diaries-v1')
+    const cacheKey = cacheKeyForUrl(`${API_BASE_URL}/internPlacements`, 'diaries-v1')
     const TTL = 5 * 60 * 1000
 
     const fetchDiaries = async () => {
       const controller = new AbortController()
       const listTimeout = setTimeout(() => { try { controller.abort() } catch {} }, 8000)
-      const res = await fetch('https://api.thinkindiasvnit.in/internPlacements', { signal: controller.signal })
+      const res = await fetch(`${API_BASE_URL}/internPlacements`, { signal: controller.signal })
       clearTimeout(listTimeout)
       if (!res.ok) throw new Error('Failed to fetch internship diaries')
       const data = await res.json()
@@ -103,11 +104,11 @@ export default function Internships() {
     let cancelled = false
     if (!isLoggedIn) return () => {}
     const authDiscriminator = 'logged-in'
-    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/user/getUpcommingInternships', authDiscriminator)
+    const cacheKey = cacheKeyForUrl(`${API_BASE_URL}/user/getUpcommingInternships`, authDiscriminator)
     const TTL = 5 * 60 * 1000
 
     const fetchUpcoming = async () => {
-      const res = await authFetch('https://api.thinkindiasvnit.in/user/getUpcommingInternships')
+      const res = await authFetch(`${API_BASE_URL}/user/getUpcommingInternships`)
       if (!res.ok) throw new Error('Failed to fetch upcoming internships')
       let data
       try { data = await res.json() } catch { data = [] }
@@ -151,11 +152,11 @@ export default function Internships() {
   // Fetch successful placements posters
   useEffect(() => {
     let cancelled = false
-    const cacheKey = cacheKeyForUrl('https://api.thinkindiasvnit.in/internPlacements', 'posters-v1')
+    const cacheKey = cacheKeyForUrl(`${API_BASE_URL}/internPlacements`, 'posters-v1')
     const TTL = 5 * 60 * 1000
 
     const fetchPosters = async () => {
-      const res = await fetch('https://api.thinkindiasvnit.in/internPlacements')
+      const res = await fetch(`${API_BASE_URL}/internPlacements`)
       if (!res.ok) throw new Error('Failed to fetch internship placements')
       const data = await res.json()
       const rows = Array.isArray(data) ? data : (data?.items || [])

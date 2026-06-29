@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Button from '../components/Button.jsx'
 import useAuth from '../hooks/useAuth.jsx'
+import { API_BASE_URL } from '../utils/config.js'
 
 export default function AdminAddEvent() {
   const navigate = useNavigate()
@@ -46,7 +47,7 @@ export default function AdminAddEvent() {
 
     try {
       // Adjust if your base path differs
-      const url = 'https://api.thinkindiasvnit.in/api/admin/addEvent'
+      const url = `${API_BASE_URL}/api/admin/addEvent`
       let res = await fetch(url, { method: 'POST', body: fd, mode: 'cors' })
       if (!res.ok) {
         // retry without explicit cors if server handles it

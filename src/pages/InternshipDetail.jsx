@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import useAuth from '../hooks/useAuth.jsx'
 import { authFetch } from '../utils/auth.js'
+import { API_BASE_URL } from '../utils/config.js'
 
 export default function InternshipDetail() {
   const { id } = useParams()
@@ -22,7 +23,7 @@ export default function InternshipDetail() {
         setLoading(true)
         setError('')
         // Fetch upcoming internships (auth required) and find by id
-        const res = await authFetch('https://api.thinkindiasvnit.in/user/getUpcommingInternships')
+        const res = await authFetch(`${API_BASE_URL}/user/getUpcommingInternships`)
         if (!res.ok) throw new Error('Failed to fetch internships')
         let list = []
         try { list = await res.json() } catch { list = [] }

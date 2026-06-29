@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { authFetch } from '../utils/auth'
+import { API_BASE_URL } from '../utils/config.js'
 
 export default function ProtectedComponent() {
   const [data, setData] = useState(null)
@@ -13,7 +14,7 @@ export default function ProtectedComponent() {
     
     try {
       // This will automatically include the JWT token in the Authorization header
-      const response = await authFetch('https://api.thinkindiasvnit.in/api/protected-endpoint')
+      const response = await authFetch(`${API_BASE_URL}/api/protected-endpoint`)
       
       if (response.ok) {
         const result = await response.json()
@@ -31,7 +32,7 @@ export default function ProtectedComponent() {
   // Example of posting data with authentication
   const postProtectedData = async (postData) => {
     try {
-      const response = await authFetch('https://api.thinkindiasvnit.in/api/protected-endpoint', {
+      const response = await authFetch(`${API_BASE_URL}/api/protected-endpoint`, {
         method: 'POST',
         body: JSON.stringify(postData)
       })
